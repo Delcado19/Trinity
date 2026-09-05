@@ -73,6 +73,21 @@ public class ExportFunctionContext extends GhidraScript {
         }
         println("CALLER_COUNT=" + callerCount);
 
+        println("\n-- NON-CALL REFERENCES --");
+        references = currentProgram.getReferenceManager().getReferencesTo(function.getEntryPoint());
+        int nonCallReferenceCount = 0;
+        while (references.hasNext()) {
+            Reference reference = references.next();
+            if (reference.getReferenceType().isCall()) {
+                continue;
+            }
+            Function owner = functions.getFunctionContaining(reference.getFromAddress());
+            println(reference.getFromAddress() + " " + reference.getReferenceType() + " " +
+                (owner == null ? "<no function>" : owner.getName()));
+            ++nonCallReferenceCount;
+        }
+        println("NON_CALL_REFERENCE_COUNT=" + nonCallReferenceCount);
+
         println("\n-- DIRECT CALLEES --");
         for (Function callee : function.getCalledFunctions(monitor)) {
             println(callee.getEntryPoint() + " " + callee.getName());

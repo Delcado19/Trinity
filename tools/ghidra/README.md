@@ -2,7 +2,7 @@
 
 `ExportFunctionContext.java` produces read-only evidence for virtual addresses
 that were already found by the signature auditor. It reports the containing
-function, direct callers and callees, instructions, and Ghidra decompilation.
+function, call and non-call references, callees, instructions, and Ghidra decompilation.
 It does not discover or validate addresses.
 
 Run it against an existing analyzed Ghidra project:
@@ -27,3 +27,9 @@ containing every requested value. Each result still requires manual review.
 three operands from the old player-class expression (`+0x88`, tag byte `+1`,
 mask `0xF7`) and prints their context. It deliberately does not infer data
 flow; its results are candidates, not validated accessors.
+
+`FindPossessorRoundTrips.java` looks for the documented `owner+0xA0` to
+`possessor+0xD0` pointer round trip while preserving register data flow through
+the comparison. It is a candidate search, not proof that either offset is still
+valid in the target build. Optional hexadecimal arguments require those scalar
+operands to occur in the same function.

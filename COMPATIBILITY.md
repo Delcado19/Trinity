@@ -23,7 +23,7 @@ single match means only that the byte sequence exists once.
 | Version detection | PASS | Revision 2760 was identified as TU 2.01.00 and remained unverified |
 | Process gate | PASS | Runtime log contains only `CrimsonDesert.exe`; helper processes cannot start Trinity initialization |
 | Gameplay hook gate | PASS | Runtime entered diagnostics-only mode before any gameplay installer ran |
-| Character/player resolution | BROKEN | All four baseline CharMgr anchors have zero matches; semantic operand searches found no equivalent |
+| Character/player resolution | LIKELY | Old anchors are broken; a local-player accessor and manager global candidate were identified statically but remain disabled |
 | Stat commit | LIKELY/HIGH RISK | Old AOB is broken; equivalent implementation and a unique candidate AOB were identified statically, but remain disabled |
 | Damage application | LIKELY/HIGH RISK | Unique match and dispatcher shape confirmed statically; hook safety and state-transition semantics remain unverified |
 | Health/God Mode | DISABLED REQUIRED | Depends on broken player/stat paths and unsafe damage semantics |
@@ -150,10 +150,52 @@ two candidates. RVA `0x16E4650` compares the byte behind a pointer loaded from
 operand belongs to an unrelated indexed access. Neither is the old player-tag
 check, and neither exposes the manager-vector/possessor round trip.
 
-Character/player resolution therefore remains `BROKEN`. The TU 2.01.00 global,
-accessor, container layout, player classification, and possessor link are all
-still `UNKNOWN`; no candidate signature or offset has been added to runtime
-source.
+The stricter round-trip search then identified the likely TU 2.01.00
+local-player accessor at RVA `0x2837940`. It loads the slot at RVA `0x6C29C88`,
+dereferences it once, and passes the resulting manager to the enumeration helper
+at RVA `0x29B5310`. It walks the helper's temporary 0x20-byte entries, reads the
+owner pointer at entry `+0x08`, requires type descriptor `owner+0x88` tag byte
+`+1` to equal 1, and requires the exact `owner+0xA0` to `possessor+0xD0`
+round trip. It returns the matching owner or zero and destroys the temporary
+entries before returning.
+
+Twelve functions contain the same `+0xA0/+0xD0` ownership round trip, providing
+strong static evidence that this relationship survives TU 2.01.00. Nine of
+those functions also use the type descriptor at `+0x88`; several independently
+combine tag 1 with the round trip after calling the same enumeration helper.
+The old `((tag - 1) & 0xF7) == 0` test does not survive: no round-trip function
+contains the `0xF7` mask, and the new accessor accepts tag 1 only. Code that
+still assumes the old tag-1-or-9 player set is therefore unsafe.
+
+Candidate pattern:
+
+```text
+4C 8B DC 49 89 5B 08 49 89 73 10 57 48 83 EC 40 33 F6
+49 89 73 D8 49 89 73 E0 49 89 73 E8 49 8D 43 D8 49 89 43 F0
+49 8D 53 E8 48 8B 0D ?? ?? ?? ?? 48 8B 09 E8 ?? ?? ?? ??
+48 8B 4C 24 ??
+44 8B 44 24 ?? 49 C1 E0 05 4C 03 C1 49 3B C8 74 ?? 90 48 8B 51 08
+48 8B 82 88 00 00 00 80 78 01 01 75 ?? 48 8B 9A A0 00 00 00
+48 85 DB 74 ?? 48 8B 9B D0 00 00 00 48 85 DB 74 ?? 48 3B DA 74 ??
+```
+
+Expected and observed count: one match at accessor entry RVA `0x2837940` in
+executable `.data2`. The RIP-relative load at pattern offset `+0x2A` resolves
+the manager slot to RVA `0x6C29C88` without embedding that RVA in runtime code.
+The sibling slot at RVA `0x6C29C68` is used by other accessors and must not be
+substituted merely because its surrounding logic looks similar.
+
+Character/player resolution is now `LIKELY`, not `VERIFIED`. The accessor has
+no recovered direct callers, Ghidra labels its calling convention unknown, its
+game-thread requirements are untested, and the old direct manager
+`+0xB8/+0xC0` container layout has not been established for TU 2.01.00. The
+candidate is recorded only in the offline candidate manifest; runtime source
+and all dependent hooks remain disabled.
+
+Classification at this stage: accessor/global, type descriptor `+0x88`, tag
+byte `+1`, and possessor/pawn `+0xA0/+0xD0` are `LIKELY`; the temporary result
+stride `0x20` and owner field `+0x08` are `VERIFIED` instruction behavior for
+this accessor only; direct manager fields `+0xB8/+0xC0` remain `UNKNOWN`.
 
 ## Movement update static analysis
 
