@@ -42,7 +42,9 @@ target_include_directories(imgui PUBLIC
 FetchContent_Declare(
     minhook
     GIT_REPOSITORY https://github.com/TsudaKageyu/minhook.git
-    GIT_TAG        master
+    # Pin the dependency resolved by the recorded TU 2.00.00 baseline build;
+    # following master would make identical Trinity commits build differently.
+    GIT_TAG        d94c64d32ea37bc4f5ee47d580709f70c6fb6080
 )
 FetchContent_MakeAvailable(minhook)
 

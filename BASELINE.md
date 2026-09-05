@@ -31,8 +31,9 @@ Resolved FetchContent dependencies for this build:
 | Dear ImGui | `v1.91.5-docking` | `368123ab06b2b573d585e52f84cd782c5c006697` |
 | MinHook | `master` | `d94c64d32ea37bc4f5ee47d580709f70c6fb6080` |
 
-MinHook is not pinned by the imported source. Pinning the recorded commit should
-be a separate reproducibility change, not folded into the untouched baseline.
+MinHook is not pinned by the imported source. The port branch pins the resolved
+commit in a separate reproducibility change; the untouched baseline tag remains
+unchanged.
 
 The normal inherited agent environment contained both `PATH` and `Path`, which
 caused MSBuild `MSB6001`. Running CMake/MSBuild in a clean process environment
