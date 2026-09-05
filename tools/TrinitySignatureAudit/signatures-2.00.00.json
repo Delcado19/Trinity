@@ -1,0 +1,376 @@
+{
+  "baseline": {
+    "label": "gugi97 Trinity TU 2.00.00",
+    "repository": "https://github.com/gugi97/Trinity",
+    "branch": "fork/tu2.00.00",
+    "commit": "7ad5fb1895021d7132083b4194ca1b1ab208610b",
+    "gameVersion": "2.00.00",
+    "peRevision": 2625
+  },
+  "signatures": [
+    {
+      "id": "kSig_StatCommit",
+      "feature": "Health, stamina, and spirit stat commit",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 10 55 56 57 48 83 EC 20 48 8B 59 18 41 0F B7 E9 48 03 59 20 48 89 D6 48 89 CF 4C 39 C3",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_DamageApply",
+      "feature": "Damage application and multipliers",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 49 8B C1 49 8B E8 0F B7 DA 48 8B F1 4D 85 C9",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_MountStaminaTick",
+      "feature": "Historical mount stamina tick",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 08 48 89 74 24 10 48 89 7C 24 18 55 41 56 41 57 48 8B EC 48 83 EC 70 48 8B F9 C5 F2 58 41 2C",
+      "policy": "observe"
+    },
+    {
+      "id": "kCharMgrAnchor_1",
+      "feature": "Character manager consensus anchor",
+      "source": "src/game/offsets.h",
+      "pattern": "48 8B 05 ?? ?? ?? ?? 48 8B 08 4D 8B 00 49 C1 E8 20",
+      "policy": "exact",
+      "expectedMatches": 1,
+      "ripInstructionOffset": 0
+    },
+    {
+      "id": "kCharMgrAnchor_2",
+      "feature": "Character manager consensus anchor",
+      "source": "src/game/offsets.h",
+      "pattern": "48 8B 05 ?? ?? ?? ?? 44 8B 82 90 00 00 00 48 8D 54 24 ?? 48 8B 08 E8",
+      "policy": "exact",
+      "expectedMatches": 1,
+      "ripInstructionOffset": 0
+    },
+    {
+      "id": "kCharMgrAnchor_3",
+      "feature": "Character manager consensus anchor",
+      "source": "src/game/offsets.h",
+      "pattern": "48 8B 05 ?? ?? ?? ?? 44 8B 81 60 01 00 00 48 8D 55 ?? 48 8B 08 E8",
+      "policy": "exact",
+      "expectedMatches": 1,
+      "ripInstructionOffset": 0
+    },
+    {
+      "id": "kCharMgrAnchor_4",
+      "feature": "Character manager consensus fallback anchor",
+      "source": "src/game/offsets.h",
+      "pattern": "48 8B 05 ?? ?? ?? ?? 44 8B 07 48 8D 54 24 ?? 48 8B 08 E8",
+      "policy": "exact",
+      "expectedMatches": 2,
+      "ripInstructionOffset": 0
+    },
+    {
+      "id": "kSig_MoveUpdate",
+      "feature": "Player position tracking",
+      "source": "src/game/offsets.h",
+      "pattern": "48 8B C4 4C 89 48 ? 48 89 50 ? 55 41 56",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_LocoStepper",
+      "feature": "Locomotion and super run",
+      "source": "src/game/offsets.h",
+      "pattern": "48 8B C4 48 89 58 10 44 88 48 20 55 56 57 41 54 41 55 41 56 41 57 48 8D A8 68 F8 FF FF 48 81 EC 60 08 00 00",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_TravelToNode",
+      "feature": "Fast travel",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 18 89 54 24 10 48 89 4C 24 08 55 56 57 48 8D 6C 24 ?? 48 81 EC ?? ?? ?? ?? 41 8B F8 33 DB 83 FA FF",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_DestinationUpdate",
+      "feature": "Current destination tracking",
+      "source": "src/game/offsets.h",
+      "pattern": "48 8B C4 48 89 58 10 48 89 48 08 55 56 57 41 54 41 55 41 56 41 57 48 8D 68 ?? 48 81 EC ?? ?? ?? ?? C5 F8 29 70 ?? 49 8B F8",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_PathingHelper",
+      "feature": "Teleport pathing helper",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 08 48 89 74 24 18 55 57 41 56 48 8D 6C 24 ?? 48 81 EC ?? ?? ?? ?? 4D 8B F0 48 8B F2 66 C7 45 ?? 04 00 C6 45 ?? 01 33 DB 48 89 5D ?? 48 89 5D ?? C5 FB 10 05",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_MarkerOriginPrefix",
+      "feature": "Marker origin candidate prefix",
+      "source": "src/game/offsets.h",
+      "pattern": "C5 F8 5C 05",
+      "policy": "contextual"
+    },
+    {
+      "id": "kSig_LeaR8Rip",
+      "feature": "RIP-relative table/string candidate",
+      "source": "src/game/offsets.h",
+      "pattern": "4C 8D 05 ?? ?? ?? ??",
+      "policy": "contextual"
+    },
+    {
+      "id": "kSig_TableResolverPrologue",
+      "feature": "32-bit-key table resolver prologue",
+      "source": "src/game/offsets.h and src/game/teleport.cpp",
+      "pattern": "48 89 5C 24 10 48 89 6C 24 18 56 57 41 56 48 83 EC ?? 8B 39 48 8B 1D",
+      "policy": "contextual",
+      "aliases": ["teleport.cpp:kPrologue32"]
+    },
+    {
+      "id": "kResolverPrologue16",
+      "feature": "16-bit-key table resolver prologue",
+      "source": "src/game/teleport.cpp and src/game/inventory.cpp",
+      "pattern": "48 89 5C 24 10 48 89 6C 24 18 56 57 41 56 48 83 EC ?? 0F B7 39 48 8B 1D",
+      "policy": "contextual",
+      "aliases": ["teleport.cpp:kPrologue16", "inventory.cpp:kItemPrologue"]
+    },
+    {
+      "id": "kSig_InvGetItemQty",
+      "feature": "Inventory item quantity accessor",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC 20 49 8B E8 0F B7 DA",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_InvGetHolder",
+      "feature": "Inventory holder resolution",
+      "source": "src/game/offsets.h",
+      "pattern": "40 53 48 83 EC 20 48 8B 41 ? 48 8B D9 48 8B 48",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_InvSetExpandSlots",
+      "feature": "Inventory slot expansion",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 ? 56 48 83 EC 20 48 8B 41 ? 48 8B F2 8B 49",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_InvHolderInsert",
+      "feature": "Inventory insertion planner",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 ? 4C 89 44 24 ? 48 89 54 24 ? 48 89 4C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC 10 03 00 00",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_InvCommit",
+      "feature": "Inventory transaction commit",
+      "source": "src/game/offsets.h",
+      "pattern": "4C 89 44 24 ? 48 89 54 24 ? 48 89 4C 24 ? 55 53 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC 48 01 00 00 4D 8B D0 48 8B D1",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_InvCoreGlobal",
+      "feature": "Inventory core global",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 54 24 ? 53 48 83 EC 30 48 8B DA C7 44 24 20 00 00 00 00 48 8B 05 ? ? ? ? 48 8B 50 30 48 8B 52 50 48 8B CB E8",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_TrItemValueCtor",
+      "feature": "Item-value constructor",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 ? 48 89 4C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8B EC 48 83 EC 60 4C 8B EA 48 8B F1 48 C7 01 FF FF FF FF 0F B7 02 66 89 41 08 4C 89 41 10",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_InvCommitPlacement",
+      "feature": "Inventory placement commit",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 ? 4C 89 44 24 ? 55 56 57 48 83 EC 30 41 0F B7 59",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_InvFreePlacements",
+      "feature": "Inventory placement cleanup",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 ? 57 48 83 EC 20 48 8B D9 48 8B 09 48 85 C9 74 ?? 33 FF 39 7B ?? 76 ?? 0F 1F 40 ?? 8B C7 48 69 C8 E0 00 00 00",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_MovR8Rip",
+      "feature": "Indirect RIP-relative table/string candidate",
+      "source": "src/game/offsets.h",
+      "pattern": "4C 8B 05 ?? ?? ?? ??",
+      "policy": "contextual"
+    },
+    {
+      "id": "kSig_LocStringGet",
+      "feature": "Localized string lookup",
+      "source": "src/game/offsets.h",
+      "pattern": "8B 41 ?? 48 8B 0D ?? ?? ?? ?? 3B 41 ?? 72 08 48 8D 05 ?? ?? ?? ?? C3 48 03 41 ?? C3",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_ReportStealthExecute",
+      "feature": "Historical stealth crime path",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 08 57 48 83 EC 40 48 8B DA 49 8B 78 70 44 0F B6 41 08 48 8D 54 24 20 48 8B 0F E8 ?? ?? ?? ?? 90 80 7C 24 30 00 75 08 C7 03 00 00 00 00 EB 22 48 8B 07 48 8B 40 08 48 8B 40 68 48 8B 54 24 28 48 8B 88 B0 00 00 00",
+      "policy": "observe"
+    },
+    {
+      "id": "kSig_TheftCrimeReport",
+      "feature": "Historical theft crime path",
+      "source": "src/game/offsets.h",
+      "pattern": "4C 89 4C 24 20 4C 89 44 24 18 48 89 54 24 10 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 A8 E7 FF FF",
+      "policy": "observe"
+    },
+    {
+      "id": "kSig_ClientStealItemExecute",
+      "feature": "Historical client steal execution",
+      "source": "src/game/offsets.h",
+      "pattern": "4C 8B DC 49 89 5B 08 49 89 6B 10 49 89 73 18 57 48 81 EC 90 00 00 00 49",
+      "policy": "observe"
+    },
+    {
+      "id": "kSig_ClientStealItemProcess",
+      "feature": "Historical client steal processing",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 08 48 89 6C 24 18 48 89 74 24 20 57 41 54 41 55 41 56 41 57 48 81 EC 30 01 00 00",
+      "policy": "observe"
+    },
+    {
+      "id": "kSig_AIFuncRegistCrime",
+      "feature": "Historical AI crime registration",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 48 8B 02 48 8B F9 48 8B CA 48 8B DA FF 50 08 4C 8B 07 48 8B CF 0F B7 F0 41 FF 50 08 66 3B C6 77 28 73 12 B0 FF",
+      "policy": "observe"
+    },
+    {
+      "id": "kSig_AIFuncWitnessCriminal",
+      "feature": "Historical AI crime witness",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 08 48 89 74 24 10 57 48 83 EC 20 48 8B 02 48 8B F9 48 8B CA 48 8B DA FF 50 08 4C 8B 07 48 8B CF 0F B7 F0 41 FF 50 08 66 3B C6 77 1D 73 12 B0 FF",
+      "policy": "observe"
+    },
+    {
+      "id": "kSig_WantedAddCrimeRecord",
+      "feature": "Historical wanted-state crime record",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 08 55 56 57 41 54 41 55 41 56 41 57 48 8B EC 48 81 EC 80 00 00 00 49 8B F0 48 8B DA 4C 8B F1 4D 8B 78 18",
+      "policy": "observe"
+    },
+    {
+      "id": "kSig_SetCrimeTarget",
+      "feature": "Historical crime target setter",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 08 48 89 74 24 10 55 57 41 54 41 56 41 57 48 8B EC 48 83 EC 60 49",
+      "policy": "observe"
+    },
+    {
+      "id": "kSig_MasterFrameUpdate",
+      "feature": "Master frame update",
+      "source": "src/game/offsets.h",
+      "pattern": "48 8B C4 48 89 58 10 48 89 68 18 48 89 70 20 57 41 56 41 57 48 81 EC D0 01 00 00 C5 F8 29 70 D8",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_GameSpeed",
+      "feature": "Game speed state",
+      "source": "src/game/offsets.h",
+      "pattern": "80 3D ?? ?? ?? ?? 01 75 ?? 48 8B 4F ?? 41 8B C7 C5 78 2F 61 64 0F 97 C0 85 C0 74 ?? 80 3D ?? ?? ?? ?? 01 75 ?? C5 FA 10 05 ?? ?? ?? ?? C5 FA 11 41 64 C6 05 ?? ?? ?? ?? 00",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_FieldTimeRealm",
+      "feature": "Client/server field-time realm",
+      "source": "src/game/offsets.h",
+      "pattern": "BA F6 01 00 00 48 8B 08 0F B6 04 0A 84 C0 74 0A C5 FC 10 05 ?? ?? ?? ?? EB 08 C5 FC 10 05 ?? ?? ?? ??",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_FieldTimeTick",
+      "feature": "Field-time tick",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 ?? 48 89 74 24 ?? 48 89 7C 24 ?? 55 41 56 41 57 48 8B EC 48 83 EC 70 48 8B F9 C5 F2 58 41 2C",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_TodEngineGlobal",
+      "feature": "Time-of-day engine global",
+      "source": "src/game/offsets.h",
+      "pattern": "83 3D ?? ?? ?? ?? FF 75 ?? 48 89 1D ?? ?? ?? ?? 48 89 3D",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_EquipBatch",
+      "feature": "Equipment batch update",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 10 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ?? ?? ?? ?? B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 48 2B E0 4D 8B E0 4C 8B EA 4C 8B F1 4C 8B 79 08",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_DyeApplyBatch",
+      "feature": "Dye batch application",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 ? 48 89 54 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 83 EC ?? 4D 8B E0 48 8B F2 4C 8B F1",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_DyeUpsert",
+      "feature": "Current dye-record upsert alternative",
+      "source": "src/game/offsets.h",
+      "pattern": "48 8B 41 ? 4C 8B D1 44 8B 41 ? 49 C1 E0 04",
+      "policy": "alternative",
+      "alternativeGroup": "dye-upsert"
+    },
+    {
+      "id": "kSig_DyeUpsert_1180",
+      "feature": "Legacy dye-record upsert alternative",
+      "source": "src/game/offsets.h",
+      "pattern": "48 8B 41 78 4C 8B D1 44 8B 81 80 00 00 00 49 C1 E0 04",
+      "policy": "alternative",
+      "alternativeGroup": "dye-upsert"
+    },
+    {
+      "id": "kSig_EquipEffectRefresh",
+      "feature": "Equipment-effect refresh",
+      "source": "src/game/offsets.h",
+      "pattern": "48 89 5C 24 20 55 56 57 48 8D 6C 24 B9 48 81 EC 90 00 00 00 48 8B D9 80 B9 F8 00 00 00 00",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_FriendlySetNpc",
+      "feature": "Current NPC trust setter alternative",
+      "source": "src/game/offsets.h",
+      "pattern": "49 89 E3 53 55 56 57 41 56 48 83 EC 60 48 89 D7 B8 ?? ?? ?? ?? 03 05 ?? ?? ?? ?? 48 8D 2C 01 0F B7 42 04 66 41 89 43 08",
+      "policy": "alternative",
+      "alternativeGroup": "friendly-npc"
+    },
+    {
+      "id": "kSig_FriendlySetNpc_1180",
+      "feature": "Legacy NPC trust setter alternative",
+      "source": "src/game/offsets.h",
+      "pattern": "49 89 E3 53 55 56 57 41 56 48 83 EC 60 48 89 D7 8B 05 ? ? ? ? 2D ? ? ? ? 48 8D 2C 01 0F B7 42 04 66 41 89 43 08",
+      "policy": "alternative",
+      "alternativeGroup": "friendly-npc"
+    },
+    {
+      "id": "kSig_FriendlySetPet",
+      "feature": "Pet trust setter",
+      "source": "src/game/offsets.h",
+      "pattern": "4C 8B DC 53 55 56 57 41 56 48 83 EC 60 48 8B FA 48 8D 69 38 0F B7 42 04 66 41 89 43 08",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_ParryVerdict",
+      "feature": "Easy Parry executable patch site",
+      "source": "src/game/parry.cpp",
+      "pattern": "C5 F8 2F D3 0F 97 C0 88 06",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_WeatherDeserialize",
+      "feature": "Weather preset deserializer",
+      "source": "src/game/weather.cpp",
+      "pattern": "48 89 5C 24 08 57 48 83 EC 60 48 8B 01 41 B8 04 00 00 00 48 8B FA 48 8B D9 FF 50 08 84 C0 75 4D 48 8D 0D ? ? ? ? 48 89 4C 24 58 4C 8D 0D ? ? ? ? C7 44 24 50 06 00 00 00 33 C0 89 44 24 48 B1 01 4C 89 4C 24 40 89 44 24 38 4C 89 4C 24 30 4C 89 4C 24 28 4C 89 4C 24 20 E8 B0 A2 02 FF",
+      "policy": "unique"
+    }
+  ]
+}

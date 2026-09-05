@@ -37,8 +37,8 @@ Trinity.asi (DLL)
 ├── mem/scanner.*          AOB signature scanner
 ├── mem/hooks.h            MinHook helpers
 ├── mem/safe_memory.h      Guarded reads/writes and pointer-chain walks
-├── game/offsets.h         The ONLY place game knowledge lives: byte
-│                          signatures + struct offsets, re-scanned at load
+├── game/offsets.h         Central registry for byte signatures and struct
+│                          offsets, re-scanned at load
 ├── game/player.*          Player resolution + stat/vital features
 ├── game/teleport.*        Fast-travel node enumeration and warping
 ├── game/inventory.*       Inventory read/edit, item catalog, add-item
@@ -59,10 +59,11 @@ Trinity.asi (DLL)
 └── gui/menu.*             The actual menu content (the tabs above)
 ```
 
-Everything the mod knows about the game binary is a **byte signature** or a
-**struct offset** in [`src/game/offsets.h`](src/game/offsets.h), never an
-absolute address, so a game patch that shifts code around does not silently
-break it: signatures are re-scanned at load and any failure is logged.
+Most game-version knowledge is centralized in
+[`src/game/offsets.h`](src/game/offsets.h). A few legacy resolver patterns,
+layout constants and RVAs remain in feature source files; the signature audit
+manifest inventories those patterns as well. Do not treat a successful scan as
+proof that the matched function or surrounding structures are still compatible.
 
 ## Controls
 
@@ -125,6 +126,11 @@ filtered out:
 ```powershell
 python scripts/gen_dye_data.py "<game install folder>"
 ```
+
+[`tools/TrinitySignatureAudit`](tools/TrinitySignatureAudit) is a read-only PE
+scanner for recording how the checked-in Trinity signatures behave against a
+specific game executable. A unique byte match is reported only as a mechanical
+count result; it is never treated as proof that a hook is semantically safe.
 
 ## Dependencies
 
