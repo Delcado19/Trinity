@@ -6,6 +6,15 @@ import audit
 
 
 class AuditTests(unittest.TestCase):
+    def test_executable_debug_section_is_scanned(self) -> None:
+        executable_debug = audit.Section(".debug$P", 0, 0, 1, audit.IMAGE_SCN_MEM_EXECUTE)
+        data_debug = audit.Section(".debug$S", 0, 0, 1, audit.IMAGE_SCN_MEM_READ)
+
+        primary, fallback = audit.scan_section_groups((executable_debug, data_debug))
+
+        self.assertEqual(primary, (executable_debug,))
+        self.assertEqual(fallback, ())
+
     def test_pe_scan_and_wildcard(self) -> None:
         image = bytearray(0x400)
         image[:2] = b"MZ"

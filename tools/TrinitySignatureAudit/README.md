@@ -21,10 +21,12 @@ sections scanned, recorded match RVAs, and separate count/semantic statuses.
 Match counts are exact; to keep reports reviewable, at most 64 RVAs are stored
 per signature and `locationsTruncated` records whether more were found.
 
-The primary pass scans executable sections plus `.link`, where the baseline
-documents `kSig_StatCommit`. When that pass finds nothing, the scanner mirrors
-Trinity's packed-image fallback by checking other readable sections. `.debug*`
-is excluded because stale executable bytes there can create false matches.
+The primary pass scans every executable section plus `.link`, where the
+baseline documents `kSig_StatCommit`. This intentionally includes executable
+`.debug$P`: TU 2.01.00 routes live thunks into that section. When the primary
+pass finds nothing, the scanner mirrors Trinity's packed-image fallback by
+checking other readable sections; only non-executable `.debug*` data is
+excluded.
 
 Policies in `signatures-2.00.00.json` mean:
 
@@ -36,6 +38,9 @@ Policies in `signatures-2.00.00.json` mean:
 
 Regardless of count, `semanticStatus` remains `UNKNOWN` until the target
 function, calling convention, structures, and runtime behavior are verified.
+
+`candidates-2.01.00.json` contains newly rediscovered patterns that are not yet
+safe to enable. Pass it with `--manifest` to recheck them against an executable.
 
 ## Test
 

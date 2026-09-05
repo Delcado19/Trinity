@@ -24,7 +24,7 @@ single match means only that the byte sequence exists once.
 | Process gate | PASS | Runtime log contains only `CrimsonDesert.exe`; helper processes cannot start Trinity initialization |
 | Gameplay hook gate | PASS | Runtime entered diagnostics-only mode before any gameplay installer ran |
 | Character/player resolution | BROKEN | All four baseline CharMgr anchors have zero matches |
-| Stat commit | BROKEN | `kSig_StatCommit` has zero matches |
+| Stat commit | LIKELY/HIGH RISK | Old AOB is broken; equivalent implementation and a unique candidate AOB were identified statically, but remain disabled |
 | Damage application | LIKELY/HIGH RISK | Unique match and dispatcher shape confirmed statically; hook safety and state-transition semantics remain unverified |
 | Health/God Mode | DISABLED REQUIRED | Depends on broken player/stat paths and unsafe damage semantics |
 | Stamina/spirit | DISABLED REQUIRED | Stat hook and player resolver are broken |
@@ -70,6 +70,43 @@ the in-game menu successfully. The session ended without generating a
 
 This smoke test validates loading, version gating, and overlay rendering only.
 It does not validate any gameplay hook, offset, structure, or feature behavior.
+
+## Stat commit static analysis
+
+The TU 2.00.00 `kSig_StatCommit` remains `BROKEN` with zero matches. Following
+the confirmed TU 2.01.00 damage data flow identifies a likely equivalent at RVA
+`0xC4E6A80`, reached through the live thunk at RVA `0x171E630`:
+
+```text
+DamageApply 0x1718500
+  -> generic status path 0x1718930
+  -> ApplyDelta thunk 0x171D6B0
+  -> ApplyDelta implementation 0xC4E3E70
+  -> StatCommit thunk 0x171E630
+  -> StatCommit implementation 0xC4E6A80
+```
+
+The implementation accepts the same four argument roles documented by the old
+source: entry, time, clamped target, and 16-bit flag. It reconstructs the upper
+bound from entry fields `+0x18` and `+0x20`, applies the floor at `+0x28`, and
+writes the normalized value at `+0x20` plus the current value at `+0x08`. It
+also updates fields at `+0x38`, `+0x48`, `+0x50`, and `+0x52`. These accesses
+are verified instruction behavior; their higher-level field names beyond the
+old documented fields remain unverified.
+
+Candidate pattern:
+
+```text
+66 44 89 4C 24 ?? 48 89 54 24 ?? 53 55 56 57 41 56 48 83 EC ??
+4C 8D 71 18 48 89 CF 48 8B 49 20 4C 89 C3 49 03 0E 4C 89 F6 4C 39 C1
+```
+
+Expected and observed count: one match at RVA `0xC4E6A80` in executable
+`.debug$P`. The function has nine direct callers through its thunk. This is
+still `LIKELY/HIGH RISK`, not `VERIFIED`: Ghidra did not recover the calling
+convention, player-entry ownership and live layouts are unverified, and the
+post-commit hook can affect lethal-state observation. No source signature or
+hook is enabled yet.
 
 ## Damage application static analysis
 

@@ -94,6 +94,27 @@ def parse_pe(data: Any) -> PeInfo:
     return PeInfo(timestamp, size_of_image, tuple(sections))
 
 
+def scan_section_groups(
+    sections: Iterable[Section],
+) -> tuple[tuple[Section, ...], tuple[Section, ...]]:
+    sections = tuple(sections)
+    # TU 2.01.00 routes live thunks into executable .debug$P. Excluding it by
+    # name hides reachable code; only non-executable debug data stays excluded.
+    primary = tuple(
+        section
+        for section in sections
+        if section.executable or section.name.lower() == ".link"
+    )
+    fallback = tuple(
+        section
+        for section in sections
+        if section.readable
+        and section not in primary
+        and not section.name.lower().startswith(".debug")
+    )
+    return primary, fallback
+
+
 def parse_pattern(text: str) -> Pattern:
     values: list[int | None] = []
     for token in text.split():
@@ -235,19 +256,7 @@ def _file_version(path: Path) -> str | None:
 def audit(executable: Path, manifest: dict[str, Any], game_version: str) -> dict[str, Any]:
     with executable.open("rb") as stream, mmap.mmap(stream.fileno(), 0, access=mmap.ACCESS_READ) as image:
         pe = parse_pe(image)
-        primary = tuple(
-            section
-            for section in pe.sections
-            if not section.name.lower().startswith(".debug")
-            and (section.executable or section.name.lower() == ".link")
-        )
-        fallback = tuple(
-            section
-            for section in pe.sections
-            if not section.name.lower().startswith(".debug")
-            and section.readable
-            and section not in primary
-        )
+        primary, fallback = scan_section_groups(pe.sections)
         section_by_name = {section.name: section for section in pe.sections}
         results: dict[str, Any] = {}
         for entry in manifest["signatures"]:
@@ -307,7 +316,7 @@ def audit(executable: Path, manifest: dict[str, Any], game_version: str) -> dict
         "scan": {
             "primarySections": [section.name for section in primary],
             "fallbackSections": [section.name for section in fallback],
-            "excludedSectionPrefix": ".debug",
+            "excludedNonExecutableSectionPrefix": ".debug",
             "maxRecordedLocationsPerSignature": MAX_RECORDED_LOCATIONS,
             "note": "Count results are mechanical only; semantic status remains UNKNOWN.",
         },

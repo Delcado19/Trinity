@@ -21,7 +21,8 @@
   },
   "scan": {
     "primarySections": [
-      ".data2"
+      ".data2",
+      ".debug$P"
     ],
     "fallbackSections": [
       ".idata",
@@ -35,7 +36,7 @@
       ".xtext",
       ".trace"
     ],
-    "excludedSectionPrefix": ".debug",
+    "excludedNonExecutableSectionPrefix": ".debug",
     "maxRecordedLocationsPerSignature": 64,
     "note": "Count results are mechanical only; semantic status remains UNKNOWN."
   },
@@ -211,8 +212,8 @@
       "source": "src/game/offsets.h",
       "policy": "contextual",
       "expectedMatches": null,
-      "matches": 25,
-      "locationsRecorded": 25,
+      "matches": 26,
+      "locationsRecorded": 26,
       "locationsTruncated": false,
       "scanScope": "executable-or-link",
       "countStatus": "CONTEXT_REQUIRED",
@@ -317,6 +318,10 @@
         {
           "rva": "0x394A0E8",
           "section": ".data2"
+        },
+        {
+          "rva": "0x13EF01D3",
+          "section": ".debug$P"
         }
       ]
     },
@@ -325,7 +330,7 @@
       "source": "src/game/offsets.h",
       "policy": "contextual",
       "expectedMatches": null,
-      "matches": 54549,
+      "matches": 142942,
       "locationsRecorded": 64,
       "locationsTruncated": true,
       "scanScope": "executable-or-link",
@@ -595,8 +600,8 @@
       "source": "src/game/offsets.h and src/game/teleport.cpp",
       "policy": "contextual",
       "expectedMatches": null,
-      "matches": 19,
-      "locationsRecorded": 19,
+      "matches": 24,
+      "locationsRecorded": 24,
       "locationsTruncated": false,
       "scanScope": "executable-or-link",
       "countStatus": "CONTEXT_REQUIRED",
@@ -677,6 +682,26 @@
         {
           "rva": "0x22BEBE0",
           "section": ".data2"
+        },
+        {
+          "rva": "0x87D3FD0",
+          "section": ".debug$P"
+        },
+        {
+          "rva": "0x9197570",
+          "section": ".debug$P"
+        },
+        {
+          "rva": "0x9A77BF0",
+          "section": ".debug$P"
+        },
+        {
+          "rva": "0x9BC3DA0",
+          "section": ".debug$P"
+        },
+        {
+          "rva": "0xBE3CB10",
+          "section": ".debug$P"
         }
       ],
       "aliases": [
@@ -688,7 +713,7 @@
       "source": "src/game/teleport.cpp and src/game/inventory.cpp",
       "policy": "contextual",
       "expectedMatches": null,
-      "matches": 88,
+      "matches": 121,
       "locationsRecorded": 64,
       "locationsTruncated": true,
       "scanScope": "executable-or-link",
@@ -1084,7 +1109,7 @@
       "source": "src/game/offsets.h",
       "policy": "contextual",
       "expectedMatches": null,
-      "matches": 1027,
+      "matches": 23823,
       "locationsRecorded": 64,
       "locationsTruncated": true,
       "scanScope": "executable-or-link",
@@ -1416,8 +1441,8 @@
       "source": "src/game/offsets.h",
       "policy": "observe",
       "expectedMatches": null,
-      "matches": 2,
-      "locationsRecorded": 2,
+      "matches": 3,
+      "locationsRecorded": 3,
       "locationsTruncated": false,
       "scanScope": "executable-or-link",
       "countStatus": "OBSERVED",
@@ -1430,6 +1455,10 @@
         {
           "rva": "0x2070530",
           "section": ".data2"
+        },
+        {
+          "rva": "0xEA3A880",
+          "section": ".debug$P"
         }
       ]
     },
