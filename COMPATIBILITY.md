@@ -20,6 +20,7 @@ A single match means only that the byte sequence exists once.
 | DLL loading/injection | UNTESTED | Requires controlled diagnostics-only runtime test |
 | Overlay/UI | UNTESTED | Available in diagnostics-only mode; runtime test required |
 | Version detection | IMPLEMENTED | Revision 2760 maps to TU 2.01.00 as unverified |
+| Process gate | BUILD PASS | Non-`CrimsonDesert.exe` processes return before Trinity creates a thread or initializes hooks |
 | Gameplay hook gate | BUILD PASS | Unverified builds skip all gameplay installers |
 | Character/player resolution | BROKEN | All four baseline CharMgr anchors have zero matches |
 | Stat commit | BROKEN | `kSig_StatCommit` has zero matches |
@@ -41,3 +42,18 @@ A single match means only that the byte sequence exists once.
 
 Full mechanical results are in
 [`reports/crimson-desert-2.01.00-signatures.md`](reports/crimson-desert-2.01.00-signatures.md).
+
+## Pre-test local evidence
+
+The 2026-09-04 installation state contains Ultimate ASI Loader 9.7.1 as
+`winmm.dll` and three other ASIs: `CharacterCreatorHead.asi`,
+`FreedomFlyer.asi`, and `LETMESLEEP.asi`.
+
+Historical Trinity v1.3.3 logs show that the loader injected it into both
+`CrimsonDesert.exe` and `crashpad_handler.exe`. The old build mislabeled PE
+revision 2760 as "TU 2.00.02 (Active)" and installed its `DamageApply` hook at
+RVA `0x1718500`; this confirms only the observed location, not semantic safety.
+The crash report's first recorded mod fault is in `CharacterCreatorHead.asi`,
+followed by repeated null dereferences in the game executable. That evidence is
+not sufficient to attribute the crashes to Trinity. A controlled Trinity test
+must isolate the other ASIs to avoid confounded results.

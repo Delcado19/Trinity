@@ -14,6 +14,11 @@ BOOL APIENTRY DllMain(HMODULE module, DWORD reason, LPVOID lpReserved)
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
+        // Ultimate ASI Loader also loads ASIs into crashpad_handler.exe. Reject
+        // helper processes before Trinity creates a thread or initializes hooks.
+        if (!GetModuleHandleW(L"CrimsonDesert.exe"))
+            return TRUE;
+
         g_module = module;
         DisableThreadLibraryCalls(module);
         // Do real work off the loader lock.
