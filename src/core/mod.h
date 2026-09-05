@@ -24,5 +24,6 @@ namespace trinity
 
         HMODULE m_module = nullptr;
         bool    m_initialized = false;
+        bool    m_gameplayHooksInstalled = false;
     };
 }

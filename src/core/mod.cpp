@@ -30,6 +30,7 @@ namespace trinity
         // Name the game build before anything scans for it, so a log that ends
         // in signature failures already says which build produced them.
         LogGameVersion();
+        const bool verifiedGameBuild = CurrentGameVersion().isVerified();
 
         // Restore last session's feature settings (Trinity.ini) before the
         // feature hooks install, so restored toggles apply from frame one.
@@ -45,6 +46,18 @@ namespace trinity
         {
             LOG("Failed to install DX12 hooks.");
             MH_Uninitialize();
+            return;
+        }
+
+        // TU 2.01.00 demonstrates why a surviving unique match is not enough:
+        // DamageApply still occurs once while StatCommit and every character-
+        // manager anchor are gone. Keep the overlay/logging path available for
+        // diagnostics, but never install gameplay hooks on an unverified build.
+        if (!verifiedGameBuild)
+        {
+            m_initialized = true;
+            LOG_WARN("Diagnostics-only mode: gameplay features are unavailable for this game build.");
+            LOG_OK("Overlay ready - INSERT (or LB + DOWN on controller) toggles the menu.");
             return;
         }
 
@@ -69,6 +82,7 @@ namespace trinity
         if (State::Get().noBounty)
             game::Inventory::SetNoBounty(true);
 
+        m_gameplayHooksInstalled = true;
         m_initialized = true;
         LOG_OK("Ready - INSERT (or LB + DOWN on controller) toggles the menu in-game.");
     }
@@ -84,14 +98,18 @@ namespace trinity
         if (State::Get().autoSave)
             Settings::Save();
 
-        game::Player::Remove();
-        game::Teleport::Remove();
-        game::Inventory::Remove();
-        game::World::Remove();
-        game::Dye::Remove();
-        game::Equipment::Remove();
-        game::Parry::Remove();      // restore the game's own bytes first
-        game::Friendly::Remove();
+        if (m_gameplayHooksInstalled)
+        {
+            game::Player::Remove();
+            game::Teleport::Remove();
+            game::Inventory::Remove();
+            game::World::Remove();
+            game::Dye::Remove();
+            game::Equipment::Remove();
+            game::Parry::Remove();      // restore the game's own bytes first
+            game::Friendly::Remove();
+            m_gameplayHooksInstalled = false;
+        }
         hooks::RemoveDX12Hooks();
         MH_Uninitialize();
         Logger::Shutdown();

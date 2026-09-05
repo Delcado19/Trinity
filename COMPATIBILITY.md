@@ -17,9 +17,10 @@ A single match means only that the byte sequence exists once.
 | Feature | TU 2.01.00 status | Evidence / next gate |
 | --- | --- | --- |
 | Unmodified TU 2.00.00 source build | PASS | Release ASI built; this does not establish game compatibility |
-| DLL loading/injection | UNTESTED | Wait for unknown-version fail-safe |
-| Overlay/UI | UNTESTED | Wait for diagnostic-only runtime |
-| Version detection | INCOMPATIBLE | Exact 2.01.00 fingerprint is not registered |
+| DLL loading/injection | UNTESTED | Requires controlled diagnostics-only runtime test |
+| Overlay/UI | UNTESTED | Available in diagnostics-only mode; runtime test required |
+| Version detection | IMPLEMENTED | Revision 2760 maps to TU 2.01.00 as unverified |
+| Gameplay hook gate | BUILD PASS | Unverified builds skip all gameplay installers |
 | Character/player resolution | BROKEN | All four baseline CharMgr anchors have zero matches |
 | Stat commit | BROKEN | `kSig_StatCommit` has zero matches |
 | Damage application | UNKNOWN/HIGH RISK | `kSig_DamageApply` has one match; semantics unverified |

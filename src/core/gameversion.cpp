@@ -18,6 +18,7 @@ namespace trinity
         // say so rather than imply a guarantee that was never made.
         struct KnownBuild { uint16_t revision; const char* tu; bool verified; };
         constexpr KnownBuild kKnown[] = {
+            { 2760, "2.01.00",          false },  // fingerprinted; gameplay hooks not yet verified
             { 2625, "2.00.00",          true  },  // verified: every signature re-checked
             { 2474, "1.18.02",          true  },
             { 2435, "1.18.0",           true  },
@@ -104,9 +105,8 @@ namespace trinity
             LOG("version: Crimson Desert %s (TU %s) - the build this release was checked against.",
                 v.text(), v.titleUpdate());
         else
-            LOG_WARN("version: Crimson Desert %s - Trinity has not been checked against this "
-                     "build. Anything that resolves will work; anything the patch moved will "
-                     "disable itself and say so below. Quote this line in a bug report.",
-                     v.text());
+            LOG_WARN("version: Crimson Desert %s (TU %s) - Trinity has not been checked against "
+                     "this build. Gameplay hooks will remain disabled; quote this line in a "
+                     "bug report.", v.text(), v.titleUpdate());
     }
 }

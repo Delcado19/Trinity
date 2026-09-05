@@ -132,6 +132,10 @@ scanner for recording how the checked-in Trinity signatures behave against a
 specific game executable. A unique byte match is reported only as a mechanical
 count result; it is never treated as proof that a hook is semantically safe.
 
+Game builds not explicitly marked as verified start in diagnostics-only mode:
+the overlay and logging remain available, but Trinity installs no gameplay
+hooks until that build's signatures and semantics have been validated.
+
 ## Dependencies
 
 Fetched automatically by CMake:
