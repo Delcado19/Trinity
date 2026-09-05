@@ -17,11 +17,11 @@ A single match means only that the byte sequence exists once.
 | Feature | TU 2.01.00 status | Evidence / next gate |
 | --- | --- | --- |
 | Unmodified TU 2.00.00 source build | PASS | Release ASI built; this does not establish game compatibility |
-| DLL loading/injection | UNTESTED | Requires controlled diagnostics-only runtime test |
-| Overlay/UI | UNTESTED | Available in diagnostics-only mode; runtime test required |
-| Version detection | IMPLEMENTED | Revision 2760 maps to TU 2.01.00 as unverified |
-| Process gate | BUILD PASS | Non-`CrimsonDesert.exe` processes return before Trinity creates a thread or initializes hooks |
-| Gameplay hook gate | BUILD PASS | Unverified builds skip all gameplay installers |
+| DLL loading/injection | PASS | DMM-deployed ASI initialized in `CrimsonDesert.exe` during the 2026-09-05 smoke test |
+| Overlay/UI | PASS | User opened the menu; log confirms rendering at 2560x1440 with 6 back buffers |
+| Version detection | PASS | Revision 2760 was identified as TU 2.01.00 and remained unverified |
+| Process gate | PASS | Runtime log contains only `CrimsonDesert.exe`; helper processes cannot start Trinity initialization |
+| Gameplay hook gate | PASS | Runtime entered diagnostics-only mode before any gameplay installer ran |
 | Character/player resolution | BROKEN | All four baseline CharMgr anchors have zero matches |
 | Stat commit | BROKEN | `kSig_StatCommit` has zero matches |
 | Damage application | UNKNOWN/HIGH RISK | `kSig_DamageApply` has one match; semantics unverified |
@@ -57,3 +57,15 @@ The crash report's first recorded mod fault is in `CharacterCreatorHead.asi`,
 followed by repeated null dereferences in the game executable. That evidence is
 not sufficient to attribute the crashes to Trinity. A controlled Trinity test
 must isolate the other ASIs to avoid confounded results.
+
+## Diagnostics-only runtime smoke test
+
+On 2026-09-05 the freshly built ASI was installed through DMM after the other
+ASI mods and old Trinity diagnostics were removed. Trinity v0.18.0 initialized
+in `CrimsonDesert.exe`, recognized file version 1.0.0.2760 as TU 2.01.00, and
+reported diagnostics-only mode before the overlay became ready. The user opened
+the in-game menu successfully. The session ended without generating a
+`Trinity_Crash.dmp` or `Trinity_Crash.txt` file.
+
+This smoke test validates loading, version gating, and overlay rendering only.
+It does not validate any gameplay hook, offset, structure, or feature behavior.
