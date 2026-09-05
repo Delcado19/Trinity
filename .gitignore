@@ -73,6 +73,7 @@ tools/disasm_pe.py
 Trinity-*.zip
 
 # Test and analysis caches.
+/ghidra-project/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/

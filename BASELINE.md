@@ -38,3 +38,16 @@ unchanged.
 The normal inherited agent environment contained both `PATH` and `Path`, which
 caused MSBuild `MSB6001`. Running CMake/MSBuild in a clean process environment
 removed that harness-only conflict; no source change was required.
+
+## Reverse-engineering toolchain
+
+- Ghidra: `12.1.3 PUBLIC` (`Ghidra_12.1.3_build`)
+- Release asset: `ghidra_12.1.3_PUBLIC_20260817.zip`
+- Asset SHA-256: `93a5d11a9ad510622acaaf908c556a7b9b764d338e78a7567f3689bf5081fd54`
+- Java: Eclipse Temurin JDK `21.0.12.1+1` 64-bit
+- Install location: `%LOCALAPPDATA%\Programs\Ghidra\ghidra_12.1.3_PUBLIC`
+- Local project location: `ghidra-project/` (intentionally ignored)
+
+The Ghidra release asset was downloaded from the NSA GitHub release and its
+SHA-256 was checked against the digest published by the GitHub API before
+extraction. `analyzeHeadless.bat` reached its usage screen successfully.
