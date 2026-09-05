@@ -30,7 +30,7 @@ single match means only that the byte sequence exists once.
 | Stamina/spirit | DISABLED REQUIRED | Stat hook and player resolver are broken |
 | Respawn/revive | REQUIRED TEST | Must wait for isolated health/state validation |
 | Boss death/quest completion | REQUIRED TEST | Must wait for isolated damage/death validation |
-| Position tracking | UNKNOWN | `kSig_MoveUpdate` has one match; structure semantics unverified |
+| Position tracking | LIKELY | Unique match retains the seven-argument integrator and `+0x90`/`+0xC0`/`+0xD0` roles; player exclusivity is unverified |
 | Locomotion/Super Run | BROKEN | `kSig_LocoStepper` has zero matches |
 | Fast travel | BROKEN | Travel, destination, and pathing signatures have zero matches |
 | Inventory read/write | BROKEN | Holder accessor survives; most inventory primitives have zero matches |
@@ -154,3 +154,24 @@ Character/player resolution therefore remains `BROKEN`. The TU 2.01.00 global,
 accessor, container layout, player classification, and possessor link are all
 still `UNKNOWN`; no candidate signature or offset has been added to runtime
 source.
+
+## Movement update static analysis
+
+The unchanged `kSig_MoveUpdate` has one match at RVA `0x418EFC0`. Ghidra
+recovers seven parameters, matching the old hook shape. The function reads the
+desired-motion vector at first-argument `+0xC0`, integrates and notifies using
+the position vector at `+0x90`, and writes the resulting velocity vector at
+`+0xD0`. These are the same three field roles documented for TU 2.00.00.
+
+There are two direct callers at RVAs `0x35BE940` and `0x35C1EE0`. Both pass the
+object loaded from caller component `+0x2B8` as the integrator's first argument
+and supply the same seven argument roles. This supports functional continuity,
+but static analysis does not establish that the dispatch remains exclusive to
+the local player in TU 2.01.00. Ghidra also reports the calling convention as
+unknown.
+
+Position tracking is therefore `LIKELY`, not `VERIFIED`, and the hook remains
+disabled. A read-only live test must first prove call frequency, object
+stability, finite coordinate values, and correlation with local-player motion;
+no teleport, velocity, jump, or game-thread write may be enabled during that
+test.
