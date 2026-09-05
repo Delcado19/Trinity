@@ -23,7 +23,7 @@ single match means only that the byte sequence exists once.
 | Version detection | PASS | Revision 2760 was identified as TU 2.01.00 and remained unverified |
 | Process gate | PASS | Runtime log contains only `CrimsonDesert.exe`; helper processes cannot start Trinity initialization |
 | Gameplay hook gate | PASS | Runtime entered diagnostics-only mode before any gameplay installer ran |
-| Character/player resolution | BROKEN | All four baseline CharMgr anchors have zero matches |
+| Character/player resolution | BROKEN | All four baseline CharMgr anchors have zero matches; semantic operand searches found no equivalent |
 | Stat commit | LIKELY/HIGH RISK | Old AOB is broken; equivalent implementation and a unique candidate AOB were identified statically, but remain disabled |
 | Damage application | LIKELY/HIGH RISK | Unique match and dispatcher shape confirmed statically; hook safety and state-transition semantics remain unverified |
 | Health/God Mode | DISABLED REQUIRED | Depends on broken player/stat paths and unsafe damage semantics |
@@ -128,3 +128,29 @@ This evidence supports `LIKELY`, not `VERIFIED`: status identities, structure
 meanings, caller intent, calling convention, and death/respawn/quest side
 effects are not yet established for TU 2.01.00. The hook therefore remains
 disabled.
+
+## Character manager static analysis
+
+All four TU 2.00.00 character-manager anchors remain `BROKEN` with zero
+matches. The old accessor RVA maps to unrelated parser logic in TU 2.01.00, and
+the old anchor suffixes also have zero matches, so neither the old RVA nor a
+shortened old pattern is reusable.
+
+The old source documents a manager vector at `+0xB8`/`+0xC0`, a type descriptor
+at owner `+0x88`, its tag byte at `+1`, a player-tag mask of `0xF7`, and the
+possessor/back-reference pair at `+0xA0`/`+0xD0`. A broad Ghidra operand search
+for those values produced 1,148 functions; adding `0xF7` reduced the set to 43,
+but reviewed compact candidates did not contain the documented manager-vector,
+tag, and possessor data flow.
+
+A narrower search for nearby `+0x88`, `+1`, and `AND 0xF7` instructions produced
+two candidates. RVA `0x16E4650` compares the byte behind a pointer loaded from
+`+0x88` with 7, but applies `0xF7` to a separate output flag at `+0x132`. RVA
+`0x31541B0` repeatedly sets and clears bits in the byte at `+0x88`; its `+1`
+operand belongs to an unrelated indexed access. Neither is the old player-tag
+check, and neither exposes the manager-vector/possessor round trip.
+
+Character/player resolution therefore remains `BROKEN`. The TU 2.01.00 global,
+accessor, container layout, player classification, and possessor link are all
+still `UNKNOWN`; no candidate signature or offset has been added to runtime
+source.

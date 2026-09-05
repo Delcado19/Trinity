@@ -18,3 +18,12 @@ $ghidra = "$env:LOCALAPPDATA\Programs\Ghidra\ghidra_12.1.3_PUBLIC"
 Pass more virtual addresses after the script name to export them in the same
 run. Keep project files and raw analysis logs under ignored `ghidra-project/`;
 record only reviewed conclusions and their confidence in `COMPATIBILITY.md`.
+
+`FindFunctionsByScalars.java` narrows semantic searches without inventing byte
+patterns. Pass hexadecimal instruction operands; it reports only functions
+containing every requested value. Each result still requires manual review.
+
+`FindPlayerTagChecks.java` searches for instruction windows containing the
+three operands from the old player-class expression (`+0x88`, tag byte `+1`,
+mask `0xF7`) and prints their context. It deliberately does not infer data
+flow; its results are candidates, not validated accessors.

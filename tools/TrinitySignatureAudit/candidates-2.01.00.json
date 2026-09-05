@@ -1,6 +1,7 @@
 {
   "baseline": {
     "label": "Trinity TU 2.01.00 static-analysis candidates",
+    "commit": "not applicable (static candidates)",
     "gameVersion": "2.01.00",
     "fileVersion": "1.0.0.2760",
     "exeSha256": "4d99c15c58bd20a94d354d10ae395d1fac777d59ef52cba8080dc3fc8dc6f454"
