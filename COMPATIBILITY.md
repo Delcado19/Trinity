@@ -10,9 +10,10 @@ PE timestamp: 0x6A998DC4 (2026-09-03T15:09:56Z)
 SizeOfImage: 0x16F1F000
 ```
 
-The current port branch must not be loaded into the game. The table below is
-based only on an offline signature count; no gameplay behavior has been tested.
-A single match means only that the byte sequence exists once.
+The current port branch may be loaded only in its diagnostics-only mode. The
+table below combines the offline signature audit, targeted static analysis, and
+the explicitly identified smoke test. No gameplay behavior has been tested. A
+single match means only that the byte sequence exists once.
 
 | Feature | TU 2.01.00 status | Evidence / next gate |
 | --- | --- | --- |
@@ -24,7 +25,7 @@ A single match means only that the byte sequence exists once.
 | Gameplay hook gate | PASS | Runtime entered diagnostics-only mode before any gameplay installer ran |
 | Character/player resolution | BROKEN | All four baseline CharMgr anchors have zero matches |
 | Stat commit | BROKEN | `kSig_StatCommit` has zero matches |
-| Damage application | UNKNOWN/HIGH RISK | `kSig_DamageApply` has one match; semantics unverified |
+| Damage application | LIKELY/HIGH RISK | Unique match and dispatcher shape confirmed statically; hook safety and state-transition semantics remain unverified |
 | Health/God Mode | DISABLED REQUIRED | Depends on broken player/stat paths and unsafe damage semantics |
 | Stamina/spirit | DISABLED REQUIRED | Stat hook and player resolver are broken |
 | Respawn/revive | REQUIRED TEST | Must wait for isolated health/state validation |
@@ -69,3 +70,24 @@ the in-game menu successfully. The session ended without generating a
 
 This smoke test validates loading, version gating, and overlay rendering only.
 It does not validate any gameplay hook, offset, structure, or feature behavior.
+
+## Damage application static analysis
+
+Ghidra identifies the unique `kSig_DamageApply` match at RVA `0x1718500`
+(VA `0x141718500`) as a 347-byte dispatcher with 39 direct call sites. Its
+prologue and decompilation retain the source hook's 11-argument shape, including
+a 16-bit status identifier and signed 64-bit delta. Ghidra did not recover a
+calling convention, so this is ABI-shape evidence rather than ABI verification.
+
+The dispatcher compares the status identifier with a realm-selected identifier
+and routes that case to RVA `0x17164F0`; other statuses go to RVA `0x1718930`.
+The special path contains zero-value and negative-delta branches plus state
+flags at `+0x272` and `+0x273`. The generic path clamps the resulting value,
+increments a change counter, and invokes multiple notification/write-back
+callbacks. RVA `0x1717B20`, called by both paths, resolves the current value for
+a 16-bit status identifier.
+
+This evidence supports `LIKELY`, not `VERIFIED`: status identities, structure
+meanings, caller intent, calling convention, and death/respawn/quest side
+effects are not yet established for TU 2.01.00. The hook therefore remains
+disabled.
