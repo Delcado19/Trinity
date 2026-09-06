@@ -23,7 +23,7 @@ single match means only that the byte sequence exists once.
 | Version detection | PASS | Revision 2760 was identified as TU 2.01.00 and remained unverified |
 | Process gate | PASS | Runtime log contains only `CrimsonDesert.exe`; helper processes cannot start Trinity initialization |
 | Gameplay hook gate | PASS | Runtime entered diagnostics-only mode before any gameplay installer ran |
-| Character/player resolution | LIKELY | Old anchors are broken; a local-player accessor and manager global candidate were identified statically but remain disabled |
+| Character/player resolution | LIKELY (manager only) / BROKEN (selection) | Old anchors are broken; the accessor call itself is BROKEN (pinned to a fixed body). The manager-global slot it exposes is LIKELY - stable pointer, list count tracks world population over a 3.5h session - but the tag==1-seeded vtable selection built on top of it is BROKEN; see "Player-accessor live probe" |
 | Stat commit | LIKELY/HIGH RISK | Old AOB is broken; equivalent implementation and a unique candidate AOB were identified statically, but remain disabled |
 | Damage application | LIKELY/HIGH RISK | Unique match and dispatcher shape confirmed statically; hook safety and state-transition semantics remain unverified |
 | Health/God Mode | DISABLED REQUIRED | Depends on broken player/stat paths and unsafe damage semantics |
@@ -185,17 +185,119 @@ the manager slot to RVA `0x6C29C88` without embedding that RVA in runtime code.
 The sibling slot at RVA `0x6C29C68` is used by other accessors and must not be
 substituted merely because its surrounding logic looks similar.
 
-Character/player resolution is now `LIKELY`, not `VERIFIED`. The accessor has
-no recovered direct callers, Ghidra labels its calling convention unknown, its
-game-thread requirements are untested, and the old direct manager
-`+0xB8/+0xC0` container layout has not been established for TU 2.01.00. The
-candidate is recorded only in the offline candidate manifest; runtime source
-and all dependent hooks remain disabled.
+Character/player resolution is `BROKEN`, not `LIKELY`. The accessor has no
+recovered direct callers, Ghidra labels its calling convention unknown, and
+the old direct manager `+0xB8/+0xC0` container layout has not been established
+for TU 2.01.00. The live probe below (run to completion, not just tested for
+crash-safety) shows the candidate does not track the currently-played
+protagonist at all, so it must not be wired into `player.cpp`.
 
-Classification at this stage: accessor/global, type descriptor `+0x88`, tag
-byte `+1`, and possessor/pawn `+0xA0/+0xD0` are `LIKELY`; the temporary result
-stride `0x20` and owner field `+0x08` are `VERIFIED` instruction behavior for
-this accessor only; direct manager fields `+0xB8/+0xC0` remain `UNKNOWN`.
+Classification at this stage: type descriptor `+0x88`, tag byte `+1`, and
+possessor/pawn `+0xA0/+0xD0` remain `LIKELY` as a general identity-proof
+pattern (reused successfully elsewhere in this document), but the specific
+accessor/manager-global candidate built on top of them is `BROKEN` for player
+resolution; direct manager fields `+0xB8/+0xC0` remain `UNKNOWN`.
+
+### Player-accessor live probe (read-only) - accessor dropped, manager global kept, selection open
+
+Two independent read-only probes were run live in `CrimsonDesert.exe` against
+`kSig_CharMgrAccessor_TU20100_Candidate` and the RIP-relative manager-global
+slot it reads (`src/game/diag_player_accessor.*`), both driven off a
+read-only, pass-through hook on `kSig_MoveUpdate` (no position, velocity, or
+other field is read or written by the hook itself):
+
+- **ProbeTick** calls the accessor directly under SEH and checks the
+  returned owner against the type-tag (`+0x88` tag `== 1`) and possessor
+  round-trip (`+0xA0` -> `+0xD0`) identity proof documented above.
+- **ManagerWalkTick** re-resolves the manager from the accessor's own
+  manager-global slot and re-runs the same vtable-shared-class walk
+  `Player::TickResolveSelf` (player.cpp) already uses on the verified
+  TU 2.00.00 baseline, tag-agnostic, to find every body sharing a
+  protagonist's vtable.
+
+A first short session (2026-09-06, ~29s, idle/light movement only) looked
+promising: the accessor returned one stable owner with tag/round-trip OK on
+every sample. That result was provisional by construction - it never
+exercised a real body swap - and a full session was run to close that gap.
+
+**Full session, 2026-09-06, 08:26-11:55 (`Trinity.log`, 7897 lines, 4373
+ProbeTick + 3509 ManagerWalkTick samples), covering riding, running, flying,
+combat, cooking, questing, and a genuine switch to a different playable
+protagonist:**
+
+- `ProbeTick`: `owner=0x2DB7A0F0200` in **all 4370** valid samples, tag `1`
+  and round-trip `OK` throughout. Confirms the first session's result was not
+  luck - it is pinned to one specific body for the entire session, unmoved by
+  the protagonist switch. This matches the known limitation already
+  documented in `player.cpp` for the verified baseline: the permanent
+  SelfPlayer tag stays on one body even while a different protagonist is
+  being played. **The accessor cannot answer "who is currently controlled."**
+- `ManagerWalkTick`: `classMatches=6` in **all 3509** samples, and every
+  single time the *same six addresses in the same order*,
+  `0x2DB7A0F0200,...0300,...0400,...0500,...0600,...0700` - a contiguous
+  block spaced exactly `0x100` apart (one 256-byte object slot each; every
+  offset this code reads, `+0x88`/`+0xA0`/`+0xD0`, fits inside that), with
+  the first entry being the exact address `ProbeTick` also returns. This
+  never changed across three and a half hours of varied play, including the
+  character switch. Six permanently-resident roster bodies drawn from a pool
+  allocator would look exactly like this too, so "static template array" was
+  an unverified guess, not a conclusion - see the open question below before
+  assuming these six are inert.
+- The seed step for that walk (`nTag1`, how many characters in the manager's
+  list currently carry tag `1`) ranged from 1 to 99 across the session
+  (average ~49), tracking the manager's own live population count (187 to
+  1016) rather than staying near 1-2 as "the local player(s)" would. Tag `1`
+  is therefore not a rare, player-specific marker on this build; it matches a
+  double-digit percentage of all characters, so seeding a vtable from "any
+  tag==1 body" is seeding from an arbitrary match, not the player.
+- The manager pointer itself (`0x2DB75C12C00`) and its list-count field
+  stayed sane and stable in shape the whole session, and neither probe ever
+  hit the SEH handler or logged a warning beyond the expected
+  diagnostics-only banner - so the memory layout being read
+  (`kOff_CharMgr_ListData`/`ListCount`, `kOff_Owner_TypeDesc`,
+  `kOff_Owner_Possessor`/`Pawn`) is not itself unsafe or wrong, only
+  insufficient to answer "who is playable right now."
+
+**Verdict, split by piece, not lumped together:**
+
+- The **accessor call** (`ProbeTick`) is a dead end for player resolution:
+  pinned to a fixed body, unaffected by a real control swap. Do not promote
+  it; it has no purpose left beyond staying as a probe.
+- The **manager global** the accessor's RIP-relative slot exposes is NOT
+  shown to be broken - it is structurally the same two-dereference shape as
+  `player.cpp`'s verified `g_charMgrGlobal`, stayed at one stable address the
+  whole session, and its list count (187 to 1016) tracked visible world
+  population the way a real character list should. It is a working
+  `LIKELY` candidate replacement for the broken `kCharMgrAnchors`, on a
+  single anchor with no independent cross-check yet.
+- The **selection logic** stacked on top of that manager (seed a vtable from
+  any tag`==1` body, then collect everything sharing it) is BROKEN: `nTag1`
+  tracked world population (1 to 99, matching the double-digit-percent share
+  of all characters that carry tag `1`), not "the local player(s)", so the
+  vtable it seeded from was an arbitrary match, not the player's.
+
+**Open question before touching Ghidra again:** the accessor's fixed owner
+*is* one of the six `classMatches` roster slots, and it passed the possessor
+round-trip (`+0xA0` -> `+0xD0`) on all 4370 samples, including across the
+protagonist switch. That does not yet mean round-trip finds "who is
+currently possessed" - it is equally consistent with round-trip being a
+permanent class invariant of a roster-slot object, true whether or not that
+slot is the one actually being played (the same failure mode as tag `==1`,
+one level down). The six roster slots were never checked individually; only
+the tag-seeded aggregate was logged. The next diagnostic step is to log
+round-trip pass/fail and tag per roster-slot address (not aggregated), plus
+the total round-trip pass count across the full character list, on a session
+that repeats a protagonist switch:
+- if all six pass round-trip always -> it is a class invariant like tag was,
+  and round-trip is dead as a possession signal for this purpose - only then
+  is hunting Ghidra for a genuinely different manager-global anchor justified.
+- if exactly one roster slot passes and it changes on the switch -> that is
+  the resolver, and no new manager-global candidate is needed at all; the
+  existing manager slot was fine, the selection just needed to be
+  round-trip-based instead of tag-based.
+
+Character/player resolution stays `LIKELY (manager only) / BROKEN
+(selection)` until that test runs.
 
 ## Movement update static analysis
 

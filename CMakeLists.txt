@@ -57,6 +57,7 @@ add_library(Trinity SHARED
     src/core/i18n.cpp
     src/mem/scanner.cpp
     src/game/player.cpp
+    src/game/diag_player_accessor.cpp  # TU 2.01.00 read-only accessor probe; remove once resolved
     src/game/teleport.cpp
     src/game/inventory.cpp
     src/game/world.cpp

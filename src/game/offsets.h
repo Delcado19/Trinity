@@ -1701,4 +1701,53 @@ namespace trinity::game
     // Warp landing.
     inline constexpr float    kWarp_RiseAbove = 30.0f;
     inline constexpr unsigned kWarp_GraceMs   = 8000;
+
+    // --- TU 2.01.00 candidate: local-player accessor (DIAGNOSTICS ONLY) ----
+    // kCharMgrAnchors above are BROKEN on TU 2.01.00 (zero matches each; see
+    // COMPATIBILITY.md "Character manager static analysis") - the game's own
+    // manager-lookup call sites were recompiled and no longer contain any of
+    // those anchors' bytes. Ghidra static analysis on the TU 2.01.00
+    // executable (PE revision 2760, file version 1.0.0.2760) found a
+    // candidate replacement: a self-contained accessor that walks the
+    // character manager, applies the SAME type-descriptor-tag +
+    // possessor-round-trip identity proof documented above
+    // (kOff_Owner_TypeDesc / kOff_Owner_Possessor / kOff_Possessor_Pawn all
+    // still apply), and returns the matching owner or null.
+    //
+    // Two things set this apart from every OTHER signature in this file:
+    //  - It has never been called by our own code. Ghidra reports zero
+    //    recovered direct callers, an unknown calling convention, and
+    //    untested game-thread requirements.
+    //  - The old tag test - ((tag - 1) & 0xF7) == 0, i.e. tag 1 OR 9 - does
+    //    NOT survive: no round-trip function in the TU 2.01.00 image contains
+    //    that mask, and this accessor accepts tag 1 (SelfPlayer) only. Code
+    //    that still assumes tag 9 (OtherPlayer) is a player body is unsafe on
+    //    this build.
+    //
+    // Do not wire this into Player/Teleport and do not call it from a
+    // gameplay hook. game::PlayerAccessorProbe (diag_player_accessor.*) is
+    // the ONLY sanctioned caller: it exercises this address once every few
+    // seconds, from a genuine game-thread tick, entirely read-only, and logs
+    // what comes back - the live evidence COMPATIBILITY.md's "Character/
+    // player resolution" row is waiting on before this can move from LIKELY
+    // to VERIFIED (or get thrown out).
+    //
+    // Expected and observed count (offline, static): one match, RVA
+    // 0x2837940 in executable section .data2 of the 2026-09-03 build
+    // (SHA-256 4d99c15c58bd20a94d354d10ae395d1fac777d59ef52cba8080dc3fc8dc6f454).
+    // Re-verify uniqueness at runtime before trusting it (CountMatches) - a
+    // future patch could easily make it ambiguous or make it vanish outright.
+    inline constexpr const char* kSig_CharMgrAccessor_TU20100_Candidate =
+        "4C 8B DC 49 89 5B 08 49 89 73 10 57 48 83 EC 40 33 F6 49 89 73 D8 "
+        "49 89 73 E0 49 89 73 E8 49 8D 43 D8 49 89 43 F0 49 8D 53 E8 "
+        "48 8B 0D ?? ?? ?? ?? 48 8B 09 E8 ?? ?? ?? ?? 48 8B 4C 24 ?? "
+        "44 8B 44 24 ?? 49 C1 E0 05 4C 03 C1 49 3B C8 74 ?? 90 48 8B 51 08 "
+        "48 8B 82 88 00 00 00 80 78 01 01 75 ?? 48 8B 9A A0 00 00 00 "
+        "48 85 DB 74 ?? 48 8B 9B D0 00 00 00 48 85 DB 74 ?? 48 3B DA 74 ??";
+    // Offset (in bytes) of the `mov rcx,[rip+disp32]` load that resolves the
+    // manager-global slot (documented at RVA 0x6C29C88) - kept only so the
+    // probe can log that slot's live address as an extra cross-check against
+    // COMPATIBILITY.md; the probe calls the function itself rather than
+    // reimplementing its walk, so this is diagnostic only, never load-bearing.
+    inline constexpr int kRipOff_CharMgrAccessor_TU20100_Candidate = 42;
 }

@@ -7,6 +7,7 @@
 #include "gameversion.h"
 #include "../hooks/dx12_hook.h"
 #include "../game/player.h"
+#include "../game/diag_player_accessor.h"
 #include "../game/teleport.h"
 #include "../game/inventory.h"
 #include "../game/world.h"
@@ -55,6 +56,15 @@ namespace trinity
         // diagnostics, but never install gameplay hooks on an unverified build.
         if (!verifiedGameBuild)
         {
+            // Read-only TU 2.01.00 player-accessor probe (see COMPATIBILITY.md
+            // "Character/player resolution" and diag_player_accessor.*). Not a
+            // gameplay feature: it calls a statically-found candidate function
+            // and logs what it returns, never hooks it, never writes anything.
+            // Deliberately allowed on an unverified build - that is the whole
+            // point of this diagnostic - and independent of every game::*
+            // feature below, which stay uninstalled here.
+            m_accessorProbeInstalled = game::PlayerAccessorProbe::Install();
+
             m_initialized = true;
             LOG_WARN("Diagnostics-only mode: gameplay features are unavailable for this game build.");
             LOG_OK("Overlay ready - INSERT (or LB + DOWN on controller) toggles the menu.");
@@ -97,6 +107,12 @@ namespace trinity
         // is inert - Save() only writes for the process that owns the file.
         if (State::Get().autoSave)
             Settings::Save();
+
+        if (m_accessorProbeInstalled)
+        {
+            game::PlayerAccessorProbe::Remove();
+            m_accessorProbeInstalled = false;
+        }
 
         if (m_gameplayHooksInstalled)
         {
