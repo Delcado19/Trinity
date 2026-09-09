@@ -30,8 +30,8 @@ single match means only that the byte sequence exists once.
 | Stamina/spirit | VERIFIED (2026-09-08) | Confirmed working by the user in a follow-up long session, including a real (non-combat) protagonist switch |
 | Respawn/revive | REQUIRED TEST | Must wait for isolated health/state validation |
 | Boss death/quest completion | REQUIRED TEST | Must wait for isolated damage/death validation |
-| Position tracking | LIKELY, `Teleport::Install()` wired 2026-09-09 | Unique match retains the seven-argument integrator and `+0x90`/`+0xC0`/`+0xD0` roles; player exclusivity is unverified. `kSig_MoveUpdate` (the fatal signature) is unchanged and confirmed working; `kSig_PathingHelper`/`kSig_LocoStepper` TU 2.01.00 candidates re-derived and offline-verified this session. NOT yet live-tested |
-| Locomotion/Super Run | LIKELY, re-derived 2026-09-09 | Old `kSig_LocoStepper` dead; `kSig_LocoStepper_TU20100_Candidate` found by walking the airborne-mover anchor to its callee (see "LocoStepper" section), offline-verified unique, wired via `InstallHookAny`. NOT yet live-tested |
+| Position tracking | LIKELY-VERIFIED (2026-09-10) | Unique match retains the seven-argument integrator and `+0x90`/`+0xC0`/`+0xD0` roles; player exclusivity is unverified. `kSig_MoveUpdate` (the fatal signature) installed cleanly (log: `teleport: pathing helper hook installed @ 0x1435C8000`); a live coordinate warp completed with target-world and observed-world matching exactly (`teleport: warp complete target-world -9406.24 564.77 -4562.35 ... observed-world -9406.24 564.77 -4562.35`). Super Jump also confirmed working by the user in the same session. |
+| Locomotion/Super Run | VERIFIED (2026-09-10) | Old `kSig_LocoStepper` dead; `kSig_LocoStepper_TU20100_Candidate` (found by walking the airborne-mover anchor to its callee, see "LocoStepper" section) installed live at exactly the predicted RVA (log: `teleport: locomotion-stepper hook installed @ 0x1435BE940`, matching Ghidra's `ENTRY=1435be940`). Confirmed working in real play by the user. |
 | Fast travel | BROKEN | `kSig_TravelToNode`/`kSig_DestinationUpdate`/scene-registry still have zero matches; fails closed (menu stays empty, logged) |
 | Inventory read/write | BROKEN | Holder accessor survives; most inventory primitives have zero matches |
 | Localization lookup | UNKNOWN | `kSig_LocStringGet` has one match; semantics unverified |
@@ -820,11 +820,18 @@ but static analysis does not establish that the dispatch remains exclusive to
 the local player in TU 2.01.00. Ghidra also reports the calling convention as
 unknown.
 
-Position tracking is therefore `LIKELY`, not `VERIFIED`, and the hook remains
-disabled. A read-only live test must first prove call frequency, object
-stability, finite coordinate values, and correlation with local-player motion;
-no teleport, velocity, jump, or game-thread write may be enabled during that
-test.
+**Note (2026-09-10):** `0x35BE940` - found here via `kSig_MoveUpdate`'s own
+caller list, in an earlier session, for an unrelated reason - is the exact
+same address independently re-derived as `kSig_LocoStepper_TU20100_Candidate`
+this session (see "LocoStepper" breakthrough below), by a completely
+different method (walking the airborne-mover anchor to its callee). Two
+independent approaches converging on the same function is further
+corroboration, on top of the live confirmation already recorded there.
+
+Position tracking was `LIKELY`, not `VERIFIED`, while the hook stayed
+disabled. **Superseded 2026-09-09/10:** `Teleport::Install()` is now wired
+in and live-tested - see the "LocoStepper" and Position-tracking matrix
+entries below for current status.
 
 ### Teleport signatures: started re-deriving via the same live cross-reference (2026-09-08)
 
@@ -972,21 +979,26 @@ Every other sub-signature was re-checked before wiring: `kSig_MoveUpdate`
 always succeeds; `kSig_DestinationUpdate` and `kSig_TravelToNode`/scene-registry
 are still dead and fail closed with a log line each (Teleport to
 Destination and the fast-travel menu stay grey/empty, nothing silently
-wrong). **NOT yet live-tested** - `kSig_LocoStepper_TU20100_Candidate` has
-never run through our own hook plumbing before this build.
+wrong).
 
-**Not yet found/checked at all this session:** `kSig_LocoStepper` (BROKEN,
-needed for Super Run AND for Free Flight's `inAirMover` gate to ever be
-reachable - the airborne-mover range above is only consumed inside
-`hkLocoStep`, so updating it alone does nothing until LocoStepper itself
-hooks), `kSig_TravelToNode` (BROKEN, fast-travel trigger), `kSig_DestinationUpdate`
-status on TU 2.01.00 (unknown - gugi's log did not show an explicit
-success/failure line for it), the scene-registry table resolver status
-(also not logged explicitly by gugi's build). None of these were captured
-from gugi's log this session (it did not print distinct lines for them,
-unlike the character-manager/inventory captures from the earlier session) -
-would need either a more targeted read of gugi's live process (like the
-character-manager slot) or fresh Ghidra work.
+**LIVE-TESTED 2026-09-10.** Same-session log confirms a clean install at
+exactly the predicted RVA (`teleport: locomotion-stepper hook installed @
+0x1435BE940`, matching Ghidra's `ENTRY=1435be940`) and the hook-order fix
+working (the probe's competing hook logged `signature NOT FOUND` rather
+than crashing or erroring on `MH_CreateHook`). User confirmed Super Run and
+Super Jump both work in real play; a coordinate warp completed with
+target-world and observed-world coordinates matching exactly. Session ran
+19:08-23:55+ with no crash dumps.
+
+**Still open, unchanged:** `kSig_TravelToNode` (BROKEN, fast-travel
+trigger), `kSig_DestinationUpdate` status on TU 2.01.00 (unknown - gugi's
+log did not show an explicit success/failure line for it), and the
+scene-registry table resolver status (also not logged explicitly by gugi's
+build). None of these were captured from gugi's log (it did not print
+distinct lines for them, unlike the character-manager/inventory captures
+from an earlier session, or the airborne-mover range that led to
+LocoStepper) - would need either a more targeted read of gugi's live
+process or fresh Ghidra work, same as the LocoStepper approach above.
 
 ### World / Dye / Parry: same technique, three more signatures re-derived (2026-09-08)
 
