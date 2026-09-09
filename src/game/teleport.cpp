@@ -940,8 +940,15 @@ namespace trinity::game
 
         // Live-identified airborne mover (module-relative, IDB imagebase 0).
         // 1.18.02 (1.0.0.2625): moved to 0x307B030 (+0x49070), size remains 0x9A4.
-        constexpr uintptr_t kAirMover_Lo = 0x307B030;
-        constexpr uintptr_t kAirMover_Hi = 0x307B030 + 0x9A4;  // 0x307B9D4
+        // TU 2.01.00 (1.0.0.2760) candidate: found by converting a working
+        // third-party build's live-logged range (COMPATIBILITY.md:
+        // "BREAKTHROUGH 2026-09-08") to module-relative - NOT yet re-derived
+        // by our own static analysis and NOT yet live-tested through our own
+        // code, only copied from another build's already-working value.
+        // Teleport is not installed on this game version yet (see mod.cpp),
+        // so this constant has no live effect until it is.
+        constexpr uintptr_t kAirMover_Lo = 0x35C3290;
+        constexpr uintptr_t kAirMover_Hi = 0x35C3C5C;
 
         // True on frames where Free Flight is actively driving the player's
         // vertical velocity (a direction key/button is held while airborne).
@@ -1598,15 +1605,30 @@ namespace trinity::game
             LOG_WARN("teleport: area-name resolver not found - waypoint names fall back to indices.");
 
         // Locomotion sub-step driver for Super Run (optional - Super Jump and
-        // everything else still works without it).
-        mem::InstallHook("teleport: locomotion-stepper", kSig_LocoStepper, "Super Run disabled",
-                         &hkLocoStep, &oLocoStep, &g_locoStepTarget);
+        // everything else still works without it). Falls back to the TU
+        // 2.01.00 candidate (COMPATIBILITY.md: "BREAKTHROUGH 2026-09-08/09" -
+        // found by walking the airborne-mover anchor to its callee, offline-
+        // verified unique) when the primary (TU 2.00.00) pattern does not
+        // match - same prologue-reshape shape as pathing-helper/dye-upsert/
+        // master-frame-update/parry-verdict from the same session.
+        if (mem::InstallHookAny("teleport: locomotion-stepper",
+                                {kSig_LocoStepper, kSig_LocoStepper_TU20100_Candidate},
+                                "Super Run disabled",
+                                &hkLocoStep, &oLocoStep, &g_locoStepTarget))
+        {
+            LOG("teleport: locomotion-stepper hook installed @ %p.", g_locoStepTarget);
+        }
 
         // Hook the pathing helper so destination warps can override the servo
-        // instead of fighting it. Non-fatal.
-        if (mem::InstallHook("teleport: pathing-helper", kSig_PathingHelper,
-                             "destination warp may fight the servo",
-                             &hkPathingHelper, &oPathingHelper, &g_pathingHelperTarget))
+        // instead of fighting it. Non-fatal. Falls back to the TU 2.01.00
+        // candidate (COMPATIBILITY.md: "BREAKTHROUGH 2026-09-08" - offline-
+        // verified unique, live-tested-working in a third-party build,
+        // NOT yet live-tested through our own hook plumbing) when the
+        // primary (TU 2.00.00) pattern does not match.
+        if (mem::InstallHookAny("teleport: pathing-helper",
+                                {kSig_PathingHelper, kSig_PathingHelper_TU20100_Candidate},
+                                "destination warp may fight the servo",
+                                &hkPathingHelper, &oPathingHelper, &g_pathingHelperTarget))
         {
             LOG("teleport: pathing helper hook installed @ %p.", g_pathingHelperTarget);
         }

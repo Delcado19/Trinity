@@ -17,6 +17,18 @@ namespace trinity::game
         // verdict itself rather than a shape that happens to recur.
         constexpr const char* kSig_ParryVerdict = "C5 F8 2F D3 0F 97 C0 88 06";
 
+        // TU 2.01.00 candidate (COMPATIBILITY.md: "BREAKTHROUGH 2026-09-08").
+        // The compiler swapped the VCOMISS operand order on this build
+        // (`VCOMISS XMM2,XMM3` -> `VCOMISS XMM3,XMM2`), changing only the
+        // ModRM byte (D3 -> DA); the SETA + store that follow (the actual
+        // patch site, kSetaOffset below) are byte-identical. Confirmed via a
+        // working third-party build's live-logged address (RVA 0x7FC528,
+        // `parry: verdict site @ ...`): Ghidra shows SETA AL starting at
+        // exactly that RVA, 4 bytes after this pattern's start. Verified
+        // offline: one match, exactly RVA 0x7FC524 (kSetaOffset 4 lands on
+        // 0x7FC528). NOT yet live-tested through our own patch code.
+        constexpr const char* kSig_ParryVerdict_TU20100_Candidate = "C5 F8 2F DA 0F 97 C0 88 06";
+
         constexpr uintptr_t kSetaOffset = 4;         // into the match
         constexpr uint8_t   kSeta[3] = { 0x0F, 0x97, 0xC0 };  // seta al
         constexpr uint8_t   kForce[3] = { 0xB0, 0x01, 0x90 }; // mov al,1 ; nop
@@ -42,13 +54,19 @@ namespace trinity::game
 
     bool Parry::Install()
     {
-        const uintptr_t hit = mem::FindPattern(kSig_ParryVerdict);
+        // TU 2.01.00 candidate (COMPATIBILITY.md: "BREAKTHROUGH 2026-09-08")
+        // as a fallback - that build's compiler swapped the VCOMISS operand
+        // order (only the ModRM byte differs), so the SETA+store this
+        // patches is unchanged at kSetaOffset either way.
+        size_t which = 0;
+        const std::string_view sigs[] = { kSig_ParryVerdict, kSig_ParryVerdict_TU20100_Candidate };
+        const uintptr_t hit = mem::FindPatternAny(sigs, 2, mem::GameModule(), &which);
         if (!hit)
         {
             LOG("parry: verdict site not found - Easy Parry disabled.");
             return false;
         }
-        if (mem::CountMatches(kSig_ParryVerdict, 4) != 1)
+        if (mem::CountMatches(sigs[which], 4) != 1)
         {
             // Refuse rather than pick one. This patches executable code, and a
             // second match would mean the pattern no longer identifies the

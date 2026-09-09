@@ -572,12 +572,16 @@ namespace trinity::game
         }
         g_dyeApply = reinterpret_cast<DyeApplyBatch_t>(apply);
 
-        // Current build's encoding first, the older one as a fallback - the two
-        // are the same function compiled with different displacement forms, so
-        // one pattern can never cover both.
+        // Current build's encoding first, older ones as fallbacks - each is the
+        // same function compiled differently, so one pattern can never cover
+        // all of them. TU 2.01.00 candidate (COMPATIBILITY.md: "BREAKTHROUGH
+        // 2026-09-08") added last - that build needs a full register-save
+        // prologue the older ones apparently didn't, so it anchors at the
+        // true function entry instead of mid-function like the others.
         size_t which = 0;
-        const std::string_view upsertSigs[] = { kSig_DyeUpsert_1180, kSig_DyeUpsert };
-        const uintptr_t upsert = mem::FindPatternAny(upsertSigs, 2, mem::GameModule(), &which);
+        const std::string_view upsertSigs[] =
+            { kSig_DyeUpsert_1180, kSig_DyeUpsert, kSig_DyeUpsert_TU20100_Candidate };
+        const uintptr_t upsert = mem::FindPatternAny(upsertSigs, 3, mem::GameModule(), &which);
         if (!upsert)
             LOG_WARN("dye: upsert signature NOT FOUND - falling back to a direct RGB write, so "
                      "channels without an existing record will not survive a reload.");

@@ -21,6 +21,57 @@
       "source": "COMPATIBILITY.md: Stat commit static analysis",
       "pattern": "66 44 89 4C 24 ?? 48 89 54 24 ?? 53 55 56 57 41 56 48 83 EC ?? 4C 8D 71 18 48 89 CF 48 8B 49 20 4C 89 C3 49 03 0E 4C 89 F6 4C 39 C1",
       "policy": "unique"
+    },
+    {
+      "id": "kCharMgrSlot_0x6C29C68_TU20100_Candidate_A",
+      "feature": "Corrected character-manager global slot (RVA 0x6C29C68, not the dead 0x6C29C88 accessor candidate). Found by converting a working third-party TU 2.01.00 build's live-logged addresses to RVAs; this is one of ~50 call sites that read `manager = *(*0x6C29C68)` and pass it as arg1 (RCX) to a shared char-manager API helper (0x1429b39d0 in the analyzed image). Anchored on the ABI-fixed dereference-into-arg1 step plus two literal offsets (RBP+0xDC, RSP+0x40) from one specific call site, not the allocator-chosen registers around it.",
+      "source": "COMPATIBILITY.md: BREAKTHROUGH (2026-09-06) - character-manager slot found",
+      "pattern": "44 8B 85 DC 00 00 00 48 8D 54 24 40 48 8B 0D ?? ?? ?? ?? 48 8B 09",
+      "policy": "unique",
+      "ripInstructionOffset": 12
+    },
+    {
+      "id": "kCharMgrSlot_0x6C29C68_TU20100_Candidate_B",
+      "feature": "Corrected character-manager global slot (RVA 0x6C29C68), second independent call site for cross-checking Candidate_A - a different function, same shared API helper (0x1429b39d0).",
+      "source": "COMPATIBILITY.md: BREAKTHROUGH (2026-09-06) - character-manager slot found",
+      "pattern": "48 8D 55 1F 48 8B 0D ?? ?? ?? ?? 48 8B 09 E8 ?? ?? ?? ?? 90 80 7D 2F 00",
+      "policy": "unique",
+      "ripInstructionOffset": 4
+    },
+    {
+      "id": "kSig_PathingHelper_TU20100_Candidate",
+      "feature": "Pathing helper (destination-following movement override) candidate. Found by converting a working third-party TU 2.01.00 build's live-logged hook address (RVA 0x35C8000) to a function entry, then diffing its prologue against the dead TU 2.00.00 kSig_PathingHelper: the compiler switched from an RSP-relative shadow-space prologue (`48 89 5C 24 08...`) to an RAX-copy-of-RSP prologue (`48 8B C4 48 89 58 08...`), but everything from the R14/RSI register setup onward (`4D 8B F0 48 8B F2 66 C7 45 ?? 04 00 C6 45 ?? 01 33 DB 48 89 5D ?? 48 89 5D ??`) is byte-identical to the old signature's tail. Pattern starts at the function's true entry point (verified: Ghidra reports ENTRY=0x1435c8000 for this exact match).",
+      "source": "COMPATIBILITY.md: BREAKTHROUGH (2026-09-08) - teleport signatures re-derived via gugi97 v0.19.0 cross-reference",
+      "pattern": "48 8B C4 48 89 58 08 48 89 70 18 55 57 41 56 48 8D 68 ?? 48 81 EC ?? ?? ?? ?? C5 F8 29 70 ?? 4D 8B F0 48 8B F2 66 C7 45 ?? 04 00 C6 45 ?? 01 33 DB 48 89 5D ?? 48 89 5D ??",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_MasterFrameUpdate_TU20100_Candidate",
+      "feature": "World master frame update (Game Speed / Timescale) candidate. Found the same way as the pathing-helper: a working third-party build's live-logged hook address (RVA 0xA541C0) diffed against the dead TU 2.00.00 kSig_MasterFrameUpdate. The register-save prologue changed shape (one extra PUSH R12, RSI saved via push instead of a shadow-space store, different stack/XMM-save offsets), but the semantic body starting at `48 8B F9 48 8B 51 60 8B 42 64 89 42 60` (RDI=RCX; RDX=[RCX+0x60] i.e. TimeManager; EAX=[RDX+0x64]; [RDX+0x60]=EAX) is byte-identical and matches the documented TimeManager access exactly. Pattern starts at the true function entry (Ghidra: ENTRY=0x140a541c0, 1 caller).",
+      "source": "COMPATIBILITY.md: BREAKTHROUGH (2026-09-08) - teleport/world signatures re-derived via gugi97 v0.19.0 cross-reference",
+      "pattern": "48 8B C4 48 89 58 10 48 89 68 18 56 57 41 54 41 56 41 57 48 81 EC ?? ?? ?? ?? C5 F8 29 70 ?? C5 F8 29 78 ?? C5 78 29 40 ?? C5 78 29 50 ?? C5 78 29 58 ?? C5 78 29 A0 ?? ?? ?? ?? C5 78 29 A8 ?? ?? ?? ?? 48 8B F9 48 8B 51 60 8B 42 64 89 42 60",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_DyeUpsert_TU20100_Candidate",
+      "feature": "Durable dye-record upsert candidate. The old kSig_DyeUpsert/_1180 patterns anchor mid-function (this build's compiled function needs a full register-save prologue where the old one apparently did not, so those bytes no longer exist at all on this build). Found the true function entry from a working third-party build's live-logged address (RVA 0x2353FE0, `dye: durable upsert @ ...`) via Ghidra (ENTRY=0x142353fe0). The body from the prologue through the documented 16-byte record-stride shift (`49 C1 E0 04`, same literal the old signature's own comment already called out as semantic) is fully literal, no wildcards needed - this build's stack offsets happen to match byte-for-byte at this exact point.",
+      "source": "COMPATIBILITY.md: BREAKTHROUGH (2026-09-08) - teleport/world/dye signatures re-derived via gugi97 v0.19.0 cross-reference",
+      "pattern": "48 89 5C 24 18 48 89 6C 24 20 56 57 41 54 41 56 41 57 48 83 EC 30 4C 8B 51 78 4D 8B F0 44 8B 81 80 00 00 00 33 ED 49 C1 E0 04",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_ParryVerdict_TU20100_Candidate",
+      "feature": "Parry verdict site candidate. The compiler swapped the VCOMISS operand order on this build (`VCOMISS XMM2,XMM3` -> `VCOMISS XMM3,XMM2`), changing only the ModRM byte (`D3` -> `DA`); the SETA + store that immediately follow (the actual patch site, `kSetaOffset=4` bytes into the match per parry.cpp) are byte-identical. Confirmed via a working third-party build's live-logged address (RVA 0x7FC528, `parry: verdict site @ ...`): Ghidra shows `0F 97 C0` (SETA AL) starting at exactly that RVA, 4 bytes after this pattern's start - matching parry.cpp's own kSetaOffset exactly.",
+      "source": "COMPATIBILITY.md: BREAKTHROUGH (2026-09-08) - teleport/world/dye/parry signatures re-derived via gugi97 v0.19.0 cross-reference",
+      "pattern": "C5 F8 2F DA 0F 97 C0 88 06",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_LocoStepper_TU20100_Candidate",
+      "feature": "Locomotion sub-step driver (Super Run) candidate. Not found via a third-party log address (gugi97's v0.19.0 build reorganizes its own logging for this feature - its 'airborne mover' log line does not exist anywhere in this project's own source, so an absent error line there proves nothing). Instead found by walking a known-good anchor: kAirMover_Lo/Hi (teleport.cpp, RVA range 0x35C3290-0x35C3C5C, itself live-identified via the third-party log) is the airborne mover's own function; Ghidra's decompile of that function (ENTRY=0x1435c3290) calls FUN_1435be940 three times with the exact hkLocoStep argument shape (comp, *dt-by-value, &vel-stack-buffer, 0, ptr, 0, 0). That callee's prologue keeps the old signature's distinctive byte-parameter store (`44 88 48 20`) byte-identical, with one extra qword home-store inserted before the pushes shifting the frame literals by a consistent 0x10 (0x798->0x788, 0x860->0x850). It also calls the already-independently-confirmed kSig_MoveUpdate (RVA 0x418EFC0, unchanged on this build) and has 12 callers, consistent with a stepper shared across movement modes.",
+      "source": "COMPATIBILITY.md: BREAKTHROUGH (2026-09-08/09) - LocoStepper re-derived by walking the airborne-mover anchor to its callee",
+      "pattern": "48 8B C4 48 89 58 10 44 88 48 20 48 89 48 08 55 56 57 41 54 41 55 41 56 41 57 48 8D A8 78 F8 FF FF 48 81 EC 50 08 00 00",
+      "policy": "unique"
     }
   ]
 }

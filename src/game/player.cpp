@@ -13,6 +13,7 @@
 #include "../mem/hooks.h"
 #include "../core/logger.h"
 #include "../core/state.h"
+#include "../core/gameversion.h"
 
 namespace trinity::game
 {
@@ -393,9 +394,17 @@ namespace trinity::game
                 }
             }
 
-            // The mounted horse is a separate live character. The verified
-            // class is exact for TU 2.00.00, so no NPC stamina can be pinned.
-            if (State::Get().infStamina || State::Get().infMountStamina)
+            // The mounted horse is a separate live character, found by a
+            // hardcoded image-relative vtable offset - verified exact for
+            // TU 2.00.00 only. Unlike everything else in this function (found
+            // by signature/structural walk, so it degrades to "resolves
+            // nothing" on an unrecognised build), a raw offset degrades to
+            // "matches whatever unrelated class happens to sit there now" -
+            // silently pinning the wrong object's memory if infStamina/
+            // infMountStamina is on. Skip it entirely on any build this
+            // offset was not confirmed against, rather than risk that.
+            if ((State::Get().infStamina || State::Get().infMountStamina) &&
+                CurrentGameVersion().isVerified())
             {
                 const mem::ModuleRegion& mod = mem::GameModule();
                 const uintptr_t mountVt = mod.base + kMountVtableOffset_TU20000;
@@ -568,33 +577,141 @@ namespace trinity::game
             return oDamageApply(targetOwner, statusId, time, delta, sourceCtx,
                                 a6, a7, a8, a9, a10, out);
         }
+
+        // This game ships packed: scanner.cpp already documents that some code
+        // regions are not yet unpacked/executable at the moment Mod::Initialize()
+        // runs Player::Install(), so a signature scan for a function living in
+        // one of those regions can spuriously find nothing even though it is
+        // provably present once the game finishes unpacking (offline audits
+        // against the same executable always find it). Observed live
+        // 2026-09-08: damage-apply failed to resolve at Install() time in an
+        // otherwise fully successful session (char-manager and stat-commit both
+        // resolved fine seconds later) - One-Hit Kill and the other damage
+        // multipliers were silently unavailable for the whole session as a
+        // result. Every piece below is therefore idempotent (skips whatever
+        // already resolved) and safe to call again later - see
+        // RetryUnresolvedHooks, called from RefreshSelf until everything is up
+        // or the retry window gives up.
+        void ResolvePlayerHooks()
+        {
+            if (!g_charMgrGlobal)
+            {
+                g_charMgrGlobal = ResolveCharMgrGlobal();
+                if (!g_charMgrGlobal)
+                    LOG_ERR("player: char-manager global NOT FOUND (no anchor matched) - God "
+                            "Mode / Infinite Stamina / Infinite Spirit / damage multipliers "
+                            "disabled.");
+            }
+
+            // Hook the stat-commit funnel so HP/Stamina/Spirit are forced back to
+            // full at the exact write site. Non-fatal if it fails - the resolver
+            // still tracks the player, but God Mode, Infinite Stamina and Infinite
+            // Spirit are all lost (they share this one hook).
+            //
+            // Falls back to the TU 2.01.00 candidate (COMPATIBILITY.md: "Stat
+            // commit static analysis" - LIKELY/HIGH RISK, calling convention not
+            // Ghidra-recovered, but the same four-argument shape as the verified
+            // source) when the primary (TU 2.00.00) pattern does not match. Safe
+            // to attempt: this hook only ever writes through PinEntry, and
+            // PinEntry only ever touches an entry already present in the
+            // WalkSelfChain-validated player sets above - so a wrong calling-
+            // convention guess here cannot touch unrelated memory, it can at
+            // worst do nothing (the entry pointer just never matches).
+            if (!oStatCommit)
+                mem::InstallHookAny("player: stat-commit",
+                                    {kSig_StatCommit, kSig_StatCommit_TU20100_Candidate},
+                                    "God Mode / Infinite Stamina / Infinite Spirit disabled",
+                                    &hkStatCommit, &oStatCommit, &g_commitTarget);
+
+            // Hook the damage-apply dispatcher for the damage multipliers.
+            // Non-fatal if it fails - only the multipliers are lost.
+            if (!oDamageApply)
+            {
+                mem::InstallHook("player: damage-apply", kSig_DamageApply,
+                                 "damage multipliers disabled",
+                                 &hkDamageApply, &oDamageApply, &g_damageHookTarget);
+
+                // ponytail: temporary ground-truth diagnostic for the
+                // 2026-09-08 investigation (COMPATIBILITY.md/memory - external
+                // ReadProcessMemory found a JMP hook already sitting at the
+                // documented RVA 0x1718500, tracing back into Trinity.asi's
+                // OWN module, yet InstallHook consistently reports NOT FOUND -
+                // an unresolved contradiction). Logs what Trinity itself sees
+                // at that exact address plus oDamageApply's own pointer value,
+                // to settle it from inside the process instead of more
+                // external guessing. Remove once the contradiction is
+                // explained.
+                const mem::ModuleRegion& diagMod = mem::GameModule();
+                const uintptr_t diagAddr = diagMod.base + 0x1718500;
+                uint8_t diagBytes[8] = {};
+                bool diagOk = true;
+                for (int i = 0; i < 8; ++i)
+                    diagOk = diagOk && Read8(diagAddr + i, &diagBytes[i]);
+                LOG("player/diag: damage-apply GT - VA=0x%llX read=%d bytes=%02X %02X %02X %02X "
+                    "%02X %02X %02X %02X oDamageApply=%p g_damageHookTarget=%p",
+                    static_cast<unsigned long long>(diagAddr), diagOk,
+                    diagBytes[0], diagBytes[1], diagBytes[2], diagBytes[3],
+                    diagBytes[4], diagBytes[5], diagBytes[6], diagBytes[7],
+                    reinterpret_cast<void*>(oDamageApply), g_damageHookTarget);
+            }
+        }
+
+        // Retries whatever ResolvePlayerHooks left unresolved. Fast for the
+        // first minute (every 2s - covers menu navigation/save-select), then
+        // backs off to every 15s indefinitely rather than ever fully giving
+        // up: live testing (2026-09-08) found damage-apply consistently
+        // unresolved at Install() time across repeated launches, so whatever
+        // unpacks its code page may not happen within any short fixed
+        // window (e.g. only once the world finishes loading) - and there is
+        // no real cost to keep checking a boolean-guarded, throttled
+        // condition for the rest of a session. Logs the slow-phase
+        // transition once (informational, not a failure) instead of
+        // spamming NOT FOUND forever. Cheap no-op once everything is up.
+        void RetryUnresolvedHooks()
+        {
+            if (g_charMgrGlobal && oStatCommit && oDamageApply) return;
+
+            static unsigned long long s_nextRetry = 0;
+            static int s_fastAttemptsLeft = 30; // ~60s at 2s apart
+            static bool s_slowPhaseLogged = false;
+            const unsigned long long now = GetTickCount64();
+            if (now < s_nextRetry) return;
+
+            if (s_fastAttemptsLeft > 0)
+            {
+                s_nextRetry = now + 2000;
+                --s_fastAttemptsLeft;
+            }
+            else
+            {
+                s_nextRetry = now + 15000;
+                if (!s_slowPhaseLogged)
+                {
+                    s_slowPhaseLogged = true;
+                    LOG_WARN("player: still missing hook(s) after ~60s - char-manager=%d "
+                             "stat-commit=%d damage-apply=%d (1=resolved). Slowing retries to "
+                             "every 15s for the rest of the session instead of giving up.",
+                             g_charMgrGlobal != 0, oStatCommit != nullptr, oDamageApply != nullptr);
+                }
+            }
+
+            const bool hadCharMgr = g_charMgrGlobal != 0;
+            const bool hadStatCommit = oStatCommit != nullptr;
+            const bool hadDamageApply = oDamageApply != nullptr;
+            ResolvePlayerHooks();
+            if (!hadCharMgr && g_charMgrGlobal)
+                LOG_OK("player: char-manager global resolved on retry.");
+            if (!hadStatCommit && oStatCommit)
+                LOG_OK("player: stat-commit resolved on retry.");
+            if (!hadDamageApply && oDamageApply)
+                LOG_OK("player: damage-apply resolved on retry - damage multipliers now "
+                       "available.");
+        }
     }
 
     bool Player::Install()
     {
-        // Resolve the character-manager global: the sole discovery path for the
-        // protagonist party (RefreshSelf walks its vector each tick). Without it
-        // every stat feature below is inert, so this is the critical resolve.
-        g_charMgrGlobal = ResolveCharMgrGlobal();
-        if (!g_charMgrGlobal)
-        {
-            LOG_ERR("player: char-manager global NOT FOUND (no anchor matched) - God Mode / "
-                    "Infinite Stamina / Infinite Spirit / damage multipliers disabled.");
-        }
-
-        // Hook the stat-commit funnel so HP/Stamina/Spirit are forced back to
-        // full at the exact write site. Non-fatal if it fails - the resolver
-        // still tracks the player, but God Mode, Infinite Stamina and Infinite
-        // Spirit are all lost (they share this one hook).
-        mem::InstallHook("player: stat-commit", kSig_StatCommit,
-                         "God Mode / Infinite Stamina / Infinite Spirit disabled",
-                         &hkStatCommit, &oStatCommit, &g_commitTarget);
-
-        // Hook the damage-apply dispatcher for the damage multipliers.
-        // Non-fatal if it fails - only the multipliers are lost.
-        mem::InstallHook("player: damage-apply", kSig_DamageApply, "damage multipliers disabled",
-                         &hkDamageApply, &oDamageApply, &g_damageHookTarget);
-
+        ResolvePlayerHooks();
         return true;
     }
 
@@ -605,6 +722,14 @@ namespace trinity::game
 
     void Player::RefreshSelf()
     {
+        // Cheap (a timestamp check in the common case) and independent of
+        // whether any toggle is on: a hook that failed to resolve at
+        // Install() time because its code page was not unpacked yet should
+        // still come up proactively, not only once the user happens to
+        // enable a feature that needs it. See ResolvePlayerHooks/
+        // RetryUnresolvedHooks above.
+        RetryUnresolvedHooks();
+
         // Skip the per-frame character-list walk when nothing consumes its
         // output. Clear the sets once on the active->idle edge so a re-enable
         // can never pin a stale/freed entry for the one frame before the next

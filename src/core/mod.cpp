@@ -8,6 +8,7 @@
 #include "../hooks/dx12_hook.h"
 #include "../game/player.h"
 #include "../game/diag_player_accessor.h"
+#include "../game/diag_damage_probe.h"
 #include "../game/teleport.h"
 #include "../game/inventory.h"
 #include "../game/world.h"
@@ -56,15 +57,90 @@ namespace trinity
         // diagnostics, but never install gameplay hooks on an unverified build.
         if (!verifiedGameBuild)
         {
+            // Teleport (see COMPATIBILITY.md "BREAKTHROUGH 2026-09-08/09" -
+            // teleport/world/dye/parry signatures re-derived, LocoStepper
+            // follow-up). Installed FIRST in this branch specifically so its
+            // hkMoveUpdate claims kSig_MoveUpdate before
+            // PlayerAccessorProbe's own competing hook on the same address
+            // gets a chance to (MinHook refuses a second hook on an
+            // already-hooked target) - Teleport's hkMoveUpdate is a strict
+            // superset of what the probe's substitute did (it also drives
+            // Player::RefreshSelf(), plus g_playerMoveOwner, Super Jump, and
+            // Game Speed), so this ordering costs nothing. Install()'s only
+            // FATAL signature is kSig_MoveUpdate, which is unchanged and
+            // confirmed working on this build - so this always succeeds.
+            // What actually works: position tracking, coordinate warps,
+            // Saved Locations, Super Jump, and now Super Run
+            // (kSig_LocoStepper_TU20100_Candidate, offline-verified unique,
+            // NOT yet live-tested through our own hook). Fails closed and
+            // logs, not silently: Teleport to Destination
+            // (kSig_DestinationUpdate still dead) and the fast-travel menu
+            // (kSig_TravelToNode, scene-registry still dead) stay
+            // grey/empty rather than doing something wrong.
+            m_teleportInstalled = game::Teleport::Install();
+
             // Read-only TU 2.01.00 player-accessor probe (see COMPATIBILITY.md
             // "Character/player resolution" and diag_player_accessor.*). Not a
             // gameplay feature: it calls a statically-found candidate function
             // and logs what it returns, never hooks it, never writes anything.
-            // Deliberately allowed on an unverified build - that is the whole
-            // point of this diagnostic - and independent of every game::*
-            // feature below, which stay uninstalled here.
+            // Its own move-update-tick hook (a substitute driver for
+            // Player::RefreshSelf(), see diag_player_accessor.cpp) now loses
+            // the race to Teleport above and fails closed - logged, non-
+            // fatal for the probe's other diagnostics (CharMgr accessor,
+            // SelfChain), which already ran and logged by this point.
             m_accessorProbeInstalled = game::PlayerAccessorProbe::Install();
 
+            // Read-only battle-damage probe (see diag_damage_probe.h): logs
+            // the victim object DamageApply hands to player.cpp's own
+            // hkDamageApply directly, sidestepping the character-manager
+            // walk above entirely. Independent of it and of every
+            // game::* feature below.
+            m_damageProbeInstalled = game::DamageProbe::Install();
+
+            // God Mode / Infinite Stamina / Infinite Spirit / damage
+            // multipliers (see COMPATIBILITY.md "BREAKTHROUGH 2026-09-06" and
+            // the live-verified WalkSelfChain result). Deliberately enabled
+            // here, ahead of full version verification: every write it can
+            // make is gated behind its own toggles (off by default in
+            // State) and behind WalkSelfChain resolving the object first, so
+            // there is no path to touching unrelated memory even if a
+            // sub-signature turns out wrong - it just does nothing. Driven
+            // by Teleport's hkMoveUpdate above, now that Teleport is
+            // installed on this build.
+            // Inventory/World/Dye/Equipment/Friendly are NOT enabled here -
+            // each needs its own single-body identity or engine-call
+            // verification this session did not establish.
+            m_playerStatsInstalled = game::Player::Install();
+
+            // Game Speed (see COMPATIBILITY.md "BREAKTHROUGH 2026-09-08" -
+            // teleport/world/dye/parry signatures re-derived). Only the
+            // master-frame-update hook (the toggle's actual write site) is
+            // confirmed working on this build; World::Install()'s other
+            // sub-features (the game-speed code patch, Freeze/Advance Time
+            // of Day) depend on separate signatures not re-derived this
+            // session and fail closed (confirmed offline: 0 matches each) -
+            // World::Tick() is deliberately NOT driven here, so those stay
+            // fully inert rather than resolve partially and do nothing
+            // visible. Non-fatal either way, same as Player above.
+            m_worldInstalled = game::World::Install();
+
+            // Easy Parry (see COMPATIBILITY.md, same breakthrough) - fully
+            // self-contained (one signature, one three-byte patch, no
+            // per-tick driver needed), so this delivers the complete
+            // feature, not a partial one.
+            m_parryInstalled = game::Parry::Install();
+            if (State::Get().easyParry)
+                game::Parry::SetEnabled(true);
+
+            // Dye/Inventory/Equipment/Friendly are NOT enabled here. Dye
+            // specifically was checked and is NOT ready despite this
+            // session's DyeUpsert fix: Install() fails at the FIRST
+            // signature it checks (kSig_DyeApplyBatch, confirmed offline: 0
+            // matches on this build) before ever reaching the fixed
+            // DyeUpsert fallback chain - two more signatures
+            // (kSig_DyeApplyBatch, kSig_EquipBatch) still need re-deriving
+            // first. The others each need their own single-body identity or
+            // engine-call verification this session did not establish.
             m_initialized = true;
             LOG_WARN("Diagnostics-only mode: gameplay features are unavailable for this game build.");
             LOG_OK("Overlay ready - INSERT (or LB + DOWN on controller) toggles the menu.");
@@ -112,6 +188,36 @@ namespace trinity
         {
             game::PlayerAccessorProbe::Remove();
             m_accessorProbeInstalled = false;
+        }
+
+        if (m_damageProbeInstalled)
+        {
+            game::DamageProbe::Remove();
+            m_damageProbeInstalled = false;
+        }
+
+        if (m_playerStatsInstalled)
+        {
+            game::Player::Remove();
+            m_playerStatsInstalled = false;
+        }
+
+        if (m_worldInstalled)
+        {
+            game::World::Remove();
+            m_worldInstalled = false;
+        }
+
+        if (m_parryInstalled)
+        {
+            game::Parry::Remove();
+            m_parryInstalled = false;
+        }
+
+        if (m_teleportInstalled)
+        {
+            game::Teleport::Remove();
+            m_teleportInstalled = false;
         }
 
         if (m_gameplayHooksInstalled)

@@ -149,6 +149,25 @@ namespace trinity::game
     inline constexpr const char* kSig_StatCommit =
         "48 89 5C 24 10 55 56 57 48 83 EC 20 48 8B 59 18 41 0F B7 E9 48 03 59 20 48 89 D6 48 89 CF 4C 39 C3";
 
+    // TU 2.01.00 candidate (COMPATIBILITY.md: "Stat commit static analysis").
+    // The old pattern above is BROKEN on this build (zero matches); Ghidra
+    // traced the confirmed TU 2.01.00 damage data flow (DamageApply ->
+    // generic status path -> ApplyDelta -> StatCommit) to an equivalent at
+    // RVA 0xC4E6A80, reached through a thunk at RVA 0x171E630. It accepts
+    // the same four argument roles as the verified source (entry, time,
+    // clamped target, 16-bit flag) and performs the same base/cap/floor
+    // reconstruction. LIKELY/HIGH RISK, not VERIFIED: Ghidra did not recover
+    // the calling convention. Safe to attempt anyway (see player.cpp's
+    // Install()) because hkStatCommit only ever writes through PinEntry,
+    // and PinEntry only ever touches an entry already validated by
+    // WalkSelfChain - a wrong guess here can do nothing, not corrupt
+    // unrelated memory. Expected and observed count (offline): one match at
+    // RVA 0xC4E6A80 in executable section .debug$P of the 2026-09-03 build
+    // (SHA-256 4d99c15c58bd20a94d354d10ae395d1fac777d59ef52cba8080dc3fc8dc6f454).
+    inline constexpr const char* kSig_StatCommit_TU20100_Candidate =
+        "66 44 89 4C 24 ?? 48 89 54 24 ?? 53 55 56 57 41 56 48 83 EC ?? "
+        "4C 8D 71 18 48 89 CF 48 8B 49 20 4C 89 C3 49 03 0E 4C 89 F6 4C 39 C1";
+
     // --- Damage multipliers: hook the damage-apply dispatcher ---------------
     // One level above pa_StatCommit sits a per-status "apply signed delta"
     // dispatcher (IDB sub_145B2A0):
@@ -240,6 +259,19 @@ namespace trinity::game
         // those sites - but both resolve to the same global, so it still votes
         // correctly. Kept as a fallback.
         {"48 8B 05 ?? ?? ?? ?? 44 8B 07 48 8D 54 24 ?? 48 8B 08 E8", 0},
+        // TU 2.01.00 (RVA 0x6C29C68 - see COMPATIBILITY.md "BREAKTHROUGH
+        // 2026-09-06"): all four anchors above are BROKEN on this build (zero
+        // matches), so they simply never vote; these two do instead. Verified
+        // live: both agree with each other AND with the OLD 0x6C29C88 slot on
+        // resolving the identical manager object (read externally against a
+        // working third-party TU 2.01.00 build), and TickResolveSelf's own
+        // WalkSelfChain confirmed live (diag_player_accessor.cpp SelfChainTick,
+        // 2026-09-07) against the manager this reaches - same offsets, same
+        // shape, only the anchor bytes differ because the compiler recompiled
+        // the call sites. Kept as two separate entries (not one signature with
+        // two movOff choices) so the existing vote naturally cross-checks them.
+        {"44 8B 85 DC 00 00 00 48 8D 54 24 40 48 8B 0D ?? ?? ?? ?? 48 8B 09", 12},
+        {"48 8D 55 1F 48 8B 0D ?? ?? ?? ?? 48 8B 09 E8 ?? ?? ?? ?? 90 80 7D 2F 00", 4},
     };
 
     // Character manager -> the vector of all gameplay characters. It is the
@@ -389,6 +421,32 @@ namespace trinity::game
         "48 8B C4 48 89 58 10 44 88 48 20 55 56 57 41 54 41 55 41 56 41 57 "
         "48 8D A8 68 F8 FF FF 48 81 EC 60 08 00 00";
 
+    // TU 2.01.00: the old signature has 0 matches. Re-derived not from a
+    // third-party log (gugi97's v0.19.0 build reorganizes its own logging -
+    // see COMPATIBILITY.md "LocoStepper/TravelToNode/... log-conversion does
+    // NOT apply here" - so an absent error line there proves nothing) but by
+    // walking a known-good anchor: kAirMover_Lo/Hi (teleport.cpp) is the
+    // airborne mover's RVA range, live-identified via the same third-party
+    // log; Ghidra's decompile of that function (entry RVA 0x35C3290) calls
+    // FUN_1435be940 three times with the exact hkLocoStep argument shape
+    // (comp, *dt-by-value, &vel-stack-buffer, 0, ptr, 0, 0). That callee's
+    // own prologue keeps the old signature's distinctive byte-parameter
+    // store byte-identical (`44 88 48 20` = MOV [RAX+0x20],R9B), just with
+    // one extra qword home-store inserted before the pushes, shifting the
+    // frame literals by the same 0x10 both places (0x798->0x788,
+    // 0x860->0x850) - the same prologue-reshape pattern behind every other
+    // signature re-derived this session. It also calls the ALREADY-
+    // independently-confirmed kSig_MoveUpdate (RVA 0x418EFC0, unchanged on
+    // this build) and has 12 callers, consistent with "a shared stepper the
+    // ground and air movers both call". Verified offline: one match, exactly
+    // RVA 0x35BE940 (tools/TrinitySignatureAudit/candidates-2.01.00.json,
+    // kSig_LocoStepper_TU20100_Candidate), against the 2026-09-03 build
+    // (SHA-256 4d99c15c58bd20a94d354d10ae395d1fac777d59ef52cba8080dc3fc8dc6f454).
+    // NOT yet live-tested with our own InstallHookAny/hook plumbing.
+    inline constexpr const char* kSig_LocoStepper_TU20100_Candidate =
+        "48 8B C4 48 89 58 10 44 88 48 20 48 89 48 08 55 56 57 41 54 41 55 41 56 41 57 "
+        "48 8D A8 78 F8 FF FF 48 81 EC 50 08 00 00";
+
     // --- Fast travel / map-gimmick teleport --------------------------------
     // The world map fast-travels through sub_505140(ignored, sceneId, nodeIndex)
     // (IDB 0x505140): a normal, server-blessed travel that streams properly (the
@@ -423,6 +481,23 @@ namespace trinity::game
         "48 89 5C 24 08 48 89 74 24 18 55 57 41 56 48 8D 6C 24 ?? "
         "48 81 EC ?? ?? ?? ?? 4D 8B F0 48 8B F2 66 C7 45 ?? 04 00 "
         "C6 45 ?? 01 33 DB 48 89 5D ?? 48 89 5D ?? C5 FB 10 05";
+
+    // TU 2.01.00 candidate (COMPATIBILITY.md: "BREAKTHROUGH (2026-09-08) -
+    // teleport signatures re-derived"). The old pattern above is BROKEN on
+    // this build - found this build's replacement by converting a working
+    // third-party TU 2.01.00 build's live-logged hook address (RVA
+    // 0x35C8000) to a function entry and diffing its prologue: the compiler
+    // switched from an RSP-relative shadow-space prologue to an
+    // RAX-copy-of-RSP one, but the R14/RSI setup onward is byte-identical to
+    // the old signature's tail. Verified offline: one match, exactly RVA
+    // 0x35C8000 (tools/TrinitySignatureAudit/candidates-2.01.00.json,
+    // kSig_PathingHelper_TU20100_Candidate), against the 2026-09-03 build
+    // (SHA-256 4d99c15c58bd20a94d354d10ae395d1fac777d59ef52cba8080dc3fc8dc6f454).
+    // NOT yet live-tested with our own InstallHookAny/hook plumbing.
+    inline constexpr const char* kSig_PathingHelper_TU20100_Candidate =
+        "48 8B C4 48 89 58 08 48 89 70 18 55 57 41 56 48 8D 68 ?? "
+        "48 81 EC ?? ?? ?? ?? C5 F8 29 70 ?? 4D 8B F0 48 8B F2 66 C7 45 ?? 04 00 "
+        "C6 45 ?? 01 33 DB 48 89 5D ?? 48 89 5D ??";
 
     // Marker origin prefix for coordinate rebasing
     inline constexpr const char* kSig_MarkerOriginPrefix  = "C5 F8 5C 05";
@@ -1236,6 +1311,24 @@ namespace trinity::game
     inline constexpr const char* kSig_MasterFrameUpdate =
         "48 8B C4 48 89 58 10 48 89 68 18 48 89 70 20 57 41 56 41 57 48 81 EC D0 01 00 00 C5 F8 29 70 D8";
 
+    // TU 2.01.00 candidate (COMPATIBILITY.md: "BREAKTHROUGH 2026-09-08" -
+    // teleport/world/dye/parry signatures re-derived via gugi97 v0.19.0
+    // cross-reference). The old pattern is BROKEN on this build - found this
+    // build's replacement from a working third-party build's live-logged
+    // hook address (RVA 0xA541C0). The register-save prologue changed shape
+    // (one extra PUSH R12, RSI saved via push instead of a shadow-space
+    // store, different stack/XMM-save offsets), but the semantic body
+    // (`48 8B F9 48 8B 51 60 8B 42 64 89 42 60` - RDI=RCX; RDX=[RCX+0x60]
+    // i.e. TimeManager; EAX=[RDX+0x64]; [RDX+0x60]=EAX) is byte-identical
+    // and matches the documented TimeManager access above exactly. Verified
+    // offline: one match, exactly RVA 0xA541C0
+    // (tools/TrinitySignatureAudit/candidates-2.01.00.json). NOT yet
+    // live-tested through our own hook plumbing.
+    inline constexpr const char* kSig_MasterFrameUpdate_TU20100_Candidate =
+        "48 8B C4 48 89 58 10 48 89 68 18 56 57 41 54 41 56 41 57 48 81 EC ?? ?? ?? ?? "
+        "C5 F8 29 70 ?? C5 F8 29 78 ?? C5 78 29 40 ?? C5 78 29 50 ?? C5 78 29 58 ?? "
+        "C5 78 29 A0 ?? ?? ?? ?? C5 78 29 A8 ?? ?? ?? ?? 48 8B F9 48 8B 51 60 8B 42 64 89 42 60";
+
     // --- World: Game Speed (fixed-timestep override) ------------------------
     // The engine's per-frame timing update (IDB sub_8FBD80) measures the real
     // frame delta, applies UI/pause/native-timescale factors, and stores the
@@ -1501,6 +1594,20 @@ namespace trinity::game
     inline constexpr const char* kSig_DyeUpsert =
         "48 8B 41 ? 4C 8B D1 44 8B 41 ? 49 C1 E0 04";
 
+    // TU 2.01.00 candidate (COMPATIBILITY.md: "BREAKTHROUGH 2026-09-08").
+    // Neither pattern above matches on this build - unlike them, this
+    // build's compiled function needs a full register-save prologue, so
+    // found the true function entry from a working third-party build's
+    // live-logged address (RVA 0x2353FE0, `dye: durable upsert @ ...`) via
+    // Ghidra. The body from the prologue through the documented 16-byte
+    // record-stride shift (`49 C1 E0 04`, the same literal the comment
+    // above already calls semantic) is fully literal, no wildcards needed.
+    // Verified offline: one match, exactly RVA 0x2353FE0. NOT yet
+    // live-tested through our own hook plumbing.
+    inline constexpr const char* kSig_DyeUpsert_TU20100_Candidate =
+        "48 89 5C 24 18 48 89 6C 24 20 56 57 41 54 41 56 41 57 48 83 EC 30 "
+        "4C 8B 51 78 4D 8B F0 44 8B 81 80 00 00 00 33 ED 49 C1 E0 04";
+
     // Equip component layout (verified in THIS build from BatchEquip's own
     // table walk: `a1[17]` -> desc, `*(desc+8) + 200*i`, tag at +192).
     // 1.17.00 moved the descriptor DOWN one qword, 0x88 -> 0x80. BatchEquip
@@ -1750,4 +1857,39 @@ namespace trinity::game
     // COMPATIBILITY.md; the probe calls the function itself rather than
     // reimplementing its walk, so this is diagnostic only, never load-bearing.
     inline constexpr int kRipOff_CharMgrAccessor_TU20100_Candidate = 42;
+
+    // --- TU 2.01.00: the CORRECT character-manager slot ---------------------
+    // The accessor above resolves RVA 0x6C29C88 - COMPATIBILITY.md already
+    // named this the dead "sibling slot ... used by other accessors" and
+    // warned not to substitute it for the real manager global. The real one
+    // is RVA 0x6C29C68, found 2026-09-06 by converting a WORKING third-party
+    // TU 2.01.00 build's own Trinity.log (live VAs, image base 0x140000000 on
+    // that run) to RVAs, then confirming externally (read-only
+    // ReadProcessMemory against that running process, no injection) that
+    // `manager = *(*0x146C29C68)` walks to the SAME character list every
+    // prior session's ManagerWalkTick already found via the wrong slot, and
+    // that TU 2.00.00's unmodified TickResolveSelf/WalkSelfChain algorithm
+    // (kOff_Owner_Actor/kOff_Actor_StatusMarker/kOff_Marker_TargetOwner/
+    // kOff_Root_StatArray - zero offset changes) resolves exactly the
+    // expected 3 active protagonists against it (Kliff tag=1, played
+    // secondary protagonist tag=4 "Mercenary", companion tag=5). See
+    // COMPATIBILITY.md "BREAKTHROUGH (2026-09-06)" for the full derivation.
+    //
+    // Two independent call sites, both confirmed offline (one raw match
+    // each, both RIP-resolving to exactly 0x6C29C68 - see
+    // tools/TrinitySignatureAudit/candidates-2.01.00.json,
+    // kCharMgrSlot_0x6C29C68_TU20100_Candidate_A/_B) against the 2026-09-03
+    // build (SHA-256
+    // 4d99c15c58bd20a94d354d10ae395d1fac777d59ef52cba8080dc3fc8dc6f454). Kept
+    // as a pair (not folded into one 4-anchor table like kCharMgrAnchors yet)
+    // because only two were derived so far; add more if either ever breaks
+    // alone. Re-verify uniqueness at runtime (CountMatches) before trusting -
+    // a future patch could make either ambiguous or make it vanish outright.
+    inline constexpr const char* kSig_CharMgrSlot_TU20100_A =
+        "44 8B 85 DC 00 00 00 48 8D 54 24 40 48 8B 0D ?? ?? ?? ?? 48 8B 09";
+    inline constexpr int kRipOff_CharMgrSlot_TU20100_A = 12;
+
+    inline constexpr const char* kSig_CharMgrSlot_TU20100_B =
+        "48 8D 55 1F 48 8B 0D ?? ?? ?? ?? 48 8B 09 E8 ?? ?? ?? ?? 90 80 7D 2F 00";
+    inline constexpr int kRipOff_CharMgrSlot_TU20100_B = 4;
 }

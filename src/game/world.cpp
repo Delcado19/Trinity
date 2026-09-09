@@ -194,11 +194,16 @@ namespace trinity::game
     {
         bool ok = true;
 
-        if (mem::InstallHook("world: master frame update", kSig_MasterFrameUpdate,
-                             "Game Speed timescale unavailable",
-                             reinterpret_cast<void*>(hkMasterFrameUpdate),
-                             reinterpret_cast<void**>(&oMasterFrameUpdate),
-                             &g_masterFrameTarget, 1))
+        // Falls back to the TU 2.01.00 candidate (COMPATIBILITY.md:
+        // "BREAKTHROUGH 2026-09-08") when the primary (TU 2.00.00) pattern
+        // does not match - same recompiled-prologue shape as the pathing-
+        // helper/dye-upsert fixes from the same session.
+        if (mem::InstallHookAny("world: master frame update",
+                                {kSig_MasterFrameUpdate, kSig_MasterFrameUpdate_TU20100_Candidate},
+                                "Game Speed timescale unavailable",
+                                reinterpret_cast<void*>(hkMasterFrameUpdate),
+                                reinterpret_cast<void**>(&oMasterFrameUpdate),
+                                &g_masterFrameTarget))
         {
             LOG("world: master frame update hook installed @ %p - Game Speed ready.", g_masterFrameTarget);
         }

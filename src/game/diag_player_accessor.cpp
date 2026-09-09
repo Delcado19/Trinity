@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "offsets.h"
+#include "player.h"
 #include "../mem/scanner.h"
 #include "../mem/safe_memory.h"
 #include "../mem/hooks.h"
@@ -26,6 +27,15 @@ namespace trinity::game
         // accessor-call probe above and NOT affected by that probe's tag==1
         // problem (see ManagerWalkTick).
         uintptr_t g_mgrSlot = 0;
+
+        // The SECOND, independently-verified manager slot (RVA 0x6C29C68,
+        // see offsets.h kSig_CharMgrSlot_TU20100_A/_B). Confirmed by direct
+        // live memory read against a working third-party build to resolve
+        // the SAME manager object as g_mgrSlot above - kept separate rather
+        // than replacing g_mgrSlot so ManagerWalkTick's existing, already-
+        // logged history stays exactly as it was. This slot's only
+        // advantage is not depending on ever calling the accessor.
+        uintptr_t g_selfChainMgrSlot = 0;
 
         using MoveUpdateProbe_t = uint64_t(__fastcall*)(uint64_t, uint64_t, uint64_t, uint64_t,
                                                          uint64_t, uint64_t, uint64_t);
@@ -159,6 +169,24 @@ namespace trinity::game
             uint64_t anchorVt = 0;
             int nTag1 = 0;
             int rtTotal = 0;
+
+            // Distinct-vtable histogram across the WHOLE list, not just the
+            // tag==1-seeded pool: the live session on 2026-09-06 found a
+            // confirmed protagonist switch never changed rtTotal or which
+            // roster slot passed round-trip, which only proves the six
+            // roster-slot bodies (anchorVt's class) are not the live
+            // resolver - it does NOT prove the live body is even reachable
+            // from this seed. If the list holds far more distinct vtables
+            // than the ~6-member class anchorVt finds, the currently-played
+            // body may sit under a DIFFERENT, never-inspected vtable.
+            constexpr int kMaxVtBuckets = 48;
+            constexpr int kMaxSmallAddrs = 4;
+            uint64_t vtBucket[kMaxVtBuckets] = {};
+            int vtBucketCount[kMaxVtBuckets] = {};
+            uint64_t vtSmallAddrs[kMaxVtBuckets][kMaxSmallAddrs] = {};
+            int nVtBuckets = 0;
+            int nVtOverflow = 0;
+
             for (uint32_t i = 0; i < count; ++i)
             {
                 uint64_t ch = 0;
@@ -171,6 +199,32 @@ namespace trinity::game
                     mem::Read64(static_cast<uintptr_t>(possessor) + kOff_Possessor_Pawn, &pawn) &&
                     pawn == ch)
                     ++rtTotal;
+
+                uint64_t vt = 0;
+                if (mem::Read64(static_cast<uintptr_t>(ch), &vt) && vt >= kMinPointer)
+                {
+                    int slot = -1;
+                    for (int b = 0; b < nVtBuckets; ++b)
+                        if (vtBucket[b] == vt) { slot = b; break; }
+                    if (slot < 0 && nVtBuckets < kMaxVtBuckets)
+                    {
+                        slot = nVtBuckets++;
+                        vtBucket[slot] = vt;
+                    }
+                    if (slot >= 0)
+                    {
+                        // Track the first few members of every class, not just
+                        // anchorVt's: if a class turns out small (<=4) once
+                        // the whole list is walked, this is what lets the
+                        // report show WHICH objects they are, not just a
+                        // count - e.g. the single-member class discovered
+                        // 2026-09-06 that no probe so far has ever inspected.
+                        if (vtBucketCount[slot] < kMaxSmallAddrs)
+                            vtSmallAddrs[slot][vtBucketCount[slot]] = ch;
+                        ++vtBucketCount[slot];
+                    }
+                    else ++nVtOverflow;
+                }
 
                 uint64_t td = 0;
                 uint8_t tag = 0;
@@ -226,8 +280,186 @@ namespace trinity::game
                 }
             }
 
-            LOG("diag/mgrwalk: manager=0x%llX count=%u tag1=%d rtTotal=%d classMatches=%d [%s]",
-                static_cast<unsigned long long>(mgr), count, nTag1, rtTotal, nClassMatch, list);
+            // Summarize the histogram: how many distinct vtables exist at
+            // all (nVtBuckets, capped at kMaxVtBuckets - nVtOverflow says if
+            // that cap was hit), and the top few by member count. If the
+            // list is dominated by a handful of huge classes (NPC/monster
+            // archetypes) plus many small ones, a small anchorVt-sized class
+            // is unremarkable noise; if most classes are large and anchorVt
+            // is one of the SMALLEST, that is itself informative.
+            int order[kMaxVtBuckets];
+            for (int i = 0; i < nVtBuckets; ++i) order[i] = i;
+            for (int i = 0; i < nVtBuckets; ++i)
+                for (int j = i + 1; j < nVtBuckets; ++j)
+                    if (vtBucketCount[order[j]] > vtBucketCount[order[i]])
+                    {
+                        int t = order[i]; order[i] = order[j]; order[j] = t;
+                    }
+            char top[256] = {};
+            size_t topLen = 0;
+            for (int i = 0; i < nVtBuckets && i < 5; ++i)
+            {
+                const int n = snprintf(top + topLen, sizeof(top) - topLen, "%s0x%llX:n=%d",
+                                       topLen ? "," : "",
+                                       static_cast<unsigned long long>(vtBucket[order[i]]),
+                                       vtBucketCount[order[i]]);
+                if (n > 0) topLen += static_cast<size_t>(n);
+            }
+
+            // classMatches above stops counting at 6 (it only needed enough
+            // to log); look up anchorVt's TRUE member count from the
+            // histogram so a silently-truncated class size doesn't get
+            // mistaken for "the class has exactly 6 members".
+            int anchorTrueCount = -1;
+            for (int i = 0; i < nVtBuckets; ++i)
+                if (vtBucket[i] == anchorVt) { anchorTrueCount = vtBucketCount[i]; break; }
+
+            LOG("diag/mgrwalk: manager=0x%llX count=%u tag1=%d rtTotal=%d classMatches=%d(true=%d) [%s]",
+                static_cast<unsigned long long>(mgr), count, nTag1, rtTotal, nClassMatch,
+                anchorTrueCount, list);
+            LOG("diag/mgrwalk2: distinct vtables=%d%s top5(vt:memberCount)=[%s]",
+                nVtBuckets, nVtOverflow ? "+ (capped)" : "", top);
+
+            // Every class with <=4 members, in full: which object(s), tag,
+            // round-trip. A class this small that anchorVt's seed never
+            // reaches (it only ever seeds from a tag==1 hit, and this build
+            // found anchorVt's own class has 100 members, all tag==1 - not a
+            // small "player" class at all) is the concrete candidate for
+            // "the live body sits under a vtable this walk never inspected".
+            char small[512] = {};
+            size_t smallLen = 0;
+            for (int b = 0; b < nVtBuckets; ++b)
+            {
+                if (vtBucketCount[b] > kMaxSmallAddrs || vtBucket[b] == anchorVt) continue;
+                for (int m = 0; m < vtBucketCount[b]; ++m)
+                {
+                    const uint64_t ch = vtSmallAddrs[b][m];
+                    uint64_t td = 0, possessor = 0, pawn = 0;
+                    uint8_t tag = 0;
+                    mem::Read64(static_cast<uintptr_t>(ch) + kOff_Owner_TypeDesc, &td);
+                    if (td >= kMinPointer) mem::Read8(static_cast<uintptr_t>(td) + 1, &tag);
+                    const bool rtOk =
+                        mem::Read64(static_cast<uintptr_t>(ch) + kOff_Owner_Possessor, &possessor) &&
+                        possessor >= kMinPointer &&
+                        mem::Read64(static_cast<uintptr_t>(possessor) + kOff_Possessor_Pawn, &pawn) &&
+                        pawn == ch;
+                    const int n = snprintf(small + smallLen, sizeof(small) - smallLen,
+                                           "%svt=0x%llX:0x%llX:tag=%u:rt=%s", smallLen ? "," : "",
+                                           static_cast<unsigned long long>(vtBucket[b]),
+                                           static_cast<unsigned long long>(ch), tag,
+                                           rtOk ? "OK" : "no");
+                    if (n > 0) smallLen += static_cast<size_t>(n);
+                }
+            }
+            if (smallLen)
+                LOG("diag/mgrwalk3: small classes (<=%d members, excl. anchorVt's own) [%s]",
+                    kMaxSmallAddrs, small);
+        }
+
+        // The TU 2.00.00 WalkSelfChain identity proof, unchanged: owner ->
+        // actor(+0x68) -> marker(+0x20) -> root(+0x18) -> statArray(+0x58),
+        // require the array's first entry to type-check as Health. Read-only;
+        // mirrors player.cpp's WalkSelfChain exactly (see offsets.h comments
+        // next to kOff_Owner_Actor etc.) so a future promotion to VERIFIED
+        // can copy this logic instead of re-deriving it.
+        bool WalkSelfChainRO(uintptr_t owner, uintptr_t* outRoot, uintptr_t* outArr)
+        {
+            uint64_t actor = 0, marker = 0, root = 0, arr = 0;
+            if (!mem::Read64(owner + kOff_Owner_Actor, &actor) || actor < kMinPointer) return false;
+            if (!mem::Read64(static_cast<uintptr_t>(actor) + kOff_Actor_StatusMarker, &marker) ||
+                marker < kMinPointer)
+                return false;
+            if (!mem::Read64(static_cast<uintptr_t>(marker) + kOff_Marker_TargetOwner, &root) ||
+                root < kMinPointer)
+                return false;
+            if (!mem::Read64(static_cast<uintptr_t>(root) + kOff_Root_StatArray, &arr) ||
+                arr < kMinPointer)
+                return false;
+            uint32_t type = 0;
+            if (!mem::Read32(static_cast<uintptr_t>(arr) + kOff_StatEntry_Type, &type) ||
+                static_cast<int32_t>(type) != StatType_Health)
+                return false;
+            *outRoot = static_cast<uintptr_t>(root);
+            *outArr = static_cast<uintptr_t>(arr);
+            return true;
+        }
+
+        // Re-does ManagerWalkTick's manager resolve through the SECOND slot
+        // (g_selfChainMgrSlot - confirmed the same underlying manager, see
+        // diag_player_accessor.h), then runs the actual TU 2.00.00 selection
+        // algorithm instead of tag/round-trip: every member of the
+        // protagonist-class vtable whose WalkSelfChain resolves is an active
+        // protagonist. Read-only throughout - no write, no call into game
+        // code, same offsets already used (and confirmed externally) elsewhere
+        // in this file.
+        void SelfChainTick()
+        {
+            if (!g_selfChainMgrSlot) return;
+
+            static unsigned long long s_nextAt = 0;
+            const unsigned long long now = GetTickCount64();
+            if (now < s_nextAt) return;
+            s_nextAt = now + 3000; // offset from the other two ticks' cadence
+
+            uint64_t p = 0, mgr = 0, data = 0;
+            if (!mem::Read64(g_selfChainMgrSlot, &p) || p < kMinPointer) return;
+            if (!mem::Read64(static_cast<uintptr_t>(p), &mgr) || mgr < kMinPointer) return;
+            if (!mem::Read64(static_cast<uintptr_t>(mgr) + kOff_CharMgr_ListData, &data) ||
+                data < kMinPointer)
+                return;
+            uint32_t count = 0;
+            if (!mem::Read32(static_cast<uintptr_t>(mgr) + kOff_CharMgr_ListCount, &count) ||
+                count == 0 || count > kCharList_MaxCount)
+                return;
+
+            uint64_t anchorVt = 0;
+            for (uint32_t i = 0; i < count && !anchorVt; ++i)
+            {
+                uint64_t ch = 0;
+                if (!mem::Read64(static_cast<uintptr_t>(data) + 8ull * i, &ch) || ch < kMinPointer)
+                    continue;
+                uint64_t td = 0;
+                uint8_t tag = 0;
+                if (!mem::Read64(static_cast<uintptr_t>(ch) + kOff_Owner_TypeDesc, &td) ||
+                    td < kMinPointer)
+                    continue;
+                if (!mem::Read8(static_cast<uintptr_t>(td) + 1, &tag) || tag != 1) continue;
+                mem::Read64(static_cast<uintptr_t>(ch), &anchorVt);
+            }
+            if (!anchorVt)
+            {
+                LOG("diag/selfchain: no tag==1 seed found this tick - not in world?");
+                return;
+            }
+
+            char list[512] = {};
+            size_t listLen = 0;
+            int nResolved = 0;
+            for (uint32_t i = 0; i < count; ++i)
+            {
+                uint64_t ch = 0;
+                if (!mem::Read64(static_cast<uintptr_t>(data) + 8ull * i, &ch) || ch < kMinPointer)
+                    continue;
+                uint64_t vt = 0;
+                if (!mem::Read64(static_cast<uintptr_t>(ch), &vt) || vt != anchorVt) continue;
+
+                uintptr_t root = 0, arr = 0;
+                if (!WalkSelfChainRO(static_cast<uintptr_t>(ch), &root, &arr)) continue;
+
+                uint64_t td = 0;
+                uint8_t tag = 0;
+                mem::Read64(static_cast<uintptr_t>(ch) + kOff_Owner_TypeDesc, &td);
+                if (td >= kMinPointer) mem::Read8(static_cast<uintptr_t>(td) + 1, &tag);
+
+                ++nResolved;
+                const int n = snprintf(list + listLen, sizeof(list) - listLen,
+                                       "%s0x%llX:tag=%u", listLen ? "," : "",
+                                       static_cast<unsigned long long>(ch), tag);
+                if (n > 0) listLen += static_cast<size_t>(n);
+            }
+
+            LOG_OK("diag/selfchain: anchorVt=0x%llX resolved=%d active protagonist(s) [%s]",
+                   static_cast<unsigned long long>(anchorVt), nResolved, list);
         }
 
         // Pass-through: every argument and the original result are forwarded
@@ -241,6 +473,24 @@ namespace trinity::game
             const uint64_t result = oMoveUpdateProbe(a1, a2, a3, a4, a5, a6, a7);
             ProbeTick();
             ManagerWalkTick();
+            SelfChainTick();
+
+            // Fallback driver: as of 2026-09-09, mod.cpp installs Teleport
+            // BEFORE this probe specifically so Teleport's own hkMoveUpdate
+            // (a strict superset - it also drives g_playerMoveOwner, Super
+            // Jump, Game Speed) claims kSig_MoveUpdate first; this hook then
+            // fails to install (MinHook refuses a second hook on an
+            // already-hooked target) and this line never runs. This only
+            // takes over for a TRANSIENT failure in Teleport's own
+            // MH_CreateHook/MH_EnableHook call (kSig_MoveUpdate itself
+            // still resolves, the hook API call fails) - Teleport::Install()
+            // returns false whenever kSig_MoveUpdate fails to resolve at
+            // all, which means this hook would fail identically (same dead
+            // signature) and there is no driver either way in that case.
+            // Player itself gates every write behind its own toggles (off
+            // by default) and behind WalkSelfChain resolving successfully,
+            // so this is safe to drive unconditionally when it does run.
+            Player::RefreshSelf();
             return result;
         }
     }
@@ -276,6 +526,41 @@ namespace trinity::game
         g_accessorAddr = addr;
         g_mgrSlot = slot;
 
+        // The second, independently-verified manager slot (see offsets.h
+        // kSig_CharMgrSlot_TU20100_A/_B) - confirmed by direct live memory
+        // read to resolve the SAME manager `slot` above already reaches, so
+        // this does not need to succeed for the probe overall to work; it
+        // only feeds SelfChainTick, which no-ops without it.
+        {
+            const uintptr_t a = mem::FindPattern(kSig_CharMgrSlot_TU20100_A);
+            if (a && mem::CountMatches(kSig_CharMgrSlot_TU20100_A) == 1)
+            {
+                const uintptr_t s = mem::ResolveRipAt(a + kRipOff_CharMgrSlot_TU20100_A, 7);
+                const uintptr_t b = mem::FindPattern(kSig_CharMgrSlot_TU20100_B);
+                const uintptr_t sB = (b && mem::CountMatches(kSig_CharMgrSlot_TU20100_B) == 1)
+                                         ? mem::ResolveRipAt(b + kRipOff_CharMgrSlot_TU20100_B, 7)
+                                         : 0;
+                if (s && sB && s == sB)
+                {
+                    g_selfChainMgrSlot = s;
+                    LOG_OK("diag/selfchain: manager slot at RVA 0x%llX, confirmed by two "
+                           "independent anchors (COMPATIBILITY.md documents 0x6C29C68).",
+                           static_cast<unsigned long long>(s - mod.base));
+                }
+                else
+                {
+                    LOG_ERR("diag/selfchain: anchors A/B disagree or one failed (A=0x%llX "
+                            "B=0x%llX) - refusing to trust either; SelfChainTick will no-op.",
+                            static_cast<unsigned long long>(s), static_cast<unsigned long long>(sB));
+                }
+            }
+            else
+            {
+                LOG_ERR("diag/selfchain: anchor A not found or ambiguous - this build moved "
+                        "again; SelfChainTick will no-op.");
+            }
+        }
+
         if (!mem::InstallHook("diag/accessor: move-update tick (read-only, pass-through)",
                               kSig_MoveUpdate, "player-accessor probe disabled",
                               &hkMoveUpdateProbe, &oMoveUpdateProbe, &g_moveUpdateProbeTarget))
@@ -294,5 +579,6 @@ namespace trinity::game
         mem::RemoveHook(&g_moveUpdateProbeTarget);
         g_accessorAddr = 0;
         g_mgrSlot = 0;
+        g_selfChainMgrSlot = 0;
     }
 }

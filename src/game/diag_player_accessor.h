@@ -20,24 +20,56 @@ namespace trinity::game
     //    that purpose.
     //  - ManagerWalkTick: re-resolves the character-manager global from the
     //    accessor's own RIP-relative slot (a candidate replacement for
-    //    player.cpp's g_charMgrGlobal - this part is LIKELY, not broken: a
-    //    3.5h session found a stable manager pointer whose list count
-    //    tracked world population) and runs the SAME vtable-shared-class
-    //    walk Player::TickResolveSelf already uses on TU 2.00.00. That walk
-    //    always finds the same fixed set of six roster-slot bodies. LIVE
-    //    FINDING (2026-09-06): the accessor's fixed owner is roster slot 0,
-    //    and the aggregate round-trip check passed for the whole session -
-    //    but that was only checked in aggregate, seeded by the same broken
-    //    tag==1 test used for the accessor. This build logs round-trip and
-    //    tag PER roster slot plus a whole-list round-trip total, to tell
-    //    apart "round-trip is a per-object class invariant here too" from
-    //    "round-trip is the actual possession signal, tag just wasn't."
+    //    player.cpp's g_charMgrGlobal - this part is LIKELY, not broken: two
+    //    live sessions totalling 5.5h found a stable manager pointer whose
+    //    list count tracked world population) and runs the SAME
+    //    vtable-shared-class walk Player::TickResolveSelf already uses on
+    //    TU 2.00.00. That walk always finds the same fixed set of six
+    //    roster-slot bodies. CONFIRMED (2026-09-06, two sessions, one incl.
+    //    a real protagonist switch): the accessor's fixed owner is roster
+    //    slot 0, and it is the ONLY list entry (rtTotal=1 out of ~200-1000)
+    //    that ever passes the possessor round-trip, in every one of 2678
+    //    samples across the whole session including the switch. Round-trip
+    //    is therefore ALSO a dead end for player resolution here, same as
+    //    tag==1 - both selection strategies tried on top of this manager
+    //    are broken. Open question now: is the live body even reachable
+    //    from anchorVt's seed at all, or does it carry a wholly different
+    //    vtable never inspected? This build adds a full-list vtable
+    //    histogram (diag/mgrwalk2) plus anchorVt's true uncapped member
+    //    count, to check that before hunting Ghidra for a different anchor.
     //
-    // Neither probe hooks anything gameplay-relevant, feeds Player/Teleport,
-    // or writes any game memory. Once the open question is answered - a
-    // resolver promoted to VERIFIED in offsets.h and wired into Player, or
-    // round-trip disproved as a possession signal too - delete the
-    // corresponding probe; it has no other purpose.
+    //  - SelfChainTick (added 2026-09-06, BREAKTHROUGH): resolves the
+    //    manager from a SECOND, independently-verified slot signature
+    //    (kSig_CharMgrSlot_TU20100_A/_B, RVA 0x6C29C68 - confirmed by direct
+    //    live memory read to be the SAME manager object ManagerWalkTick's
+    //    slot already reaches, so this is not a different list, just a
+    //    safer way to reach it without ever calling the accessor) and runs
+    //    TU 2.00.00's actual, previously-never-implemented
+    //    TickResolveSelf/WalkSelfChain algorithm: seed the protagonist-class
+    //    vtable from a tag==1 hit (as before), then for every member of that
+    //    class, walk owner+0x68->actor, actor+0x20->marker, marker+0x18->
+    //    root, root+0x58->statArray, and require statArray to type-check as
+    //    Health - unlike tag/round-trip, this correctly excludes the pool's
+    //    inactive slots and resolves exactly the SET of active protagonists
+    //    (Kliff + whoever you're playing + any summoned companion), with
+    //    ZERO offset changes from the TU 2.00.00 source. Confirmed externally
+    //    (read-only ReadProcessMemory, no injection) against a working
+    //    third-party TU 2.01.00 build before this was written - this tick
+    //    re-does the same walk through OUR OWN signature-scanning
+    //    infrastructure, which has not yet been live-tested. See
+    //    COMPATIBILITY.md "BREAKTHROUGH (2026-09-06)".
+    //
+    // ProbeTick/ManagerWalkTick/SelfChainTick never hook anything gameplay-
+    // relevant or write any game memory. This install ALSO now drives
+    // Player::RefreshSelf() every tick (2026-09-07, after SelfChainTick
+    // confirmed live across a real protagonist switch) - Teleport normally
+    // owns that driver via its own hkMoveUpdate, but Teleport stays
+    // uninstalled on an unverified build, so this probe is the substitute
+    // game-thread tick. Player's own toggles (off by default) and its
+    // WalkSelfChain-validated sets keep this safe; see player.cpp. Once
+    // Teleport (or a real replacement driver) is verified for this build,
+    // remove this call and every probe in this file - they have no other
+    // purpose.
     class PlayerAccessorProbe
     {
     public:
