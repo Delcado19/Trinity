@@ -132,15 +132,35 @@ namespace trinity
             if (State::Get().easyParry)
                 game::Parry::SetEnabled(true);
 
-            // Dye/Inventory/Equipment/Friendly are NOT enabled here. Dye
-            // specifically was checked and is NOT ready despite this
-            // session's DyeUpsert fix: Install() fails at the FIRST
-            // signature it checks (kSig_DyeApplyBatch, confirmed offline: 0
-            // matches on this build) before ever reaching the fixed
-            // DyeUpsert fallback chain - two more signatures
-            // (kSig_DyeApplyBatch, kSig_EquipBatch) still need re-deriving
-            // first. The others each need their own single-body identity or
-            // engine-call verification this session did not establish.
+            // Inventory (see COMPATIBILITY.md, 2026-09-10 - found via a
+            // user-supplied Cheat Engine table built against this exact
+            // build, not the gugi97 live-log technique). Install()'s two
+            // FATAL checks - kSig_InvGetItemQty and kSig_InvGetHolder - now
+            // both resolve, so this always succeeds. What actually works:
+            // the durable container walk (kSig_InvCoreGlobal fixed too), so
+            // the item list populates on its own without waiting for the
+            // HUD to query a count. What does NOT work yet: quantity edits
+            // do not persist (kSig_InvCommit/kSig_InvHolderInsert, the
+            // server-holder capture paths, are still dead - see their own
+            // comments for why a client-only edit reverts on reconcile),
+            // Add Item is refused (kSig_TrItemValueCtor/
+            // kSig_InvCommitPlacement/kSig_InvFreePlacements all still
+            // dead), and Slot Size does not apply
+            // (kSig_InvSetExpandSlots still dead, falls back to its own
+            // non-fatal call-only path which also fails). A browsable,
+            // read-only inventory, not the full feature - each remaining
+            // signature fails closed with its own log line.
+            m_inventoryInstalled = game::Inventory::Install();
+
+            // Dye/Equipment/Friendly are NOT enabled here. Dye specifically
+            // was checked and is NOT ready despite this session's DyeUpsert
+            // fix: Install() fails at the FIRST signature it checks
+            // (kSig_DyeApplyBatch, confirmed offline: 0 matches on this
+            // build) before ever reaching the fixed DyeUpsert fallback
+            // chain - two more signatures (kSig_DyeApplyBatch,
+            // kSig_EquipBatch) still need re-deriving first. The others
+            // each need their own single-body identity or engine-call
+            // verification this session did not establish.
             m_initialized = true;
             LOG_WARN("Diagnostics-only mode: gameplay features are unavailable for this game build.");
             LOG_OK("Overlay ready - INSERT (or LB + DOWN on controller) toggles the menu.");
@@ -218,6 +238,12 @@ namespace trinity
         {
             game::Teleport::Remove();
             m_teleportInstalled = false;
+        }
+
+        if (m_inventoryInstalled)
+        {
+            game::Inventory::Remove();
+            m_inventoryInstalled = false;
         }
 
         if (m_gameplayHooksInstalled)

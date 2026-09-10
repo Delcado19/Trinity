@@ -22,7 +22,7 @@ single match means only that the byte sequence exists once.
 | Overlay/UI | PASS | User opened the menu; log confirms rendering at 2560x1440 with 6 back buffers |
 | Version detection | PASS | Revision 2760 was identified as TU 2.01.00 and remained unverified |
 | Process gate | PASS | Runtime log contains only `CrimsonDesert.exe`; helper processes cannot start Trinity initialization |
-| Gameplay hook gate | PASS, narrowed 2026-09-07, widened 2026-09-08/09 | `mod.cpp`'s unverified-build branch calls `game::Player::Install()`, `game::World::Install()` (narrowly), `game::Parry::Install()`, and `game::Teleport::Install()`; Inventory, Dye, Equipment, Friendly still do not run on this build |
+| Gameplay hook gate | PASS, narrowed 2026-09-07, widened 2026-09-08/09/10 | `mod.cpp`'s unverified-build branch calls `game::Player::Install()`, `game::World::Install()` (narrowly), `game::Parry::Install()`, `game::Teleport::Install()`, and `game::Inventory::Install()` (browse-only); Dye, Equipment, Friendly still do not run on this build |
 | Character/player resolution | VERIFIED (2026-09-07) | `WalkSelfChain` (unchanged TU 2.00.00 offsets: `+0x68/+0x20/+0x18/+0x58`) confirmed live on our own signature-scanning build across a real protagonist switch (prior session) and now end-to-end through the actual write path in real play (this session). The manager itself was never broken - both known slots (`0x6C29C88`, `0x6C29C68`) resolve the identical object; `kCharMgrAnchors` now includes two live-verified TU 2.01.00 entries (RVA `0x6C29C68`). See "BREAKTHROUGH" under "Player-accessor live probe" |
 | Stat commit | VERIFIED (2026-09-07) | `kSig_StatCommit_TU20100_Candidate` fired correctly in a long real play session (`stat-commit matched fallback pattern #1`, no errors/crashes) and its God Mode consumer was confirmed working by the user |
 | Damage application | BROKEN at runtime despite offline match | `kSig_DamageApply` matches uniquely offline (RVA `0x1718500`, re-confirmed against the installed exe) but never resolves live - retried 753 times over 5 real hours, still NOT FOUND every time. Not a timing issue (ruled out by the retry test); root cause unknown, needs a live memory-read comparison next session. One-Hit Kill / damage multipliers / Fire-Cold immunity / No Fall Damage all depend on this and stay non-functional. God Mode / Infinite Stamina / Infinite Spirit are unaffected (different hook, confirmed working) |
@@ -33,7 +33,7 @@ single match means only that the byte sequence exists once.
 | Position tracking | LIKELY-VERIFIED (2026-09-10) | Unique match retains the seven-argument integrator and `+0x90`/`+0xC0`/`+0xD0` roles; player exclusivity is unverified. `kSig_MoveUpdate` (the fatal signature) installed cleanly (log: `teleport: pathing helper hook installed @ 0x1435C8000`); a live coordinate warp completed with target-world and observed-world matching exactly (`teleport: warp complete target-world -9406.24 564.77 -4562.35 ... observed-world -9406.24 564.77 -4562.35`). Super Jump also confirmed working by the user in the same session. |
 | Locomotion/Super Run | VERIFIED (2026-09-10) | Old `kSig_LocoStepper` dead; `kSig_LocoStepper_TU20100_Candidate` (found by walking the airborne-mover anchor to its callee, see "LocoStepper" section) installed live at exactly the predicted RVA (log: `teleport: locomotion-stepper hook installed @ 0x1435BE940`, matching Ghidra's `ENTRY=1435be940`). Confirmed working in real play by the user. |
 | Fast travel | BROKEN | `kSig_TravelToNode`/`kSig_DestinationUpdate`/scene-registry still have zero matches; fails closed (menu stays empty, logged) |
-| Inventory read/write | BROKEN | Holder accessor survives; most inventory primitives have zero matches |
+| Inventory read/write | LIKELY (browse-only), re-derived 2026-09-10 | Both FATAL signatures (`kSig_InvGetItemQty`, `kSig_InvGetHolder`) now resolve; `kSig_InvCoreGlobal` also fixed, so the durable container walk populates the list without waiting on the HUD. Quantity edits do NOT persist yet (`kSig_InvCommit`/`kSig_InvHolderInsert`, the server-holder capture paths, still dead) and Add Item/Slot Size are still refused (their own signatures still dead). See "Inventory re-derived via a Cheat Engine table" below. NOT yet live-tested |
 | Localization lookup | UNKNOWN | `kSig_LocStringGet` has one match; semantics unverified |
 | Time of day | BROKEN | ToD global survives; master/tick/realm paths do not |
 | Equipment/dye | BROKEN | Refresh survives; batch/dye operations do not |
@@ -1075,3 +1075,107 @@ sub-signature fails closed with its own log line rather than doing
 something wrong. `kSig_DestinationUpdate`/`kSig_TravelToNode`/scene-registry
 remain dead - Teleport to Destination and the fast-travel menu stay
 grey/empty until those are re-derived. NOT yet live-tested.
+
+### Inventory re-derived via a user-supplied Cheat Engine table, not the gugi97 log technique (2026-09-10)
+
+8 of `Inventory::Install()`'s 9 signatures were `0 matches` on this build
+(only `kSig_InvGetHolder` survived), and `Install()` returns `false`
+immediately at the FIRST one it checks (`kSig_InvGetItemQty`) - so the
+whole feature was dead, not partially working. gugi97's build was checked
+first (same live-log-to-RVA technique that solved five other signatures
+this session) and came up empty: it prints three inventory DATA-table
+addresses (`ItemGroupInfo`/`stringinfo`/`InventoryInfo`), but those resolve
+via a string-based table search independent of the 8 dead byte signatures -
+not usable evidence for any of them (consistent with the LocoStepper
+finding: gugi's fork does not log everything this project's own code
+would).
+
+A static walk from the one surviving signature (`kSig_InvGetHolder`) was
+tried next and abandoned: it has 677 callers (vs. LocoStepper's 12), far
+too generic to narrow down by hand, and its own callees are two small,
+unrelated-looking utility functions.
+
+**Solved instead from a source outside this project's usual toolkit: the
+user supplied four Cheat Engine table files from their own collection.**
+One of them, `Crimson Desert Ultimate Table.CT` (`by JenAri Dev and
+economicalwhale`, v5.0), states in its own header that it targets
+**"GAME 2.01.00 (build 1.0.0.2760)"** - the exact file version this whole
+port targets - and its Lua source contains detailed, dated commentary from
+its own authors independently re-deriving signatures for the exact same
+2.01.00 recompile this project has been fighting all session. This is a
+new kind of source for this project (not a live process, not another
+Trinity fork) but the same underlying legitimacy as the gugi97 technique:
+public, already-compiled community tooling targeting the same binary,
+consulted read-only, with every claim independently re-verified against
+this project's own copy of the executable before being trusted (same
+`audit.py`/Ghidra discipline as every other signature this session, not a
+blind copy of someone else's AOB).
+
+- **`kSig_InvGetItemQty` (FATAL, blocks all of `Install()`):** the CT
+  file's `invCheck` AOB (`48 83 78 10 ?? 7E ?? 80 B8 A0 00 00 00` - a
+  bucket-capacity check, "CMP [rax+0x10],0; JLE; CMP byte[rax+0xA0],0")
+  matched offline exactly once, at RVA `0x20819AD`, inside a small function
+  (Ghidra `ENTRY=0x142081950`). Its prologue register-saves - `MOV
+  RDI,R8(keyPtr); MOVZX EBX,DX(typeId); MOV RSI,RCX(container)` - match
+  this project's own already-declared `GetItemQty_t` signature
+  (`int64_t(void* container, uint16_t typeId, void* keyPtr)`)
+  field-for-field; the old dead pattern's visible tail (`49 8B E8 0F B7
+  DA`) turns out to be the same `MOVZX EBX,DX` plus a save of the same R8
+  argument, just to a different register (`RBP` there vs `RDI` here) - the
+  usual prologue-reshape pattern, not a semantic change. Built a fresh
+  entry-anchored pattern from Ghidra's own byte dump and confirmed it
+  offline-unique at the same RVA.
+- **`kSig_InvCoreGlobal` (the durable container-list walk, non-fatal but
+  important - without it the list only appears once the HUD happens to
+  query a count):** the same CT file's own source comments document this
+  EXACT problem already solved by its authors: *"2.01.00 RECOMPILED THE
+  HEAD OF THIS SEQUENCE, and that is the whole of 'the container editor was
+  not found in this build'... MEASURED against 2.01.00: the old spelling
+  has 0 matches, the new one has exactly 1, at exe+5F4C33, and it yields G
+  = exe+6C29760 with pm/ent/blk/mo unchanged at 30/50/68/B8."* Their
+  `pm/blk` offsets (`0x30`/`0x50`) are exactly this project's own
+  `kOff_Global_Mid`/`kOff_Mid_Container` - independent confirmation the
+  chain tail never changed, only its head (`mov rax, cs:<global>` becomes
+  `mov rcx, cs:<global>`, preceded by an inserted `lea rdx,[rsp+?]`).
+  Verified their claimed pattern against this project's own copy of the
+  executable (same SHA-256): matches exactly once at RVA `0x5F4C33`, and
+  Ghidra independently confirms the RIP load resolves to
+  `[0x146C29760]` = RVA `0x6C29760`, exactly matching their claim.
+
+Both offline-verified unique via `audit.py` against the real
+`candidates-2.01.00.json` manifest. Wired via `InstallHookAny`
+(GetItemQty) and `FindPatternAny` with a per-variant RIP-offset
+(InvCoreGlobal, since the old and new patterns' RIP-mov sits at a
+different byte offset within each pattern). `Inventory::Install()` is now
+wired into `mod.cpp`'s unverified-build branch: both FATAL checks resolve,
+so it always succeeds. Checked every remaining dependency before writing
+that down as a real result, not a partial-looking one:
+`kSig_InvSetExpandSlots` (Slot Size), `kSig_InvCommit`/`kSig_InvHolderInsert`
+(server-holder capture - what makes a quantity edit persist instead of
+reverting on reconcile) and the Add Item chain
+(`kSig_TrItemValueCtor`/`kSig_InvCommitPlacement`/`kSig_InvFreePlacements`)
+are all still independently confirmed `0 matches` and all fail closed with
+their own log line (none of them are FATAL to `Install()` itself). Net
+result: **a browsable, read-only inventory** - the list populates and item
+counts can be read, but editing a quantity will not stick, Add Item is
+refused, and Slot Size does not apply. Build 2026-09-10 compiles clean.
+**NOT yet live-tested.**
+
+Two more leads surfaced in these CT files, not yet acted on:
+- `CrimsonDesert.CT`'s own changelog-equivalent notes (different file, not
+  the Ultimate Table) document a "Bag Space" fix ("its signature was pinned
+  to register choices the recompile changed") that likely corresponds to
+  `kSig_InvSetExpandSlots` - not yet located precisely enough to build a
+  pattern from.
+- The Ultimate Table's changelog also documents, unprompted, a fix for the
+  **long-standing, unrelated `damage-apply` mystery** this project has
+  never resolved (see "Bug found and fixed: damage-apply consistently
+  failed to resolve" above): *"No Fall Damage works again... Its old site
+  was deleted by 2.01.00, so it is rebuilt on the damage dispatcher: damage
+  aimed at YOU with no attacker behind it is the world, so it is
+  cancelled."* This suggests `kSig_DamageApply`'s target function may not
+  just be hard to resolve at runtime - it may have been **compiled away
+  entirely** on this build, which would explain why a byte-unique offline
+  match never once resolves live no matter how long the retry loop runs.
+  Worth a dedicated follow-up session against this exact CT file before
+  spending more `ReadProcessMemory` time on the old theory.

@@ -31,5 +31,6 @@ namespace trinity
         bool    m_worldInstalled = false;
         bool    m_parryInstalled = false;
         bool    m_teleportInstalled = false;
+        bool    m_inventoryInstalled = false;
     };
 }

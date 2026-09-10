@@ -624,6 +624,26 @@ namespace trinity::game
     // editing it does not change spendable currency.)
     inline constexpr const char* kSig_InvGetItemQty =
         "48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC 20 49 8B E8 0F B7 DA";
+
+    // TU 2.01.00: the old signature has 0 matches. Found via a Cheat Engine
+    // table built specifically against this exact build (1.0.0.2760,
+    // "Crimson Desert Ultimate Table.CT" v5.0) that the user supplied - its
+    // own AOB for the bucket-capacity check (`CMP [rax+0x10],0; JLE; CMP
+    // byte[rax+0xA0],0`) matched offline at RVA 0x20819AD, inside a small
+    // function whose prologue register-saves match this signature's
+    // 3-argument shape exactly: `MOV RDI,R8(keyPtr); MOVZX EBX,DX(typeId);
+    // MOV RSI,RCX(container)` - the OLD dead pattern's tail `49 8B E8 0F B7
+    // DA` is the same MOVZX plus a save of the SAME R8 argument, just to a
+    // different register (RBP there, RDI here) - the game's own three-
+    // argument GetItemQuantity signature this file already declares
+    // (`GetItemQty_t = int64_t(container, uint16_t typeId, void* keyPtr)`)
+    // matches this candidate's arguments field-for-field. Entry verified via
+    // Ghidra (ENTRY=0x142081950). Offline-verified unique.
+    inline constexpr const char* kSig_InvGetItemQty_TU20100_Candidate =
+        "48 89 5C 24 10 48 89 74 24 18 57 48 83 EC 30 49 8B F8 0F B7 DA 48 8B F1 "
+        "48 8B 41 08 48 8D 50 08 33 C9 48 85 C0 48 0F 44 D1 41 B0 01 48 8B 12 "
+        "48 8D 4C 24 20 E8 ?? ?? ?? ??";
+
     inline constexpr const char* kSig_InvGetHolder =
         "40 53 48 83 EC 20 48 8B 41 ? 48 8B D9 48 8B 48";
 
@@ -747,6 +767,26 @@ namespace trinity::game
         "48 89 54 24 ? 53 48 83 EC 30 48 8B DA C7 44 24 20 00 00 00 00 "
         "48 8B 05 ? ? ? ? 48 8B 50 30 48 8B 52 50 48 8B CB E8";
     inline constexpr uintptr_t kOff_InvCoreGlobal_Mov = 0x15; // mov rax, cs:<global>
+
+    // TU 2.01.00: the old signature has 0 matches - "the head of this
+    // sequence was recompiled" (same finding independently reached by the
+    // user-supplied Cheat Engine table, "Crimson Desert Ultimate Table.CT"
+    // v5.0, built specifically against this build's file version
+    // 1.0.0.2760 - its own writeup calls this exact problem out: "2.01.00
+    // RECOMPILED THE HEAD OF THIS SEQUENCE, and that is the whole of 'the
+    // container editor was not found in this build'"). The chain TAIL is
+    // unchanged - same +0x30/+0x50 walk this file already declares below
+    // (kOff_Global_Mid, kOff_Mid_Container) - only the head changed from
+    // `mov rax, cs:<global>; mov rdx,[rax+30h]` to `lea rdx,[rsp+?]; mov
+    // rcx, cs:<global>; mov rcx,[rcx+30h]` (RAX -> RCX, and a LEA inserted
+    // before it). Verified via Ghidra against THIS build (ENTRY function
+    // contains this exact match): the RIP load resolves to
+    // `[0x146C29760]` = RVA 0x6C29760, matching the CT table's own
+    // independently-reported value exactly. Offline-verified unique.
+    inline constexpr const char* kSig_InvCoreGlobal_TU20100_Candidate =
+        "48 8D 54 24 ?? 48 8B 0D ?? ?? ?? ?? 48 8B 49 ?? E8 ?? ?? ?? ?? 90 44 38 7C 24 ?? "
+        "0F 84 ?? ?? ?? ?? 48 8B 44 24 ?? 48 85 C0 0F 84 ?? ?? ?? ?? 48 8B 40 ?? 48 8B 88 ?? ?? ?? ??";
+    inline constexpr uintptr_t kOff_InvCoreGlobal_Mov_TU20100 = 0x05; // mov rcx, cs:<global>
     inline constexpr uintptr_t kOff_Global_Mid        = 0x30; // global+0x30 -> mid
     inline constexpr uintptr_t kOff_Mid_Container     = 0x50; // mid+0x50 -> container
     inline constexpr uintptr_t kOff_Container_Sub     = 0x68; // container+0x68 -> sub-object

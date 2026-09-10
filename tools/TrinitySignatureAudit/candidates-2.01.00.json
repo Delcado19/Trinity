@@ -72,6 +72,20 @@
       "source": "COMPATIBILITY.md: BREAKTHROUGH (2026-09-08/09) - LocoStepper re-derived by walking the airborne-mover anchor to its callee",
       "pattern": "48 8B C4 48 89 58 10 44 88 48 20 48 89 48 08 55 56 57 41 54 41 55 41 56 41 57 48 8D A8 78 F8 FF FF 48 81 EC 50 08 00 00",
       "policy": "unique"
+    },
+    {
+      "id": "kSig_InvGetItemQty_TU20100_Candidate",
+      "feature": "Inventory item-quantity accessor candidate (the FATAL signature Inventory::Install() checks first). Found via a Cheat Engine table the user supplied, built specifically against this exact build (1.0.0.2760, 'Crimson Desert Ultimate Table.CT' v5.0) - its own AOB for the bucket-capacity check (`CMP [rax+0x10],0; JLE; CMP byte[rax+0xA0],0`) matched offline at RVA 0x20819AD inside a small function (Ghidra ENTRY=0x142081950) whose prologue register-saves (`MOV RDI,R8; MOVZX EBX,DX; MOV RSI,RCX`) match this project's own already-declared 3-argument GetItemQty_t signature (container, uint16_t typeId, void* keyPtr) field-for-field - the old dead pattern's tail (`49 8B E8 0F B7 DA`) is the same MOVZX plus a save of the same R8 argument, just to a different register (RBP there, RDI here).",
+      "source": "COMPATIBILITY.md: Inventory re-derived via a user-supplied build-matched Cheat Engine table (2026-09-10)",
+      "pattern": "48 89 5C 24 10 48 89 74 24 18 57 48 83 EC 30 49 8B F8 0F B7 DA 48 8B F1 48 8B 41 08 48 8D 50 08 33 C9 48 85 C0 48 0F 44 D1 41 B0 01 48 8B 12 48 8D 4C 24 20 E8 ?? ?? ?? ??",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_InvCoreGlobal_TU20100_Candidate",
+      "feature": "Durable inventory container-registry global anchor candidate. The same user-supplied, build-matched Cheat Engine table documents this exact problem in its own commentary: '2.01.00 RECOMPILED THE HEAD OF THIS SEQUENCE, and that is the whole of the container editor was not found in this build' - the chain TAIL (+0x30/+0x50, matching this project's own kOff_Global_Mid/kOff_Mid_Container) is unchanged; only the head changed from `mov rax, cs:<global>; mov rdx,[rax+30h]` to `lea rdx,[rsp+?]; mov rcx, cs:<global>; mov rcx,[rcx+30h]`. Verified via Ghidra against this exact build: the RIP load resolves to RVA 0x6C29760, matching the CT table's own independently-reported value exactly.",
+      "source": "COMPATIBILITY.md: Inventory re-derived via a user-supplied build-matched Cheat Engine table (2026-09-10)",
+      "pattern": "48 8D 54 24 ?? 48 8B 0D ?? ?? ?? ?? 48 8B 49 ?? E8 ?? ?? ?? ?? 90 44 38 7C 24 ?? 0F 84 ?? ?? ?? ?? 48 8B 44 24 ?? 48 85 C0 0F 84 ?? ?? ?? ?? 48 8B 40 ?? 48 8B 88 ?? ?? ?? ??",
+      "policy": "unique"
     }
   ]
 }

@@ -1246,8 +1246,16 @@ namespace trinity::game
 
     bool Inventory::Install()
     {
-        if (!mem::InstallHook("inventory: item-count accessor", kSig_InvGetItemQty, "inventory disabled",
-                              &hkGetItemQty, &oGetItemQty, &g_qtyTarget, 4))
+        // Falls back to the TU 2.01.00 candidate (offsets.h - found via a
+        // user-supplied Cheat Engine table built against this exact build)
+        // when the primary (TU 2.00.00) pattern does not match - same
+        // prologue-reshape shape as every other TU 2.01.00 fix this
+        // session, just with one extra saved argument (this function grew
+        // a 3rd parameter) rather than a full RSP->RAX prologue swap.
+        if (!mem::InstallHookAny("inventory: item-count accessor",
+                                 {kSig_InvGetItemQty, kSig_InvGetItemQty_TU20100_Candidate},
+                                 "inventory disabled",
+                                 &hkGetItemQty, &oGetItemQty, &g_qtyTarget))
             return false;
 
         const uintptr_t holderAddr = mem::FindPattern(kSig_InvGetHolder);
@@ -1362,10 +1370,22 @@ namespace trinity::game
 
         // Durable container walk (optional but preferred - without it the
         // list only appears once the game happens to query an item count,
-        // which is hit-or-miss at load).
-        const uintptr_t globAnchor = mem::FindPattern(kSig_InvCoreGlobal);
-        if (globAnchor)
-            g_coreGlobal = mem::ResolveRipAt(globAnchor + kOff_InvCoreGlobal_Mov, 7);
+        // which is hit-or-miss at load). TU 2.01.00 candidate (offsets.h -
+        // found via the same user-supplied Cheat Engine table, whose own
+        // writeup independently confirms this exact global RVA) recompiled
+        // only the HEAD of this sequence (RAX -> RCX, an extra LEA before
+        // it) - the +0x30/+0x50 tail this walk already uses is unchanged,
+        // so only the pattern and the RIP-mov offset differ per variant.
+        {
+            size_t which = 0;
+            const std::string_view coreGlobalSigs[] = { kSig_InvCoreGlobal, kSig_InvCoreGlobal_TU20100_Candidate };
+            const uintptr_t globAnchor = mem::FindPatternAny(coreGlobalSigs, 2, mem::GameModule(), &which);
+            if (globAnchor)
+            {
+                const uintptr_t movOff = which == 0 ? kOff_InvCoreGlobal_Mov : kOff_InvCoreGlobal_Mov_TU20100;
+                g_coreGlobal = mem::ResolveRipAt(globAnchor + movOff, 7);
+            }
+        }
         if (!g_coreGlobal)
             LOG_WARN("inventory: core-global anchor not found - inventory appears only after the HUD queries an item count.");
 
