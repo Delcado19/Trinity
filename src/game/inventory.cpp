@@ -1246,14 +1246,14 @@ namespace trinity::game
 
     bool Inventory::Install()
     {
-        // Falls back to the TU 2.01.00 candidate (offsets.h - found via a
-        // user-supplied Cheat Engine table built against this exact build)
-        // when the primary (TU 2.00.00) pattern does not match - same
-        // prologue-reshape shape as every other TU 2.01.00 fix this
-        // session, just with one extra saved argument (this function grew
-        // a 3rd parameter) rather than a full RSP->RAX prologue swap.
+        // gugi97's cross-referenced pattern (kSig_InvGetItemQty_Gugi) goes
+        // first: it is the one live-tested across 2760/2850/2944, targeting
+        // our current build (2944). The CT-table-derived TU20100 candidate is
+        // kept as a fallback only - it was never live-verified and may in
+        // fact resolve a different, lookalike function (see offsets.h) - and
+        // the original TU 2.00.00 pattern stays last for older builds.
         if (!mem::InstallHookAny("inventory: item-count accessor",
-                                 {kSig_InvGetItemQty, kSig_InvGetItemQty_TU20100_Candidate},
+                                 {kSig_InvGetItemQty_Gugi, kSig_InvGetItemQty_TU20100_Candidate, kSig_InvGetItemQty},
                                  "inventory disabled",
                                  &hkGetItemQty, &oGetItemQty, &g_qtyTarget))
             return false;

@@ -1179,3 +1179,129 @@ Two more leads surfaced in these CT files, not yet acted on:
   match never once resolves live no matter how long the retry loop runs.
   Worth a dedicated follow-up session against this exact CT file before
   spending more `ReadProcessMemory` time on the old theory.
+
+### Struct-offset drift + InvGetItemQty swap for TU 2.03.00, cross-referenced against gugi97's now-updated repo (2026-09-21)
+
+Steam auto-updated the game past this branch's 2760 target to TU 2.03.00
+(file version 1.0.0.2944) before any further live-testing could happen; 2760
+itself is gone from this machine, so it can no longer be independently
+re-verified. `gameversion.cpp`'s `kKnown` table now also fingerprints 2944 as
+unverified (same treatment 2760 got): gameplay hooks still install through
+the unverified-build branch, only `isVerified()`-gated code stays off.
+
+`upstream-gugi/fork/tu2.00.00` (previously stalled at v0.17.0/TU 2.00.00) has
+six months of real activity since, including two commits covering this exact
+transition: `a4db493` (TU 2.01.00/2760 - a full recompile, 30/47 = 64% of
+signatures broke - and TU 2.02.00/2850, which broke 0/41) and `e5b3303` (TU
+2.03.00/2944, current tip - broke exactly 2/42: `kSig_InvFreePlacements`, a
+baked-in jump displacement that broke while the function itself didn't move,
+and `kSig_TravelToNode`, recompiled and given a genuine 4th argument - neither
+is used by this project). Cross-checked every claim relevant to this port
+against this project's own `offsets.h`/`teleport.cpp` before changing
+anything:
+
+**Four silent struct-offset drifts, already wrong in this branch's code since
+2760 and never caught by any signature scan (a scan only proves the
+containing function still exists, not that every offset it reads is still
+correct):**
+
+- `kOff_MoveComp_MoveOwner` (teleport.cpp): `0x298` -> `0x2B8`. Free Flight's
+  `isPlayer` check compares `comp+off` against the real move-owner; with the
+  stale offset this simply never matched, so Free Flight would stay silently
+  dead - the hook installs cleanly and logs nothing wrong. Super Run/Super
+  Jump are unaffected (they don't use this check).
+- `kTls_RealmFlag` (offsets.h): `498` -> `509`. Affects Add Item's realm
+  gating (not wired live yet, would have been wrong once it is). A separate
+  TLS slot for the field clock also moved (502 -> 492) and still isn't
+  represented in this project's code at all - out of scope here, noted for
+  later.
+- `kOff_EquipComp_Table` (offsets.h): `0x80` -> `0x90`. Feeds Dye/Equipment's
+  table-descriptor read; neither feature is wired live on this branch yet
+  (Dye blocked on `kSig_DyeApplyBatch`/`kSig_EquipBatch`, both still dead), so
+  this had no live effect, only latent risk for when they are picked up.
+- `kOff_ItemDef_MaxEndurance` / `kOff_ItemDef_RepairDataList` (offsets.h):
+  `0x3F0`/`0x3F8` -> `0x400`/`0x408` (paired fields, same 0x10 shift -
+  ItemInfo's row grew above this point). Not currently read by any wired
+  feature.
+
+None of the four is independently re-verifiable against 2944 by this
+project's own static tooling (they are plain struct offsets, not byte
+patterns `audit.py`/Ghidra can scan for) - the correction is trusted on
+gugi's cross-build-tested word, same evidentiary tier as every other
+third-party-sourced fix this session, until a live diagnostic actually
+exercises Free Flight/Add Item/Dye on 2944.
+
+**`kSig_InvGetItemQty`: adopted gugi's independently re-derived pattern in
+place of this project's own CT-table-derived candidate.** The two patterns
+are structurally different (gugi's spills `typeId` to a stack slot and zeroes
+EDI; this project's candidate keeps both arguments in registers) - a
+different argument-handling STRATEGY, which argues for genuinely different
+functions rather than two compiles of the same one. Re-verified directly
+against the real, currently-installed 2944 executable via `audit.py`
+(`tools/TrinitySignatureAudit/candidates-2.03.00.json`, baseline SHA-256
+`6d348be9d52f81bd35cf7c55e73a5dbfc96cc8268438387c91f7f62c82381fa7`): **both
+patterns match uniquely, but at different RVAs** (gugi's at `0x240F870`, this
+project's old candidate at `0x21383E0`) - hard confirmation they are two
+distinct functions, not ambiguity in one signature. Deciding factor: gugi's
+pattern has been live-tested unmodified across three consecutive builds
+(2760/2850/2944) in a working build; this project's own candidate was never
+live-tested (its source build, 2760, no longer exists to test against).
+`kSig_InvGetItemQty_Gugi` now goes first in `Inventory::Install()`'s
+`InstallHookAny` list, with the CT-table candidate kept as a fallback and the
+original TU 2.00.00 pattern last. `GetItemQty_t`'s prototype
+(`int64_t(__fastcall*)(void* container, uint16_t typeId, void* keyPtr)`) was
+confirmed byte-identical between this project's declaration and gugi's own,
+so the swap is calling-convention-safe.
+
+**Same offline audit also re-confirmed every other TU 2.01.00-era candidate
+already wired live** (`kSig_InvCoreGlobal_TU20100_Candidate`,
+`kSig_PathingHelper_TU20100_Candidate`,
+`kSig_MasterFrameUpdate_TU20100_Candidate`,
+`kSig_ParryVerdict_TU20100_Candidate`,
+`kSig_LocoStepper_TU20100_Candidate`) still match uniquely on the real 2944
+binary - consistent with gugi's "2/42 broke between 2850 and 2944" finding,
+neither of which this project uses. Full manifest and results in
+`tools/TrinitySignatureAudit/candidates-2.03.00.json`.
+
+**Other cross-referenced findings, not yet acted on (pure forward
+information):**
+
+- `kSig_DestinationUpdate` is gone from gugi's tree entirely - the old
+  signature was a false positive matching the road-streamer's terrain
+  ground-clamp, not the destination marker, which explains why Teleport to
+  Destination never worked on this branch. Replaced there by a direct read
+  off `actor+0x168 (NavComp) + 0x1E8 (Dest)`, no hook needed. Not wired here
+  (Fast Travel/Teleport-to-Destination are not implemented on this branch at
+  all yet).
+- `kSig_TravelToNode` gained a genuine 4th argument on 2944 (a mode flag,
+  must be `0` for node travel per the game's own call sites). Irrelevant
+  until Fast Travel is picked up.
+- `kSig_DyeUpsert`'s new TU 2.01.00+ instruction sequence in gugi's tree
+  matches this project's own `kSig_DyeUpsert_TU20100_Candidate` - good
+  corroboration. Dye is still not wired here pending
+  `kSig_DyeApplyBatch`/`kSig_EquipBatch`, both of which gugi has now
+  re-derived for 2760 - directly usable once Dye is picked up.
+- `kSig_MasterFrameUpdate` is anchored on the function prologue here, which
+  offline-verifies unique on this project's own exact binary; gugi anchors
+  the same function on a 4-instruction interior sequence instead (5
+  functions share the prologue shape on his build, via a new
+  `InstallHookInterior` helper) - worth migrating to eventually, since an
+  interior anchor is immune to the prologue-reshape pattern that has driven
+  most fixes this session.
+
+**New reusable tooling worth adopting regardless of game version, not yet
+implemented:** PE-unwind-table-based true function-entry recovery
+(`RtlLookupFunctionEntry`, ~25 lines in gugi's `scanner.cpp`) - matches a
+short semantic sequence anywhere inside a function body, then asks Windows'
+own exception-unwind metadata where the function truly begins, immune to
+prologue reshaping by construction; a `sigcheck.py`-style tool that
+regex-extracts every `kSig_*` literal straight from source and scans it live
+(proposed replacement for the hand-maintained `candidates-*.json` manifest
+workflow, which has already cost real friction this session); and
+consecutive-identical-line log collapsing (directly relevant to this
+project's own `diag/damage` probe log-spam problem).
+
+**Build 2026-09-21 compiles clean. Not yet live-tested** - 2944 is the
+currently-installed build, so the next real-play session is the first chance
+to confirm any of this, starting with Free Flight (the one drift with an
+already-live consumer).

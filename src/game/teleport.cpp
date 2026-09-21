@@ -957,11 +957,18 @@ namespace trinity::game
         // The local player's move-owner (physics proxy), republished every
         // movement tick by hkMoveUpdate - which the mod already relies on to
         // track the player's own position, so it is a proven player anchor. The
-        // loco-stepper's component caches the same pointer at +0x298, so
-        // matching it there isolates the player from every other character the
-        // stepper fires for. 0 until the first movement tick / at the menu.
+        // loco-stepper's component caches the same pointer, so matching it
+        // there isolates the player from every other character the stepper
+        // fires for. 0 until the first movement tick / at the menu.
+        // TU 2.01.00 recompiled this component's layout: 0x298 (TU 2.00.00) ->
+        // 0x2B8. This was silently wrong pre-2.03.00 port - the hook installed
+        // cleanly and never errored, but the stale offset meant comp+off never
+        // equalled the real move-owner, so Free Flight's isPlayer check simply
+        // never matched (Super Run/Super Jump are unaffected, they don't use
+        // this check). Cross-referenced against gugi97's independently
+        // re-derived TU 2.01.00+ offsets, not yet live-tested by us.
         std::atomic<uintptr_t> g_playerMoveOwner{0};
-        constexpr uintptr_t    kOff_MoveComp_MoveOwner = 0x298;
+        constexpr uintptr_t    kOff_MoveComp_MoveOwner = 0x2B8;
 
         // Current real-pad mask for Free Flight (buttons + trigger sentinels),
         // read on the movement thread. XInputGetState on an empty slot is slow,

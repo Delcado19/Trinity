@@ -644,6 +644,17 @@ namespace trinity::game
         "48 8B 41 08 48 8D 50 08 33 C9 48 85 C0 48 0F 44 D1 41 B0 01 48 8B 12 "
         "48 8D 4C 24 20 E8 ?? ?? ?? ??";
 
+    // gugi97's independently re-derived TU 2.01.00+ pattern (cross-referenced
+    // 2026-09-21) - structurally different argument-handling strategy from the
+    // candidate above (stack-spills typeId and zeroes EDI, rather than keeping
+    // both in registers), which points at this being a genuinely different
+    // function rather than a different compile of the same one. Preferred:
+    // live-tested unmodified across three consecutive builds (2760/2850/2944)
+    // in gugi's own tree, while the candidate above was never live-verified
+    // (its source build, 2760, is gone - Steam already updated past it).
+    inline constexpr const char* kSig_InvGetItemQty_Gugi =
+        "48 89 5C 24 ?? 66 89 54 24 ?? 55 56 57 48 83 EC 30 48 8B F1 33 FF 48 8D 4C 24 ??";
+
     inline constexpr const char* kSig_InvGetHolder =
         "40 53 48 83 EC 20 48 8B 41 ? 48 8B D9 48 8B 48";
 
@@ -1052,7 +1063,8 @@ namespace trinity::game
     // was tried and fails (bogus TEB, then an access violation on the second
     // call, almost certainly CFG rejecting an indirect call into our own page).
     inline constexpr uintptr_t kOff_Teb_TlsPointer = 0x58; // TEB.ThreadLocalStoragePointer
-    inline constexpr uintptr_t kTls_RealmFlag      = 498;  // u8: 0 = client, 1 = server
+    // TU 2.01.00 recompiled this slot's layout: 498 (TU 2.00.00) -> 509.
+    inline constexpr uintptr_t kTls_RealmFlag      = 509;  // u8: 0 = client, 1 = server
 
     // Item-info table (typeId -> item definition -> item key string, for names).
     // Its resolver is one of ~121 identical 16-bit-key table-resolver clones, so
@@ -1653,7 +1665,10 @@ namespace trinity::game
     // 1.17.00 moved the descriptor DOWN one qword, 0x88 -> 0x80. BatchEquip
     // reads it twice and never touches +0x88 any more. Note the direction: this
     // is the one field in this build that moved down rather than up.
-    inline constexpr uintptr_t kOff_EquipComp_Table  = 0x80; // -> table descriptor
+    // TU 2.01.00 recompiled the component again: 0x80 -> 0x90. Cross-referenced
+    // against gugi97's independently re-derived TU 2.01.00+ offsets, not yet
+    // live-tested by us.
+    inline constexpr uintptr_t kOff_EquipComp_Table  = 0x90; // -> table descriptor
     inline constexpr uintptr_t kOff_EquipTable_Array = 0x08; // entry[] base
     inline constexpr uintptr_t kOff_EquipTable_Count = 0x10; // u32
     // 0xC8 -> 0xD0, following TrItemValue growing 0xC0 -> 0xC8: an entry is
@@ -1837,10 +1852,14 @@ namespace trinity::game
         "48 8B 41 78 4C 8B D1 44 8B 81 80 00 00 00 49 C1 E0 04";
 
     // --- Durability / Repair ---------------------------------------------------
-    inline constexpr uintptr_t kOff_ItemDef_MaxEndurance = 0x3F0;   // u16, ItemInfo row
+    // TU 2.01.00 grew ItemInfo's row by 0x10 above this point: MaxEndurance
+    // 0x3F0 -> 0x400 and RepairDataList 0x3F8 -> 0x408 (same shift, paired
+    // fields). Cross-referenced against gugi97's independently re-derived TU
+    // 2.01.00+ offsets, not yet live-tested by us.
+    inline constexpr uintptr_t kOff_ItemDef_MaxEndurance = 0x400;   // u16, ItemInfo row
     inline constexpr uintptr_t kOff_ItemVal_Endurance    = 0x40;    // u16, live item value
     inline constexpr uint16_t  kEndurance_None           = 0xFFFF;  // "this item has none"
-    inline constexpr uintptr_t kOff_ItemDef_RepairDataList = 0x3F8; // vector
+    inline constexpr uintptr_t kOff_ItemDef_RepairDataList = 0x408; // vector
 
     // How many slots Add Item quietly expands a storage to when it is about to overflow.
     inline constexpr int kAddRoom_TargetSlots = 2000;
