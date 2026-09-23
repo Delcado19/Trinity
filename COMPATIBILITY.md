@@ -1305,3 +1305,42 @@ project's own `diag/damage` probe log-spam problem).
 currently-installed build, so the next real-play session is the first chance
 to confirm any of this, starting with Free Flight (the one drift with an
 already-live consumer).
+
+### TU 2.03.01 / 2.03.02 re-audit + air-mover range fix (2026-09-23)
+
+Steam moved past 2944 twice: **2.03.01 = 1.0.0.2949** and **2.03.02 = 1.0.0.2976**
+(the installed exe is now 2976, SHA-256
+`57da440d72f4db974f25fef047cf84c4dadd999a88cb2a3c5af4c9bd67fde1e7`; 2949 was
+`a9e5ca2076367e7995b81a3a4803f7259ab7dac3415df8ea949043ef635a174a`). Both are
+fingerprinted in `gameversion.cpp` as unverified (not live-tested).
+
+`tools/TrinitySignatureAudit/candidates-2.03.01.json` and `candidates-2.03.02.json`
+re-check the wired signature set against each exe: **every signature is unique on
+both** (`kSig_InvGetItemQty_Gugi`, `kSig_InvCoreGlobal_TU20100_Candidate`,
+`kSig_PathingHelper_TU20100_Candidate`, `kSig_MasterFrameUpdate_TU20100_Candidate`,
+`kSig_ParryVerdict_TU20100_Candidate`, `kSig_LocoStepper_TU20100_Candidate`,
+`kSig_AirMoverStep`). Several moved by 0x10 on 2949 (PathingHelper, LocoStepper,
+InvGetItemQty) and shifted again on 2976; nothing needed a new pattern. This
+agrees with the third-party Ultimate Table/trainer changelogs (only their give
+planner/commit/durability sites moved).
+
+**Second silent bug found by this audit:** `teleport.cpp` carried the airborne
+mover as a baked module range (`0x35C3290..0x35C3C5C`, valid for 2760 only). On
+2.03.x the mover sits at `0x36A4BB0..0x36A557C` (2949) / `0x36A4C00..0x36A55CC`
+(2976), so Free Flight's `inAirMover` test would never have been true - hook
+installed, no error, feature dead (same failure class as the stale
+`kOff_MoveComp_MoveOwner`). It is now derived at load: `kSig_AirMoverStep`
+(gugi97's pattern, b0a87f8) locates one of the mover's calls into the stepper and
+`ResolveAirMover()` measures the function via the surrounding `CC CC` int3
+padding (capped walks; on failure Free Flight is disabled, Super Run/Jump are
+unaffected). Derived size is `0x9CC` on 2760, 2949 and 2976, and the 2949 bounds
+equal gugi's live-logged 2944 range + 0x10. Not yet live-tested by us.
+
+Third-party cross-checks (Nexus #3209 Ultimate Table v5.7.5 / trainer v6.9.5,
+see memory `reference-crimsoninveditor-ct`): realm byte `0x1FD`, ItemInfo
+max-durability `+0x400` and placement record 224 all match our constants; they
+date those shifts to 2.0 (2625), not 2760. Their inventory persistence works by
+also writing the authoritative parallel array (found by heap scan, identified by
+the `slot+0x60` instance-block fingerprint; two of the four parallel arrays are
+transient buffers that crash the game if written) - an alternative to our dead
+`kSig_InvCommit`/`kSig_InvHolderInsert` capture path.

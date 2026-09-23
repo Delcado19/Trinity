@@ -1,0 +1,67 @@
+{
+  "baseline": {
+    "label": "Trinity TU 2.03.01 re-verification of the TU 2.01.00+ signature set",
+    "commit": "not applicable (static candidates)",
+    "gameVersion": "2.03.01",
+    "fileVersion": "1.0.0.2949",
+    "exeSha256": "a9e5ca2076367e7995b81a3a4803f7259ab7dac3415df8ea949043ef635a174a"
+  },
+  "signatures": [
+    {
+      "id": "kSig_InvGetItemQty_Gugi",
+      "feature": "Inventory item-quantity accessor - gugi97's independently re-derived pattern, adopted 2026-09-21 in place of the CT-table-derived kSig_InvGetItemQty_TU20100_Candidate (which was never live-verified and is structurally suspected to resolve a different function). Live-tested unmodified in gugi's own tree across 2760/2850/2944.",
+      "source": "upstream-gugi/fork/tu2.00.00 commit a4db493 (introduced), unchanged through e5b3303 (2.03.00)",
+      "pattern": "48 89 5C 24 ?? 66 89 54 24 ?? 55 56 57 48 83 EC 30 48 8B F1 33 FF 48 8D 4C 24 ??",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_InvGetItemQty_TU20100_Candidate",
+      "feature": "Inventory item-quantity accessor - our own CT-table-derived candidate, kept as a fallback only. Checking whether it still matches on 2944 at all (offline-verified unique on 2760, never re-checked since).",
+      "source": "COMPATIBILITY.md: Inventory re-derived via a user-supplied build-matched Cheat Engine table (2026-09-10)",
+      "pattern": "48 89 5C 24 10 48 89 74 24 18 57 48 83 EC 30 49 8B F8 0F B7 DA 48 8B F1 48 8B 41 08 48 8D 50 08 33 C9 48 85 C0 48 0F 44 D1 41 B0 01 48 8B 12 48 8D 4C 24 20 E8 ?? ?? ?? ??",
+      "policy": "observe"
+    },
+    {
+      "id": "kSig_InvCoreGlobal_TU20100_Candidate",
+      "feature": "Durable inventory container-registry global anchor, wired live since TU 2.01.00 (browse-only inventory).",
+      "source": "COMPATIBILITY.md: Inventory re-derived via a user-supplied build-matched Cheat Engine table (2026-09-10)",
+      "pattern": "48 8D 54 24 ?? 48 8B 0D ?? ?? ?? ?? 48 8B 49 ?? E8 ?? ?? ?? ?? 90 44 38 7C 24 ?? 0F 84 ?? ?? ?? ?? 48 8B 44 24 ?? 48 85 C0 0F 84 ?? ?? ?? ?? 48 8B 40 ?? 48 8B 88 ?? ?? ?? ??",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_PathingHelper_TU20100_Candidate",
+      "feature": "Pathing helper (destination-following movement override), wired live since TU 2.01.00 (Teleport).",
+      "source": "COMPATIBILITY.md: BREAKTHROUGH (2026-09-08) - teleport signatures re-derived via gugi97 v0.19.0 cross-reference",
+      "pattern": "48 8B C4 48 89 58 08 48 89 70 18 55 57 41 56 48 8D 68 ?? 48 81 EC ?? ?? ?? ?? C5 F8 29 70 ?? 4D 8B F0 48 8B F2 66 C7 45 ?? 04 00 C6 45 ?? 01 33 DB 48 89 5D ?? 48 89 5D ??",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_MasterFrameUpdate_TU20100_Candidate",
+      "feature": "World master frame update (Game Speed / Timescale), wired live since TU 2.01.00.",
+      "source": "COMPATIBILITY.md: BREAKTHROUGH (2026-09-08) - teleport/world signatures re-derived via gugi97 v0.19.0 cross-reference",
+      "pattern": "48 8B C4 48 89 58 10 48 89 68 18 56 57 41 54 41 56 41 57 48 81 EC ?? ?? ?? ?? C5 F8 29 70 ?? C5 F8 29 78 ?? C5 78 29 40 ?? C5 78 29 50 ?? C5 78 29 58 ?? C5 78 29 A0 ?? ?? ?? ?? C5 78 29 A8 ?? ?? ?? ?? 48 8B F9 48 8B 51 60 8B 42 64 89 42 60",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_ParryVerdict_TU20100_Candidate",
+      "feature": "Parry verdict site, wired live since TU 2.01.00 (Easy Parry).",
+      "source": "COMPATIBILITY.md: BREAKTHROUGH (2026-09-08) - teleport/world/dye/parry signatures re-derived via gugi97 v0.19.0 cross-reference",
+      "pattern": "C5 F8 2F DA 0F 97 C0 88 06",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_LocoStepper_TU20100_Candidate",
+      "feature": "Locomotion sub-step driver (Super Run / Super Jump), wired live since TU 2.01.00.",
+      "source": "COMPATIBILITY.md: BREAKTHROUGH (2026-09-08/09) - LocoStepper re-derived by walking the airborne-mover anchor to its callee",
+      "pattern": "48 8B C4 48 89 58 10 44 88 48 20 48 89 48 08 55 56 57 41 54 41 55 41 56 41 57 48 8D A8 78 F8 FF FF 48 81 EC 50 08 00 00",
+      "policy": "unique"
+    },
+    {
+      "id": "kSig_AirMoverStep_Gugi",
+      "feature": "Airborne mover call site into the loco stepper (Free Flight range anchor); matches twice inside one function by design (stack displacement wildcarded).",
+      "source": "upstream-gugi/fork/tu2.00.00 kSig_AirMoverStep (b0a87f8, TU 2.00.01+)",
+      "pattern": "45 33 C9 4C 8D 45 ?? C5 FA 10 0E 48 8B CB E8 ?? ?? ?? ??",
+      "policy": "observe"
+    }
+  ]
+}

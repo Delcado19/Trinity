@@ -447,6 +447,19 @@ namespace trinity::game
         "48 8B C4 48 89 58 10 44 88 48 20 48 89 48 08 55 56 57 41 54 41 55 41 56 41 57 "
         "48 8D A8 78 F8 FF FF 48 81 EC 50 08 00 00";
 
+    // Airborne mover (Free Flight's "is this call from the air mover" gate).
+    // The range used to be a baked module offset (0x35C3290..0x35C3C5C on TU
+    // 2.01.00), which every patch moves: on 2.03.00+ it shifted and Free
+    // Flight would have gone quietly dead - hook installed, range test never
+    // true. Now derived at load from one of the mover's own calls into the
+    // stepper (zeroed r9, stack out-pointer, drive vector in xmm1, `this` in
+    // rbx); the stack displacement is wildcarded. Pattern from gugi97's fork
+    // (b0a87f8); offline-verified on 1.0.0.2949: one match @ RVA 0x36A4E88,
+    // bounds 0x36A4BB0..0x36A557C (size 0x9CC, same as 2760) = gugi's
+    // live-logged 2944 range + 0x10.
+    inline constexpr const char* kSig_AirMoverStep =
+        "45 33 C9 4C 8D 45 ?? C5 FA 10 0E 48 8B CB E8 ?? ?? ?? ??";
+
     // --- Fast travel / map-gimmick teleport --------------------------------
     // The world map fast-travels through sub_505140(ignored, sceneId, nodeIndex)
     // (IDB 0x505140): a normal, server-blessed travel that streams properly (the
