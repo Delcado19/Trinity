@@ -477,9 +477,28 @@ namespace trinity::game
     // resolver, and compares desc+0x28 (nodeCount) against its third argument
     // before travelling, which is exactly the documented contract. The frame
     // immediates are wildcarded; the arg shuffle and the sceneId test are not.
+    //
+    // TU 2.03.00 (2944) recompiled it again AND gave it a fourth argument (a
+    // mode; node travel needs 0 - see kTravelMode_Node below), which makes the
+    // pattern above permanently dead (0 matches on 2944/2949/2976; the game
+    // never rebuilds the old three-argument shape). Ported from gugi97's
+    // upstream fork (github.com/gugi97/Trinity, commit e5b3303, 2026-09-19):
+    // anchored through the new argument shuffle (`mov edi,r9d; mov r15d,r8d`)
+    // and the `test r9d,r9d` mode gate rather than the frame alone, so it does
+    // not die a third time on a recompile. Live-tested in-game by gugi on 2944
+    // (one match @ 0x1406550B0); we additionally re-checked it offline against
+    // our own installed 2976 exe (one match @ RVA 0x655110, audit.py). Not yet
+    // live-tested by us - see COMPATIBILITY.md "Fast travel".
     inline constexpr const char* kSig_TravelToNode =
-        "48 89 5C 24 18 89 54 24 10 48 89 4C 24 08 55 56 57 48 8D 6C 24 ?? "
-        "48 81 EC ?? ?? ?? ?? 41 8B F8 33 DB 83 FA FF";
+        "48 89 5C 24 ?? 89 54 24 ?? 48 89 4C 24 ?? 55 56 57 41 56 41 57 "
+        "48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 41 8B F9 45 8B F8 "
+        "33 DB 45 85 C9";
+    // The mode TravelToNode's new fourth argument needs for node travel (the
+    // other value, read from the game's own call sites, is used for a
+    // different travel path we do not drive). Passing the wrong value takes
+    // the function's other branch silently instead of failing closed - see
+    // the signature comment above.
+    inline constexpr unsigned int kTravelMode_Node = 0;
 
     // --- Destination map marker update ---------------------------------------
     inline constexpr const char* kSig_DestinationUpdate =

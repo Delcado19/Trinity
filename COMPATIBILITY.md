@@ -32,7 +32,7 @@ single match means only that the byte sequence exists once.
 | Boss death/quest completion | REQUIRED TEST | Must wait for isolated damage/death validation |
 | Position tracking | LIKELY-VERIFIED (2026-09-10) | Unique match retains the seven-argument integrator and `+0x90`/`+0xC0`/`+0xD0` roles; player exclusivity is unverified. `kSig_MoveUpdate` (the fatal signature) installed cleanly (log: `teleport: pathing helper hook installed @ 0x1435C8000`); a live coordinate warp completed with target-world and observed-world matching exactly (`teleport: warp complete target-world -9406.24 564.77 -4562.35 ... observed-world -9406.24 564.77 -4562.35`). Super Jump also confirmed working by the user in the same session. |
 | Locomotion/Super Run | VERIFIED (2026-09-10) | Old `kSig_LocoStepper` dead; `kSig_LocoStepper_TU20100_Candidate` (found by walking the airborne-mover anchor to its callee, see "LocoStepper" section) installed live at exactly the predicted RVA (log: `teleport: locomotion-stepper hook installed @ 0x1435BE940`, matching Ghidra's `ENTRY=1435be940`). Confirmed working in real play by the user. |
-| Fast travel | BROKEN | `kSig_TravelToNode`/`kSig_DestinationUpdate`/scene-registry still have zero matches; fails closed (menu stays empty, logged) |
+| Fast travel | OFFLINE-FIXED (2026-09-28), NOT YET LIVE-TESTED | `kSig_TravelToNode`'s old three-argument pattern is permanently dead since TU 2.03.00 recompiled the function with a new fourth (mode) argument; ported gugi97's fixed pattern + `kTravelMode_Node` (upstream commit e5b3303, live-tested by gugi on 2944). Re-checked offline against our own installed 2976 exe: one match @ RVA `0x655110` (`0x655110-0x6550B0=0x60` above gugi's 2944 address, plausible build drift). `kSig_DestinationUpdate`/scene-registry are a separate, still-dead capability ("Teleport to Destination" via map marker); see "Fast travel port from upstream gugi" below |
 | Inventory read/write | LIKELY (browse-only), re-derived 2026-09-10 | Both FATAL signatures (`kSig_InvGetItemQty`, `kSig_InvGetHolder`) now resolve; `kSig_InvCoreGlobal` also fixed, so the durable container walk populates the list without waiting on the HUD. Quantity edits do NOT persist yet (`kSig_InvCommit`/`kSig_InvHolderInsert`, the server-holder capture paths, still dead) and Add Item/Slot Size are still refused (their own signatures still dead). See "Inventory re-derived via a Cheat Engine table" below. NOT yet live-tested |
 | Localization lookup | UNKNOWN | `kSig_LocStringGet` has one match; semantics unverified |
 | Time of day | BROKEN | ToD global survives; master/tick/realm paths do not |
@@ -1390,3 +1390,45 @@ our build writes no file log, so live proof needs the overlay/debug output).
 the third-party v1.4.2 build's live damage-apply hook. So our existing pattern
 targets the right function on 2976 (offline match + working-build oracle). Still
 not our own live proof; the 2760 live failure (753 retries) remains unexplained.
+
+### Fast travel port from upstream gugi (2026-09-28)
+
+`upstream-gugi/fork/tu2.00.00` (github.com/gugi97/Trinity) is a fork sharing our
+own history (merge-base `7ad5fb1`) that has continued past us. Its tip, commit
+`e5b3303` ("feat: support TU 2.03.00..."), independently found and fixed the
+exact cause of our dead Fast Travel: TU 2.03.00 (2944) recompiled
+`kSig_TravelToNode` a second time AND gave it a new fourth argument (a mode;
+node travel needs `0`, read off the game's own three call sites - the other
+mode value takes a different branch). A three-argument call left garbage in
+`r9`/mode and would have silently taken the wrong branch had the old pattern
+still matched; since it does not match at all post-2944 (permanently dead -
+the game never rebuilds the three-argument shape), Fast Travel has instead
+just failed closed (empty menu, logged) since TU 2.03.00.
+
+Ported: `kSig_TravelToNode` (gugi's re-derived pattern, anchored on the new
+arg shuffle + `test r9d,r9d` mode gate, not the frame alone) and the new
+`kTravelMode_Node = 0` constant into `offsets.h`; `TravelFn`'s signature and
+its one call site in `teleport.cpp` now pass the fourth argument. Gugi
+live-tested the pattern in-game on 2944 (one match `@ 0x1406550B0`). We
+additionally re-verified it offline against our own installed 2976 exe via
+`audit.py` (ad-hoc manifest, not committed): one match at RVA `0x655110`
+(`0x60` above gugi's 2944 RVA `0x6550B0` - consistent with the small per-build
+drift already seen on our other signatures). Release build compiles clean
+(0 warnings/errors). **Not yet live-tested by us** - our build writes no file
+log (see memory `live-confirm-2026-09-27`), so live confirmation needs the
+overlay or a future debug/log path.
+
+`kSig_DestinationUpdate` ("Teleport to Destination" via the map/quest marker,
+a separate capability from node-list Fast Travel) is a different, still-dead
+signature and was deliberately left alone this pass - see AGENTS.md/advisor
+guidance for why (budget: one RE feature per session; player-identity and
+inventory-persistence leads from the same review are deferred, not started).
+Note for whoever picks it up: gugi's tip does not hook `kSig_DestinationUpdate`
+at all any more - it read gugi's own finding that the old signature resolved
+the wrong function (a terrain/road streamer, RVA in the 2760 build at
+`0x140675FE0`) and switched to reading the marker straight off the nav
+component (`kOff_NavComp_Dest`, no hook) via `Player::CharacterOwner()` and a
+new `kOff_Actor_NavComp` offset - none of which exist in our tree yet, so
+porting it is a bigger job than this one. The third-party vTweak oracle log's
+"destination pin setter hooked @ 0x143836DE8" (RVA `0x3836DE8`) is an
+independent, unread lead for the same feature.
