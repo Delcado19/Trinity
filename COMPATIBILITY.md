@@ -1344,3 +1344,49 @@ also writing the authoritative parallel array (found by heap scan, identified by
 the `slot+0x60` instance-block fingerprint; two of the four parallel arrays are
 transient buffers that crash the game if written) - an alternative to our dead
 `kSig_InvCommit`/`kSig_InvHolderInsert` capture path.
+
+### Live confirmation after the game update (2026-09-27)
+
+User report from real play on the updated game (TU 2.03.x; exact build not
+recorded - installed exe was 2976 at last audit, **confirm before treating as
+verified for a specific build**):
+
+- **Working, clearly:** God Mode, One-Hit Kill, Parry, Infinite Stamina.
+- **Working, "almost sure":** Infinite Spirit.
+- **Not reported / untested:** Teleport, Super Run/Jump, Free Flight (air-mover
+  range now derived at load), Inventory browse.
+
+One-Hit Kill working is notable: on 2760 `kSig_DamageApply` never resolved live
+(see "Damage application" above). Either the 2.03.x exe made the signature
+resolve or the damage path changed - check the log for `kSig_DamageApply` before
+updating that table row. Fork-independent leads for the remaining dead
+features live in github.com/shin2344234 (flight-freedom, private-storage-master,
+stamina-master, bounty-teleportation, master-looter).
+
+#### Third-party oracle: Trinity v1.4.2 "vTweak by Lian" log on PE 2976 (2026-09-27)
+
+The user's live log (pasted, 07:33-07:57) is from a **different binary** than this
+repo ("v1.4.2 (vTweak by Lian)", built 2026-09-20; the string does not exist in
+this tree). It is therefore NOT verification of our signatures, but it is a
+working-build oracle on PE 1.0.0.2976 (TU 2.03.00 per its own detection). Image
+base 0x140000000; RVA = address - base:
+
+| Hook (third-party log) | Address | RVA |
+|---|---|---|
+| damage-apply | `0x1417AE080` | `0x17AE080` (ours on 2760: `0x1718500`) |
+| just-window-eval (easy parry/evade) | `0x1408738B0` | `0x8738B0` |
+| stat-commit | `0x14C7EFDE0` | `0xC7EFDE0` (unusually high, verify it is inside the image) |
+| FrameTimerUpdate | `0x140AD1300` | `0xAD1300` |
+| destination pin setter | `0x143836DE8` | `0x3836DE8` |
+| inventory core global | `0x146D69190` | `0x6D69190` |
+
+Next step: run `tools/TrinitySignatureAudit` for `kSig_DamageApply` against the
+2976 exe and compare its unique match to `0x17AE080`. If equal, the damage row
+can be marked resolved on 2976 by cross-check (still not our own live proof, and
+our build writes no file log, so live proof needs the overlay/debug output).
+
+**Cross-check result (2026-09-27):** `audit.py` on the installed 2976 exe (SHA-256
+`57da440d…`) finds `kSig_DamageApply` exactly once at RVA `0x17AE080`, identical to
+the third-party v1.4.2 build's live damage-apply hook. So our existing pattern
+targets the right function on 2976 (offline match + working-build oracle). Still
+not our own live proof; the 2760 live failure (753 retries) remains unexplained.
