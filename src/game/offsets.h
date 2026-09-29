@@ -40,6 +40,12 @@ namespace trinity::game
     // The enum below is kept only as documentation of the classification.
     inline constexpr uintptr_t kOff_Owner_Actor       = 0x68;
     inline constexpr uintptr_t kOff_Actor_StatusMarker = 0x20; // actor -> status marker
+    // Nav component of the actor and the map/quest destination it holds
+    // (float[3], world space; three zeroes = cleared). Read live instead of
+    // hooking - values from gugi97's TU 2.03.00 fork (live-tested there on
+    // 2944); NOT yet live-tested by us on 2976.
+    inline constexpr uintptr_t kOff_Actor_NavComp     = 0x168;
+    inline constexpr uintptr_t kOff_NavComp_Dest      = 0x1E8;
     inline constexpr uintptr_t kOff_Owner_ObjectType  = 0x48;  // int32 ObjectType (documentation only)
 
     enum ObjectType : int32_t
@@ -500,10 +506,11 @@ namespace trinity::game
     // the signature comment above.
     inline constexpr unsigned int kTravelMode_Node = 0;
 
-    // --- Destination map marker update ---------------------------------------
-    inline constexpr const char* kSig_DestinationUpdate =
-        "48 8B C4 48 89 58 10 48 89 48 08 55 56 57 41 54 41 55 41 56 41 57 "
-        "48 8D 68 ?? 48 81 EC ?? ?? ?? ?? C5 F8 29 70 ?? 49 8B F8";
+    // --- Destination map marker ------------------------------------------------
+    // kSig_DestinationUpdate is GONE (0 matches on 2976; on 2760 it hit a
+    // terrain streamer whose arg was the sector grid centre, not a
+    // destination). The marker is read off the nav component instead - see
+    // kOff_NavComp_Dest.
 
     // --- Pathing helper ------------------------------------------------------
     // When the movement system is following a map/quest destination, a pathing

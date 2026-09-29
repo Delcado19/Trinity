@@ -49,13 +49,6 @@ namespace trinity::game
         std::atomic<uint32_t> g_posSequence{0};
         std::atomic<bool>     g_posValid{false};
 
-        // Last-seen map destination. Captured from the game's own destination
-        // copy function (sub_BE3710), so it tracks whatever the world map / quest
-        // objective system considers the current destination.
-        std::atomic<float>    g_destX{0.0f}, g_destY{0.0f}, g_destZ{0.0f};
-        std::atomic<float>    g_destOriginX{0.0f}, g_destOriginY{0.0f}, g_destOriginZ{0.0f};
-        std::atomic<uint32_t> g_destSequence{0};
-        std::atomic<bool>     g_destValid{false};
         uintptr_t             g_markerOriginAddress = 0;
 
         // Queued warp request - written by the menu, consumed by the movement
@@ -116,37 +109,43 @@ namespace trinity::game
             return false;
         }
 
+        // Defined further down, next to the rest of the marker plumbing.
+        bool ReadLiveOrigin(float origin[3]);
+
         struct DestinationSnapshot
         {
             float x, y, z;
             float originX, originY, originZ;
         };
 
+        // The marker the player placed, read live off the nav component of a
+        // tracked protagonist - no hook and no cached copy, so it cannot be
+        // stale, cannot miss a marker placed before Trinity loaded, and cannot
+        // outlive the player clearing one. Approach from gugi97's fork (its commit
+        // e5b3303): the old kSig_DestinationUpdate hook resolved a
+        // terrain streamer on 2760 and is 0 matches on 2976, so "Teleport to
+        // Destination" only set the marker and never warped (live 2026-09-29).
         bool LoadDestinationSnapshot(DestinationSnapshot* out)
         {
-            if (!out || !g_destValid.load(std::memory_order_acquire)) return false;
-            for (int attempt = 0; attempt < 8; ++attempt)
-            {
-                const uint32_t before = g_destSequence.load(std::memory_order_acquire);
-                if (before & 1) continue;
+            if (!out) return false;
+            float origin[3]{};
+            if (!ReadLiveOrigin(origin)) return false;
 
-                DestinationSnapshot value{
-                    g_destX.load(std::memory_order_relaxed),
-                    g_destY.load(std::memory_order_relaxed),
-                    g_destZ.load(std::memory_order_relaxed),
-                    g_destOriginX.load(std::memory_order_relaxed),
-                    g_destOriginY.load(std::memory_order_relaxed),
-                    g_destOriginZ.load(std::memory_order_relaxed),
-                };
-                const uint32_t after = g_destSequence.load(std::memory_order_acquire);
-                if (before == after && !(after & 1) &&
-                    std::isfinite(value.x) && std::isfinite(value.y) &&
-                    std::isfinite(value.z) && std::isfinite(value.originX) &&
-                    std::isfinite(value.originY) && std::isfinite(value.originZ))
-                {
-                    *out = value;
-                    return true;
-                }
+            // Which tracked protagonist is the controlled one is not known
+            // here, so take the first whose nav component holds a marker.
+            for (int i = 0; i < Player::ActorCount(); ++i)
+            {
+                const uintptr_t actor = Player::CharacterActor(i);
+                uintptr_t nav = 0;
+                float v[3]{};
+                if (!actor || !ReadPtr(actor + kOff_Actor_NavComp, &nav) || nav < kMinPointer) continue;
+                if (!ReadVec3(nav + kOff_NavComp_Dest, v)) continue;
+                if (!std::isfinite(v[0]) || !std::isfinite(v[1]) || !std::isfinite(v[2])) continue;
+                // A cleared marker is three zeroes; warping to the world origin
+                // is never what anyone meant.
+                if (v[0] == 0.0f && v[1] == 0.0f && v[2] == 0.0f) continue;
+                *out = DestinationSnapshot{ v[0], v[1], v[2], origin[0], origin[1], origin[2] };
+                return true;
             }
             return false;
         }
@@ -337,15 +336,6 @@ namespace trinity::game
                                              uint64_t a4, uint64_t a5, uint64_t a6, uint64_t a7);
         LocoStep_t oLocoStep = nullptr;
         void* g_locoStepTarget = nullptr;
-
-        // Map destination copy (IDB sub_BE3710). r8 points at the game's vec3
-        // destination; the function copies it into the marker manager. We hook
-        // the prologue, read r8, and record the coordinates. The return type is
-        // unknown but the rest of the mod never needs it; char is a safe ABI.
-        using DestinationUpdate_t = char(__fastcall*)(uint64_t rcx, uint64_t rdx,
-                                                      uint64_t r8, uint64_t r9);
-        DestinationUpdate_t oDestinationUpdate = nullptr;
-        void* g_destinationUpdateTarget = nullptr;
 
         // A travel request queued from the menu thread, fired once on the game
         // thread inside hkMoveUpdate (matching how the game itself calls it).
@@ -1130,43 +1120,6 @@ namespace trinity::game
             oLocoStep(comp, dt, vel, a4, a5, a6, a7);
         }
 
-        // Capture the map destination the game is about to copy into the marker
-        // manager. r8 holds a pointer to a vec3 {x,y,z}; read it safely because
-        // we are on the game's movement thread and the pointer comes from game
-        // code, but a stale call would crash the whole session.
-        char __fastcall hkDestinationUpdate(uint64_t rcx, uint64_t rdx, uint64_t r8, uint64_t r9)
-        {
-            float x = 0.0f, y = 0.0f, z = 0.0f;
-            float origin[3]{};
-            bool ok = false;
-            __try
-            {
-                const float* p = reinterpret_cast<const float*>(r8);
-                x = p[0];
-                y = p[1];
-                z = p[2];
-                ok = ReadLiveOrigin(origin) &&
-                     std::isfinite(x) && std::isfinite(y) && std::isfinite(z);
-            }
-            __except (EXCEPTION_EXECUTE_HANDLER) {}
-
-            if (ok)
-            {
-                g_destSequence.fetch_add(1, std::memory_order_acq_rel); // odd: writer owns snapshot
-                g_destX.store(x, std::memory_order_relaxed);
-                g_destY.store(y, std::memory_order_relaxed);
-                g_destZ.store(z, std::memory_order_relaxed);
-                g_destOriginX.store(origin[0], std::memory_order_relaxed);
-                g_destOriginY.store(origin[1], std::memory_order_relaxed);
-                g_destOriginZ.store(origin[2], std::memory_order_relaxed);
-                g_destSequence.fetch_add(1, std::memory_order_release); // even: snapshot complete
-                g_destValid.store(true, std::memory_order_release);
-
-            }
-
-            return oDestinationUpdate(rcx, rdx, r8, r9);
-        }
-
         uint64_t __fastcall hkMoveUpdate(uint64_t moveOwner, uint64_t a2, uint64_t a3, uint64_t a4,
                                           uint64_t a5, uint64_t a6, uint64_t a7)
         {
@@ -1609,14 +1562,6 @@ namespace trinity::game
                               &hkMoveUpdate, &oMoveUpdate, &g_moveUpdateTarget))
             return false;
 
-        // Capture map-marker / quest-destination updates. Non-fatal: the rest of
-        // teleport works without it; "Teleport to Destination" simply stays grey.
-        if (mem::InstallHook("teleport: destination-update", kSig_DestinationUpdate, "Teleport to Destination disabled",
-                             &hkDestinationUpdate, &oDestinationUpdate, &g_destinationUpdateTarget))
-        {
-            LOG("teleport: destination-update hook installed @ %p.", g_destinationUpdateTarget);
-        }
-
         // Resolve the fast-travel trigger + the destination registry global.
         // Non-fatal if missing: position tracking still works, the fast-travel
         // menu just stays empty (logged).
@@ -1685,11 +1630,9 @@ namespace trinity::game
     void Teleport::Remove()
     {
         mem::RemoveHook(&g_pathingHelperTarget);
-        mem::RemoveHook(&g_destinationUpdateTarget);
         mem::RemoveHook(&g_locoStepTarget);
         mem::RemoveHook(&g_moveUpdateTarget);
         g_posValid.store(false, std::memory_order_relaxed);
-        g_destValid.store(false, std::memory_order_relaxed);
         g_markerOriginAddress = 0;
     }
 

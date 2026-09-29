@@ -32,7 +32,7 @@ single match means only that the byte sequence exists once.
 | Boss death/quest completion | REQUIRED TEST | Must wait for isolated damage/death validation |
 | Position tracking | LIKELY-VERIFIED (2026-09-10) | Unique match retains the seven-argument integrator and `+0x90`/`+0xC0`/`+0xD0` roles; player exclusivity is unverified. `kSig_MoveUpdate` (the fatal signature) installed cleanly (log: `teleport: pathing helper hook installed @ 0x1435C8000`); a live coordinate warp completed with target-world and observed-world matching exactly (`teleport: warp complete target-world -9406.24 564.77 -4562.35 ... observed-world -9406.24 564.77 -4562.35`). Super Jump also confirmed working by the user in the same session. |
 | Locomotion/Super Run | VERIFIED (2026-09-10) | Old `kSig_LocoStepper` dead; `kSig_LocoStepper_TU20100_Candidate` (found by walking the airborne-mover anchor to its callee, see "LocoStepper" section) installed live at exactly the predicted RVA (log: `teleport: locomotion-stepper hook installed @ 0x1435BE940`, matching Ghidra's `ENTRY=1435be940`). Confirmed working in real play by the user. |
-| Fast travel | OFFLINE-FIXED (2026-09-28), NOT YET LIVE-TESTED | `kSig_TravelToNode`'s old three-argument pattern is permanently dead since TU 2.03.00 recompiled the function with a new fourth (mode) argument; ported gugi97's fixed pattern + `kTravelMode_Node` (upstream commit e5b3303, live-tested by gugi on 2944). Re-checked offline against our own installed 2976 exe: one match @ RVA `0x655110` (`0x655110-0x6550B0=0x60` above gugi's 2944 address, plausible build drift). The menu also needs `ResolveTableResolver(kStr_GimmickSceneTable, ...)` (scene-registry) to populate the catalog - unchanged since our shared history with gugi (0-line diff, no commit on either side touched it since merge-base `7ad5fb1`), so it should resolve the same way it did in gugi's live-tested 2944 session, but this is inference, not our own re-check; an empty menu on live test means this, not `TravelToNode`, is the problem. `kSig_DestinationUpdate` (a separate capability, "Teleport to Destination" via map marker) stays at 0 matches on 2976 (confirmed via `audit.py`, 2026-09-28) - inert, not a live bug. See "Fast travel port from upstream gugi" below |
+| Fast travel | LIVE-CONFIRMED with our own build (2026-09-29, bell, v0.18.0 on 2976). Was: OFFLINE-FIXED, NOT YET LIVE-TESTED. 2026-09-29 user teleports (shops + a bell, all worked on 2976) ran on the THIRD-PARTY vTweak v1.4.2 `Trinity.asi` (Trinity.log: "built Sep 20 2026", 2.4 MB, dated 09-25), not on our build (`build\Release\Trinity.asi`, 1.1 MB, 09-28 23:46, not deployed) - so it does not validate our port | `kSig_TravelToNode`'s old three-argument pattern is permanently dead since TU 2.03.00 recompiled the function with a new fourth (mode) argument; ported gugi97's fixed pattern + `kTravelMode_Node` (upstream commit e5b3303, live-tested by gugi on 2944). Re-checked offline against our own installed 2976 exe: one match @ RVA `0x655110` (`0x655110-0x6550B0=0x60` above gugi's 2944 address, plausible build drift). The menu also needs `ResolveTableResolver(kStr_GimmickSceneTable, ...)` (scene-registry) to populate the catalog - unchanged since our shared history with gugi (0-line diff, no commit on either side touched it since merge-base `7ad5fb1`), so it should resolve the same way it did in gugi's live-tested 2944 session, but this is inference, not our own re-check; an empty menu on live test means this, not `TravelToNode`, is the problem. `kSig_DestinationUpdate` (a separate capability, "Teleport to Destination" via map marker) stays at 0 matches on 2976 (confirmed via `audit.py`, 2026-09-28) - inert, not a live bug. See "Fast travel port from upstream gugi" below |
 | Inventory read/write | LIKELY (browse-only), re-derived 2026-09-10 | Both FATAL signatures (`kSig_InvGetItemQty`, `kSig_InvGetHolder`) now resolve; `kSig_InvCoreGlobal` also fixed, so the durable container walk populates the list without waiting on the HUD. Quantity edits do NOT persist yet (`kSig_InvCommit`/`kSig_InvHolderInsert`, the server-holder capture paths, still dead) and Add Item/Slot Size are still refused (their own signatures still dead). See "Inventory re-derived via a Cheat Engine table" below. NOT yet live-tested |
 | Localization lookup | UNKNOWN | `kSig_LocStringGet` has one match; semantics unverified |
 | Time of day | BROKEN | ToD global survives; master/tick/realm paths do not |
@@ -1415,8 +1415,16 @@ additionally re-verified it offline against our own installed 2976 exe via
 (`0x60` above gugi's 2944 RVA `0x6550B0` - consistent with the small per-build
 drift already seen on our other signatures). Release build compiles clean
 (0 warnings/errors). **Not yet live-tested by us** - our build writes no file
-log (see memory `live-confirm-2026-09-27`), so live confirmation needs the
-overlay or a future debug/log path.
+log (see memory `live-confirm-2026-09-27`).
+
+**2026-09-29 live session was NOT our build:** the user teleported to several
+shops and a bell and everything worked on 2976, but `Trinity.log` in the game's
+`bin64` shows the loaded `Trinity.asi` is the third-party vTweak v1.4.2 (built
+Sep 20; hooks the destination pin setter @ 0x143836DE8 and has a working
+map-marker teleport, hooks=5/5). Our port build was not deployed, so this
+neither confirms our `kSig_TravelToNode` fix nor the scene-registry catalog. To
+test ours: copy `build\Release\Trinity.asi` over the game's `Trinity.asi`
+(back up the vTweak one first) and repeat.
 
 `kSig_DestinationUpdate` ("Teleport to Destination" via the map/quest marker,
 a separate capability from node-list Fast Travel) stays at 0 matches on 2976
@@ -1437,3 +1445,31 @@ no hook) via `Player::CharacterOwner()` and a new `kOff_Actor_NavComp` offset
 one. The third-party vTweak oracle log's "destination pin setter hooked @
 0x143836DE8" (RVA `0x3836DE8`) is an independent, unread lead for the same
 feature.
+
+### Live teleport check with our own build, v0.18.0 on 2976 (2026-09-29)
+
+First live session with our own `Trinity.asi` (log: "v0.18.0, built Sep 28
+23:46"), user report + `Trinity.log`:
+
+- **Saved-location teleport:** works (log: `warp applied ... warp complete`).
+- **Area teleport** (named-area catalog, 3665 boxes built): worked - user
+  teleported to an Epidot mine. This path logs no warp line after the catalog.
+- **Teleport to Destination:** not working, as expected - `kSig_DestinationUpdate`
+  NOT FOUND (0 matches on 2976), so the map marker is set but nothing warps.
+  Leads: vTweak's pin-setter hook (RVA `0x3836DE8`) or gugi's nav-component read.
+- **Fast Travel (node list):** works - user teleported to a bell (~09:48) with
+  our own build, confirming the ported 4-arg `kSig_TravelToNode` and that the
+  scene-registry catalog resolves on 2976. No log line was checked for it; the
+  earlier shop/bell teleports ran on the third-party vTweak build (see above).
+
+### Teleport to Destination: hook removed, nav-component read (2026-09-29)
+
+`kSig_DestinationUpdate` and `hkDestinationUpdate` are deleted. Live on 2976
+(Trinity.log) the signature had 0 matches, so setting a map marker never
+warped. `LoadDestinationSnapshot` now reads the marker straight off the first
+tracked protagonist whose nav component holds one (`actor+0x168` ->
+`+0x1E8`, float[3]; three zeroes = cleared), the approach gugi97's fork took.
+Offsets are gugi's (live-tested there on 2944), **not yet live-tested by us on
+2976**. New `Player::CharacterActor/ActorCount`. Release build compiles clean.
+If a live test warps to the wrong place or not at all, the offsets drifted:
+re-derive `kOff_Actor_NavComp` / `kOff_NavComp_Dest` first.

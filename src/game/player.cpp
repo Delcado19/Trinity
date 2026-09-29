@@ -796,6 +796,15 @@ namespace trinity::game
             g_mountStamEntries[i].store(0);
     }
 
+    int Player::ActorCount() { return kMaxPlayers; }
+
+    uintptr_t Player::CharacterActor(int idx)
+    {
+        if (idx < 0 || idx >= kMaxPlayers) return 0;
+        const uintptr_t a = g_actors[idx].load(std::memory_order_acquire);
+        return (a >= kMinPointer) ? a : 0;
+    }
+
     bool Player::Ready()
     {
         return g_hpEntries[0].load(std::memory_order_relaxed) >= kMinPointer;

@@ -74,7 +74,7 @@ namespace trinity
             // (kSig_LocoStepper_TU20100_Candidate, offline-verified unique,
             // NOT yet live-tested through our own hook). Fails closed and
             // logs, not silently: Teleport to Destination
-            // (kSig_DestinationUpdate still dead) and the fast-travel menu
+            // (now a hook-free nav-component read, not yet live-tested) and the fast-travel menu
             // (kSig_TravelToNode, scene-registry still dead) stay
             // grey/empty rather than doing something wrong.
             m_teleportInstalled = game::Teleport::Install();
