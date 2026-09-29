@@ -1473,3 +1473,12 @@ Offsets are gugi's (live-tested there on 2944), **not yet live-tested by us on
 2976**. New `Player::CharacterActor/ActorCount`. Release build compiles clean.
 If a live test warps to the wrong place or not at all, the offsets drifted:
 re-derive `kOff_Actor_NavComp` / `kOff_NavComp_Dest` first.
+
+### 2976 was stuck in diagnostics-only mode (2026-09-29)
+
+Live log showed `Diagnostics-only mode: gameplay features are unavailable` on
+2976: `kKnown` listed it as `verified=false`, so `mod.cpp` never installed the
+gameplay hooks (no outgoing damage multiplier / One-Hit Kill; the only
+`damage-apply` line was the retry probe). gugi97's fork records 2976 as
+verified (42/42 signatures, features run in-game, upstream `d64e72c`). Flipped
+to `verified=true` so our own hooks install; **our own live pass is pending**.

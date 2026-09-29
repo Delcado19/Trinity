@@ -18,7 +18,11 @@ namespace trinity
         // say so rather than imply a guarantee that was never made.
         struct KnownBuild { uint16_t revision; const char* tu; bool verified; };
         constexpr KnownBuild kKnown[] = {
-            { 2976, "2.03.02",          false },  // fingerprinted; signature set re-audited offline (audit.py), not live-tested
+            { 2976, "2.03.02",          true  },  // gugi97 verified all 42 signatures resolve on 2976 and ran the
+                                                  // damage/parry/flight features in-game (upstream d64e72c). Our
+                                                  // build was stuck in diagnostics-only mode here (no damage
+                                                  // multiplier / One-Hit Kill, live log 2026-09-29), so this
+                                                  // enables our own gameplay hooks; our own live pass is pending.
             { 2949, "2.03.01",          false },  // fingerprinted; signature set re-audited offline (audit.py), not live-tested
             { 2944, "2.03.00",          false },  // fingerprinted; gameplay hooks not yet verified
             { 2760, "2.01.00",          false },  // fingerprinted; gameplay hooks not yet verified
