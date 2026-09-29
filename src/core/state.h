@@ -57,7 +57,7 @@ namespace trinity
         // index: the list is built from whatever files are installed, so an
         // index would point at a different language the moment one is added.
         char  language[8] = "en";
-        // Accent colour theme index (0 = Crimson, the original look).
+        // Accent colour theme index (0 = Azure, this fork's own look).
         int   themeIndex = 0;
         // Trinity.log is what every bug report is diagnosed from, so this
         // defaults to on; the menu says what switching it off costs.

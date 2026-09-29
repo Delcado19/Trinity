@@ -7,7 +7,7 @@
 
 namespace trinity::ui
 {
-    // --- Theme (Crimson Desert: deep reds on near-black) ---------------------
+    // --- Theme (this fork: azure on blue-slate, distinct from the red vTweak build) ---
     // The four accent colours are mutable so a theme can be chosen at runtime.
     // Deliberately NOT constexpr any more, and deliberately still named the
     // same: every reader across the menu keeps working unchanged, which is
@@ -18,16 +18,16 @@ namespace trinity::ui
     // text - the only thing a theme changes is the accent.
     namespace theme
     {
-        inline ImU32 HeaderTop  = IM_COL32(128,  10,  26, 255);
-        inline ImU32 HeaderBot  = IM_COL32( 52,   4,  12, 255);
-        inline ImU32 Accent     = IM_COL32(214,  36,  56, 255);
-        inline ImU32 AccentDark = IM_COL32(120,  14,  30, 255);
-        inline constexpr ImU32 RowBg      = IM_COL32( 13,  13,  16, 234);
-        inline constexpr ImU32 BarBg      = IM_COL32(  7,   7,   9, 245);
-        inline constexpr ImU32 CrumbBg    = IM_COL32( 10,  10,  12, 245);
-        inline constexpr ImU32 Text       = IM_COL32(228, 226, 222, 255);
+        inline ImU32 HeaderTop  = IM_COL32( 14,  70, 110, 255);
+        inline ImU32 HeaderBot  = IM_COL32(  6,  30,  50, 255);
+        inline ImU32 Accent     = IM_COL32( 46, 170, 235, 255);
+        inline ImU32 AccentDark = IM_COL32( 18,  84, 128, 255);
+        inline constexpr ImU32 RowBg      = IM_COL32( 12,  16,  24, 234);
+        inline constexpr ImU32 BarBg      = IM_COL32(  6,   9,  14, 245);
+        inline constexpr ImU32 CrumbBg    = IM_COL32(  9,  12,  18, 245);
+        inline constexpr ImU32 Text       = IM_COL32(222, 229, 238, 255);
         inline constexpr ImU32 TextBright = IM_COL32(255, 255, 255, 255);
-        inline constexpr ImU32 TextDim    = IM_COL32(148, 146, 142, 255);
+        inline constexpr ImU32 TextDim    = IM_COL32(140, 150, 164, 255);
         inline constexpr ImU32 Shadow     = IM_COL32(  0,   0,   0, 160);
         inline constexpr ImU32 SwitchOff  = IM_COL32( 70,  70,  78, 255);
         inline constexpr ImU32 Knob       = IM_COL32(245, 245, 245, 255);

@@ -13,6 +13,7 @@
 
 #include "framework.h"
 #include "widgets.h"
+#include "ui_internal.h"
 #include "../core/settings.h"
 #include "../core/state.h"
 #include "../core/text.h"
@@ -64,9 +65,9 @@ namespace trinity::gui
         const ImVec2 mn(io.DisplaySize.x - ts.x - pad * 2.0f - sz, sz);
         const ImVec2 mx(mn.x + ts.x + pad * 2.0f, mn.y + ts.y + pad * 2.0f);
 
-        dl->AddRectFilled(mn, mx, IM_COL32(7, 7, 9, 220));
+        dl->AddRectFilled(mn, mx, IM_COL32(6, 9, 14, 220));
         dl->AddText(ImGui::GetFont(), sz, ImVec2(mn.x + pad, mn.y + pad),
-                    IM_COL32(214, 36, 56, 255), buf);
+                    ui::theme::Accent, buf);
     }
 
     // --- Tab pages -----------------------------------------------------------

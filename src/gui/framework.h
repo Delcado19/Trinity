@@ -23,7 +23,7 @@ namespace trinity::ui
     // ImGui::CreateContext and before the first NewFrame.
     void InitStyle(float uiScale);
 
-    // Accent colour themes. Index 0 is Crimson, the original look.
+    // Accent colour themes. Index 0 is Azure, this fork's own look.
     int         ThemeCount();
     const char* ThemeName(int index);
     void        SetTheme(int index);

@@ -242,8 +242,12 @@ namespace trinity::ui
         // Values are picked to sit at a similar brightness so no theme is
         // noticeably harder to read than the others.
         constexpr Theme kThemes[] = {
-            { "Crimson", IM_COL32(128, 10, 26, 255), IM_COL32( 52,  4, 12, 255),
-                         IM_COL32(214, 36, 56, 255), IM_COL32(120, 14, 30, 255) },
+            // Index 0 replaces the old Crimson default on purpose: this fork's
+            // own azure look (with the slate surface colours in ui_internal.h)
+            // so it cannot be mistaken for the third-party vTweak build, which
+            // keeps the original red. Saved themeIndex 0 maps to this entry.
+            { "Azure",   IM_COL32( 14, 70,110, 255), IM_COL32(  6, 30, 50, 255),
+                         IM_COL32( 46,170,235, 255), IM_COL32( 18, 84,128, 255) },
             { "Cyan",    IM_COL32(  8, 88,104, 255), IM_COL32(  3, 38, 46, 255),
                          IM_COL32( 34,190,214, 255), IM_COL32( 12, 96,112, 255) },
             { "Purple",  IM_COL32( 78, 26,128, 255), IM_COL32( 34, 10, 56, 255),
