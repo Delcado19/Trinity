@@ -1489,3 +1489,12 @@ Teleport to Destination now warps. Log: `destination world -11034.91, 786.78,
 observed landing height was consistently ~30 above the target y in both warps,
 which the post-hold ground handling accounts for; not investigated further).
 So gugi's `kOff_Actor_NavComp 0x168` / `kOff_NavComp_Dest 0x1E8` hold on 2976.
+
+### Outgoing damage multiplier live-confirmed on 2976 (2026-09-29)
+
+Our v0.18.0 (2976 marked verified, so gameplay hooks install) with the new
+`player/damage` log line: 3 hits at x3.00, 2 at x1.50 and 14 at x20.00, each
+logged as `delta -> delta*mult` (e.g. -51000 -> -153000 at x3, -155000 ->
+-3100000 at x20), enemies died. One-Hit Kill also seen working. Damage-apply
+hook target in the log is `0x1417AE080`, matching the 2026-09-27 offline audit.
+Incoming multiplier and God Mode not re-checked in this session.
