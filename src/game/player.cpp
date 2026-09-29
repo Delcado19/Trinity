@@ -496,6 +496,7 @@ namespace trinity::game
             const State& st = State::Get();
 
             float mult = 1.0f;
+            bool incoming = false;
             if (InSet(g_targetOwners, kMaxPlayers, targetOwner))
             {
                 // Landing protection comes first and beats every multiplier:
@@ -542,6 +543,7 @@ namespace trinity::game
                         return 0;
                 }
                 mult = st.dmgInMult;
+                incoming = true;
             }
             else
             {
@@ -558,9 +560,26 @@ namespace trinity::game
             // delta < 0 and mult >= 0, so scaled <= 0; a fraction rounding up
             // to 0 simply makes the dispatcher treat the hit as a no-op.
             const double scaled = static_cast<double>(delta) * static_cast<double>(mult);
-            if (scaled <= static_cast<double>(INT64_MIN)) return INT64_MIN;
-            if (scaled >= 0.0) return 0;
-            return static_cast<int64_t>(scaled);
+            int64_t result;
+            if (scaled <= static_cast<double>(INT64_MIN)) result = INT64_MIN;
+            else if (scaled >= 0.0) result = 0;
+            else result = static_cast<int64_t>(scaled);
+
+            // Damage log: shows whether a multiplier really reached the game (live
+            // 2026-09-29: "3.0x kills in 2-3 hits" could not be told apart from
+            // an unchanged hit count). Throttled to ~10 lines/s so a fight cannot
+            // flood Trinity.log; logs only hits a multiplier actually changed.
+            static ULONGLONG s_lastLog = 0;
+            const ULONGLONG now = GetTickCount64();
+            if (now - s_lastLog >= 100)
+            {
+                s_lastLog = now;
+                LOG("player/damage: %s status=%u delta=%lld x%.2f -> %lld%s",
+                    incoming ? "in " : "out", statusId, static_cast<long long>(delta),
+                    mult, static_cast<long long>(result),
+                    (!incoming && st.oneHitKill) ? " (one-hit kill)" : "");
+            }
+            return result;
         }
 
         int64_t __fastcall hkDamageApply(void* targetOwner, uint16_t statusId,
