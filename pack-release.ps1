@@ -91,6 +91,16 @@ $stage = Join-Path $env:TEMP "trinity-pack"
 if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
 New-Item -ItemType Directory -Path $stage | Out-Null
 Copy-Item $binOut $stage
+# DMM lists a mod from info.json/modinfo.ini. Without them our build only shows up
+# as a bare .asi, indistinguishable from the third-party vTweak entry. The name is
+# deliberately different from it (see the Azure theme in framework.cpp).
+$modName = "Trinity - Azure fork (TU 2.03.02)"
+$modDesc = "DirectX 12 mod menu for Crimson Desert, Delcado19 fork of Trinity (gugi97 line)"
+$info = [ordered]@{ name = $modName; version = $Version; author = "Delcado19"; description = $modDesc; category = "Utilities" }
+[IO.File]::WriteAllText((Join-Path $stage "info.json"), ($info | ConvertTo-Json), (New-Object Text.UTF8Encoding $false))
+[IO.File]::WriteAllText((Join-Path $stage "modinfo.ini"),
+    "name=$modName`nversion=$Version`ndescription=$modDesc`nauthor=Delcado19`ncategory=Utilities`n",
+    (New-Object Text.UTF8Encoding $false))
 # Languages\ is NOT shipped. Every translation is embedded in the binary
 # (i18n_embedded.h), and Discover() lets a file on disk WIN over the
 # embedded table - so shipping our own INIs shadowed the built-in ones
