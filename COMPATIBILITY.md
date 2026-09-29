@@ -1482,3 +1482,10 @@ gameplay hooks (no outgoing damage multiplier / One-Hit Kill; the only
 `damage-apply` line was the retry probe). gugi97's fork records 2976 as
 verified (42/42 signatures, features run in-game, upstream `d64e72c`). Flipped
 to `verified=true` so our own hooks install; **our own live pass is pending**.
+
+**Live-confirmed 2026-09-29 18:18** (our v0.18.0 on 2976, Trinity.log + user report):
+Teleport to Destination now warps. Log: `destination world -11034.91, 786.78,
+-4065.46` -> `warp complete`, and a second warp to y 757.45 at 18:18:47 (the
+observed landing height was consistently ~30 above the target y in both warps,
+which the post-hold ground handling accounts for; not investigated further).
+So gugi's `kOff_Actor_NavComp 0x168` / `kOff_NavComp_Dest 0x1E8` hold on 2976.
