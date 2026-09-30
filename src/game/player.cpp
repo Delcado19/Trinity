@@ -307,6 +307,12 @@ namespace trinity::game
             // Warp grace needs the same character walk the toggles need, or
             // g_targetOwners stays empty and the protection never recognises us.
             if (WarpGraceActive()) return true;
+            // Teleport to Destination reads the marker off the tracked actors'
+            // nav component (LoadDestinationSnapshot); with no stat feature on
+            // the set was empty ("actors tracked=0", live 2026-09-30) and the
+            // button reported "set a destination on the map first". The menu
+            // is where that button lives, so walk while it is open.
+            if (st.menuOpen) return true;
             return st.godMode || st.infStamina || st.infMountStamina || st.infSpirit || st.noFallDamage ||
                    st.immuneFire || st.immuneCold ||
                    st.oneHitKill ||

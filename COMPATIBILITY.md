@@ -1529,3 +1529,12 @@ the perfect flag and, at most every 250 ms while the window is open, releases
 and re-presses whatever is held (`hooks::PulseButtonRelease` on the pad,
 `SendInput` for keyboard/mouse). The old verdict patch remains as a fallback if
 the evaluator pattern does not match. **Not yet live-tested by us.**
+
+### Teleport to Destination needs the player walk (2026-09-30)
+
+Live: marker set on the map (gamepad A), "set a destination on the map first".
+The diagnostic log said `actors tracked=0`: `RefreshSelf` skips the character
+walk unless a stat feature (God Mode, multipliers, ...) is on
+(`AnyStatFeatureActive`), and the nav-component read needs the tracked actors.
+It worked on 2026-09-29 only because One-Hit Kill / a multiplier was on. Fix: the
+walk also runs while the menu is open. Not yet live-tested.
