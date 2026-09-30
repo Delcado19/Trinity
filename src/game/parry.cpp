@@ -113,14 +113,26 @@ namespace trinity::game
                 return eligible;
 
             const ULONGLONG now = GetTickCount64();
-            if (eligible && now - g_lastPulse >= kPulseIntervalMs)
+            const bool pulse = eligible && now - g_lastPulse >= kPulseIntervalMs;
+            if (pulse)
             {
                 hooks::PulseButtonRelease();   // pad
                 PulseHeldKeys();               // keyboard and mouse
                 g_lastPulse = now;
             }
+            uint8_t before = 0xFF;   // the game's own verdict, 0xFF = unreadable
             if (eligible && perfect)
+            {
+                mem::Read8(reinterpret_cast<uintptr_t>(perfect), &before);
                 mem::Write8(reinterpret_cast<uintptr_t>(perfect), 1);
+            }
+            // One line per parry window (the pulse rate limits it to ~4/s):
+            // shows the hook sees the window, whether it re-pressed the block,
+            // and what the game itself had decided. Added because the effect on
+            // a held block could not be judged from the log (live 2026-09-30).
+            if (pulse)
+                LOG("parry: window open - block re-pressed, game's own verdict was %s",
+                    before == 1 ? "perfect" : before == 0 ? "not perfect" : "unreadable");
             return eligible;
         }
 
