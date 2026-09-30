@@ -15,6 +15,14 @@ namespace trinity::hooks
     void EnsureXInputHooks();
     void RemoveXInputHooks();
 
+    // Drops every held button and both triggers for ONE polled frame, then
+    // lets the real state through again. The game's own edge detection then
+    // sees a fresh press of whatever the player is already holding, which is
+    // what Easy Parry needs: a parry only starts on a press edge, so a held
+    // block never parries however the verdict is patched. Nothing is remapped
+    // and no button is named, so it works for LB, LT or any block binding.
+    void PulseButtonRelease();
+
     // Real pad state, bypassing the menu-open neutralisation applied to the
     // game. Falls back to the plain export until the hooks are up.
     DWORD XInputReadReal(DWORD userIndex, XINPUT_STATE* state);

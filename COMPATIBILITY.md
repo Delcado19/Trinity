@@ -1515,3 +1515,17 @@ real function prologue and each candidate pattern is unique:
 
 Trust: the record layout is unchanged (`movzx eax,[rdx+4]` group), the NPC/pet
 labels follow vTweak and only pick the cache-key group id. Not yet live-tested.
+
+### Easy Parry: evaluator hook + held-block pulse (2026-09-30)
+
+Our old Easy Parry patched the verdict byte (`seta al` -> `mov al,1`, RVA
+`0x873A98`). That only forces the attacker-side timing verdict; a block that is
+HELD never parries because the game starts a parry on the press edge (measured
+by gugi97's fork, upstream `e0d287e`). Reported live: "Easy Parry on" but no
+effect. gugi's fork and the vTweak build both hook the whole evaluator
+(`kSig_ParryEvaluator`, one match at RVA `0x8738B0` on 2976, identical to
+vTweak's logged "just-window-eval hook @ 0x1408738B0"). Ported: the hook forces
+the perfect flag and, at most every 250 ms while the window is open, releases
+and re-presses whatever is held (`hooks::PulseButtonRelease` on the pad,
+`SendInput` for keyboard/mouse). The old verdict patch remains as a fallback if
+the evaluator pattern does not match. **Not yet live-tested by us.**

@@ -40,14 +40,40 @@ namespace trinity::hooks
         }
     }
 
+    // Polls left to mask. Written from the game thread, read on whichever
+    // thread polls the pad. Ported from gugi97's fork (parry a held block).
+    static std::atomic<int> g_pulse{0};
+
+    void PulseButtonRelease() { g_pulse.store(1, std::memory_order_relaxed); }
+
+    static void ApplyPulse(XINPUT_STATE* s)
+    {
+        const int left = g_pulse.load(std::memory_order_relaxed);
+        if (left <= 0)
+            return;
+        g_pulse.store(left - 1, std::memory_order_relaxed);
+
+        if (!s->Gamepad.wButtons && !s->Gamepad.bLeftTrigger &&
+            !s->Gamepad.bRightTrigger)
+            return;   // nothing held - spend the poll, change nothing
+
+        s->Gamepad.wButtons      = 0;
+        s->Gamepad.bLeftTrigger  = 0;
+        s->Gamepad.bRightTrigger = 0;
+        ++s->dwPacketNumber;      // the release has to read as a change
+    }
+
     // A distinct detour per module so each can call the matching trampoline
     // (MinHook can't tell us which target a shared detour was invoked for).
     #define TRINITY_XINPUT_DETOUR(NAME, ORIG)                              \
         static DWORD WINAPI NAME(DWORD i, XINPUT_STATE* s)                 \
         {                                                                  \
             const DWORD r = ORIG(i, s);                                    \
-            if (r == ERROR_SUCCESS && s && State::Get().menuOpen)         \
-                Neutralize(s);                                             \
+            if (r == ERROR_SUCCESS && s)                                   \
+            {                                                              \
+                if (State::Get().menuOpen) Neutralize(s);                  \
+                ApplyPulse(s);                                             \
+            }                                                              \
             return r;                                                      \
         }
     TRINITY_XINPUT_DETOUR(hk_1_4,   o_1_4)
