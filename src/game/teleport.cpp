@@ -133,19 +133,38 @@ namespace trinity::game
 
             // Which tracked protagonist is the controlled one is not known
             // here, so take the first whose nav component holds a marker.
+            int tracked = 0, withNav = 0;
+            float first[3]{};
             for (int i = 0; i < Player::ActorCount(); ++i)
             {
                 const uintptr_t actor = Player::CharacterActor(i);
                 uintptr_t nav = 0;
                 float v[3]{};
-                if (!actor || !ReadPtr(actor + kOff_Actor_NavComp, &nav) || nav < kMinPointer) continue;
+                if (!actor) continue;
+                ++tracked;
+                if (!ReadPtr(actor + kOff_Actor_NavComp, &nav) || nav < kMinPointer) continue;
+                ++withNav;
                 if (!ReadVec3(nav + kOff_NavComp_Dest, v)) continue;
+                if (withNav == 1) { first[0] = v[0]; first[1] = v[1]; first[2] = v[2]; }
                 if (!std::isfinite(v[0]) || !std::isfinite(v[1]) || !std::isfinite(v[2])) continue;
                 // A cleared marker is three zeroes; warping to the world origin
                 // is never what anyone meant.
                 if (v[0] == 0.0f && v[1] == 0.0f && v[2] == 0.0f) continue;
                 *out = DestinationSnapshot{ v[0], v[1], v[2], origin[0], origin[1], origin[2] };
                 return true;
+            }
+
+            // Why "set a destination on the map first" appears although a marker
+            // was set (live 2026-09-30, gamepad A on the map): says whether the
+            // actors were tracked, had a nav component, and what it held. Every
+            // 3 s at most - the menu polls this every frame.
+            static ULONGLONG s_lastDiag = 0;
+            const ULONGLONG now = GetTickCount64();
+            if (now - s_lastDiag >= 3000)
+            {
+                s_lastDiag = now;
+                LOG("teleport: no destination marker - actors tracked=%d, with nav component=%d, "
+                    "first nav dest=(%.1f, %.1f, %.1f)", tracked, withNav, first[0], first[1], first[2]);
             }
             return false;
         }
