@@ -1878,6 +1878,21 @@ namespace trinity::game
         "4C 8B DC 53 55 56 57 41 56 48 83 EC 60 48 8B FA 48 8D 69 38 "
         "0F B7 42 04 66 41 89 43 08";
 
+    // TU 2.03.00+ (2976): both setters were recompiled (a 6-push prologue, frame
+    // 0x68) and neither older pattern above matches any more. Re-derived from
+    // the addresses the third-party vTweak v1.4.2 build logged as working on
+    // 2976 (RVA 0x1ECB810 "SetNpc", 0xDBB7750 "SetPet"); read from the exe with
+    // tools/TrinitySignatureAudit, each pattern is unique. The record layout
+    // is unchanged (movzx eax,[rdx+4] = group, same as before). Which of the two
+    // is NPC vs pet follows vTweak's labels and only decides the cache-key group
+    // id in friendly.cpp, not behaviour. Not yet live-tested by us.
+    inline constexpr const char* kSig_FriendlySetNpc_TU2030 =
+        "4C 8B DC 53 55 56 57 41 56 41 57 48 83 EC ?? 48 8B FA 48 8B F1 "
+        "0F B7 42 04 66 41 89 43 08 49 8D 4B 08 E8";
+    inline constexpr const char* kSig_FriendlySetPet_TU2030 =
+        "49 89 E3 53 55 56 57 41 56 41 57 48 83 EC ?? 48 89 D7 48 89 CE "
+        "0F B7 42 04 66 41 89 43 08 49 8D 4B 08 E8";
+
     inline constexpr uintptr_t kOff_FriendlyRec_Key   = 0x00; // u32 record key
     inline constexpr uintptr_t kOff_FriendlyRec_Group = 0x04; // u16 group/bucket key
     inline constexpr uintptr_t kOff_FriendlyRec_Value = 0x20; // i64 trust value

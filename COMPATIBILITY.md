@@ -1498,3 +1498,20 @@ logged as `delta -> delta*mult` (e.g. -51000 -> -153000 at x3, -155000 ->
 -3100000 at x20), enemies died. One-Hit Kill also seen working. Damage-apply
 hook target in the log is `0x1417AE080`, matching the 2026-09-27 offline audit.
 Incoming multiplier and God Mode not re-checked in this session.
+
+### Signatures re-derived from the vTweak addresses on 2976 (2026-09-30)
+
+Read from the installed 2976 exe with `tools/TrinitySignatureAudit` at the RVAs
+the third-party vTweak v1.4.2 build logged as working. Every address holds a
+real function prologue and each candidate pattern is unique:
+
+| Function (vTweak label) | RVA | Result |
+|---|---|---|
+| Trust setter "SetNpc" | 0x1ECB810 | new `kSig_FriendlySetNpc_TU2030`, unique. Used. |
+| Trust setter "SetPet" | 0xDBB7750 | new `kSig_FriendlySetPet_TU2030`, unique. Used. |
+| Dye apply-batch | 0x9911F0 | unique, same (rcx,rdx,r8) prototype, registers renamed. **Not wired**: dye also needs `kSig_EquipBatch`, which has 0 matches, and vTweak logs no address for it. |
+| Dye upsert | 0x240EA60 | unique, but our existing `..._TU20100_Candidate` matches a different function at 0x240E770 - unresolved which is right. |
+| Frame timer | 0xAD1300 | our master-frame hook is already here; Game Speed needs a different approach (vTweak scales dt in the frame timer), not just a signature. |
+
+Trust: the record layout is unchanged (`movzx eax,[rdx+4]` group), the NPC/pet
+labels follow vTweak and only pick the cache-key group id. Not yet live-tested.
