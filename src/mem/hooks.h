@@ -29,6 +29,7 @@ namespace trinity::mem
                       Fn detour, Fn* original, void** target, size_t maxMatches = 8)
     {
         *target = nullptr;
+        *original = nullptr;
         const uintptr_t addr = FindPattern(sig);
         if (!addr)
         {
@@ -45,9 +46,12 @@ namespace trinity::mem
         }
 
         void* t = reinterpret_cast<void*>(addr);
-        if (MH_CreateHook(t, reinterpret_cast<void*>(detour), reinterpret_cast<void**>(original)) != MH_OK ||
-            MH_EnableHook(t) != MH_OK)
+        const MH_STATUS created = MH_CreateHook(t, reinterpret_cast<void*>(detour), reinterpret_cast<void**>(original));
+        if (created != MH_OK || MH_EnableHook(t) != MH_OK)
         {
+            // Only remove our own newly created hook; otherwise retries can
+            // stay stuck on MH_ERROR_ALREADY_CREATED after an enable failure.
+            if (created == MH_OK) MH_RemoveHook(t);
             LOG_ERR("%s: failed to install hook - %s.", context, consequence);
             *original = nullptr;
             return false;
@@ -67,6 +71,7 @@ namespace trinity::mem
                         const char* consequence, Fn detour, Fn* original, void** target)
     {
         *target = nullptr;
+        *original = nullptr;
         size_t which = 0;
         const uintptr_t addr = FindPatternAny(sigs, &which);
         if (!addr)
@@ -88,9 +93,11 @@ namespace trinity::mem
         }
 
         void* t = reinterpret_cast<void*>(addr);
-        if (MH_CreateHook(t, reinterpret_cast<void*>(detour), reinterpret_cast<void**>(original)) != MH_OK ||
-            MH_EnableHook(t) != MH_OK)
+        const MH_STATUS created = MH_CreateHook(t, reinterpret_cast<void*>(detour), reinterpret_cast<void**>(original));
+        if (created != MH_OK || MH_EnableHook(t) != MH_OK)
         {
+            // Never remove a hook owned by another caller on create failure.
+            if (created == MH_OK) MH_RemoveHook(t);
             LOG_ERR("%s: failed to install hook - %s.", context, consequence);
             *original = nullptr;
             return false;

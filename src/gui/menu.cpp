@@ -2044,7 +2044,7 @@ namespace trinity::gui
     // name this action's two capture slots; `def*` are the defaults a reset
     // restores (so a reset can never strand the menu with no way to reopen it).
     static void KeybindActionRow(const char* label, const char* desc, int* cursor,
-                                 int* keyVk, unsigned int* padMask,
+                                 std::atomic<int>* keyVk, std::atomic<unsigned int>* padMask,
                                  int defKeyVk, unsigned int defPadMask,
                                  BindTarget keyTarget, BindTarget padTarget)
     {
@@ -2117,8 +2117,8 @@ namespace trinity::gui
         // it. Only the Free Flight pad binds accept the analog-trigger
         // sentinels - Menu Button is polled elsewhere (PollToggleCombo) purely
         // off the real wButtons mask, so a trigger could never fire it.
-        int*          keyField       = nullptr;
-        unsigned int* padField       = nullptr;
+        std::atomic<int>* keyField       = nullptr;
+        std::atomic<unsigned int>* padField       = nullptr;
         bool          padTriggersOk  = false;
         const char*   label          = "";
         switch (s_capTarget)

@@ -25,12 +25,5 @@ namespace trinity
         HMODULE m_module = nullptr;
         bool    m_initialized = false;
         bool    m_gameplayHooksInstalled = false;
-        bool    m_accessorProbeInstalled = false;
-        bool    m_damageProbeInstalled = false;
-        bool    m_playerStatsInstalled = false;
-        bool    m_worldInstalled = false;
-        bool    m_parryInstalled = false;
-        bool    m_teleportInstalled = false;
-        bool    m_inventoryInstalled = false;
     };
 }

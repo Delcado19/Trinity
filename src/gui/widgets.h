@@ -25,13 +25,17 @@ namespace trinity::ui
     bool OptionItem(const char* label, const char* icon,
                     const char* desc = nullptr);
 
+    // Local scalar and shared std::atomic settings are explicitly instantiated
+    // in widgets.cpp. The field address stays stable for animation/edit state.
     // On/off switch. Enter/A/click or Left/Right flips it; the knob animates.
-    bool Toggle(const char* label, bool* value, const char* desc = nullptr);
+    template <typename T>
+    bool Toggle(const char* label, T* value, const char* desc = nullptr);
 
     // Numeric rows. Left/Right steps (held: x10). Enter starts inline typing
     // of an exact value (keyboard; Enter commits, moving away cancels).
     // Del / X resets to `defV`.
-    bool FloatOption(const char* label, float* value, float minV, float maxV,
+    template <typename T>
+    bool FloatOption(const char* label, T* value, float minV, float maxV,
                      float step, float defV, const char* fmt = "%.2f",
                      const char* desc = nullptr);
 
@@ -39,7 +43,8 @@ namespace trinity::ui
     // switch and its multiplier share one line (e.g. "Super Run" + run speed).
     // Enter / A / click flips `enabled`; Left/Right steps `value` (held: x10);
     // Del / X resets it to `defV`. Returns true when either changed.
-    bool ToggleFloat(const char* label, bool* enabled, float* value,
+    template <typename B, typename T>
+    bool ToggleFloat(const char* label, B* enabled, T* value,
                      float minV, float maxV, float step, float defV,
                      const char* fmt = "%.2f", const char* desc = nullptr);
     bool IntOption(const char* label, int* value, int minV, int maxV,
@@ -70,7 +75,8 @@ namespace trinity::ui
 
     // Same as ToggleFloat, but for a whole-number value ("Max Stack Size"
     // 999999, "Slot Size" 999) - no decimal formatting.
-    bool ToggleInt(const char* label, bool* enabled, int* value,
+    template <typename B, typename T>
+    bool ToggleInt(const char* label, B* enabled, T* value,
                    int minV, int maxV, int step, int defV,
                    const char* desc = nullptr);
 

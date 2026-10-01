@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 
 namespace trinity
 {
@@ -12,16 +13,16 @@ namespace trinity
     constexpr unsigned int kPadRTrigger = 0x20000u; // Right Trigger
 
     // Shared runtime state, accessed from the render thread (menu) and the
-    // window thread (input). Simple scalars only - no locking needed for
-    // these plain toggles.
+    // window and game threads. Atomic scalars avoid data races; each option
+    // is independent. The language buffer remains owned by the menu thread.
     struct State
     {
-        bool menuOpen = false;
+        std::atomic<bool> menuOpen = false;
 
         // True while a ui::Search row is capturing typed text. The window
         // hook swallows ALL keyboard input from the game while this is set,
         // so typing a search never moves the player.
-        bool textCapture = false;
+        std::atomic<bool> textCapture = false;
 
         // Menu open/close binding (framework.cpp PollMenuToggle /
         // PollToggleCombo), rebindable from the SYSTEM tab's Keybinds submenu
@@ -29,23 +30,23 @@ namespace trinity
         // (default VK_INSERT); openPadMask is an XInput button mask that must
         // be held in full - a single button or a combo (default LB + D-Pad
         // Down).
-        int          openKeyVk  = 0x2D;          // VK_INSERT
-        unsigned int openPadMask = 0x0100 | 0x0002; // LB | DPAD_DOWN
+        std::atomic<int>          openKeyVk  = 0x2D;          // VK_INSERT
+        std::atomic<unsigned int> openPadMask = 0x0100 | 0x0002; // LB | DPAD_DOWN
 
         // Transient: a Keybinds-submenu row is listening for the next key /
         // button to bind. While set the window hook swallows all keyboard
         // input, the menu suspends navigation, and the open toggle is ignored,
         // so the press being captured neither moves the player nor navigates
         // nor closes the menu. Never persisted.
-        bool rebindCapture = false;
+        std::atomic<bool> rebindCapture = false;
 
         // Player stat features (player.cpp).
-        bool godMode         = false;
-        bool infStamina      = false;
-        bool infSpirit       = false;
-        bool infMountStamina = false;
-        bool immuneFire      = false;
-        bool immuneCold      = false;
+        std::atomic<bool> godMode         = false;
+        std::atomic<bool> infStamina      = false;
+        std::atomic<bool> infSpirit       = false;
+        std::atomic<bool> infMountStamina = false;
+        std::atomic<bool> immuneFire      = false;
+        std::atomic<bool> immuneCold      = false;
 
         // Battle-damage multipliers (player.cpp). Applied to the signed HP
         // delta at the damage-apply dispatcher; 1.0 = game behavior.
@@ -58,30 +59,30 @@ namespace trinity
         // index would point at a different language the moment one is added.
         char  language[8] = "en";
         // Accent colour theme index (0 = Azure, this fork's own look).
-        int   themeIndex = 0;
+        std::atomic<int>   themeIndex = 0;
         // Trinity.log is what every bug report is diagnosed from, so this
         // defaults to on; the menu says what switching it off costs.
-        bool  fileLogging = true;
+        std::atomic<bool>  fileLogging = true;
 
-        bool  oneHitKill = false;
+        std::atomic<bool>  oneHitKill = false;
         // Blocks HP loss that arrives with no attacker behind it - which is what
         // a fall is. See ScaleDamage for why that is the available discriminator.
-        bool  noFallDamage = false;
+        std::atomic<bool>  noFallDamage = false;
         // Drops the parry timing-margin test; the overlap requirement stays.
-        bool  easyParry = false;
+        std::atomic<bool>  easyParry = false;
         // Zeroes every wanted row's bounty increase; session-only, data table.
-        bool  noBounty = false;
-        float dmgOutMult = 1.0f; // player -> enemy
-        float dmgInMult  = 1.0f; // enemy  -> player
+        std::atomic<bool>  noBounty = false;
+        std::atomic<float> dmgOutMult = 1.0f; // player -> enemy
+        std::atomic<float> dmgInMult  = 1.0f; // enemy  -> player
 
         // Movement features (teleport.cpp hkMoveUpdate). Scale the character
         // physics proxy's desired-velocity vector each movement tick: Super Run
         // multiplies horizontal speed, Super Jump multiplies upward (rising)
         // velocity so jumps/launches go higher. 1.0x = game behavior.
-        bool  superRun      = false;
-        float superRunMult  = 2.0f;
-        bool  superJump     = false;
-        float superJumpMult = 2.0f;
+        std::atomic<bool>  superRun      = false;
+        std::atomic<float> superRunMult  = 2.0f;
+        std::atomic<bool>  superJump     = false;
+        std::atomic<float> superJumpMult = 2.0f;
 
         // Free Flight (teleport.cpp hkLocoStep). Turns the crow-wing glide -
         // which only ever sinks - into vertical control. While enabled and
@@ -91,50 +92,50 @@ namespace trinity
         // virtual-key codes; defaults Caps Lock (up) and Ctrl (down). Rebindable
         // (with openKeyVk/openPadMask) from the SYSTEM tab's Keybinds submenu
         // and persisted in Trinity.ini regardless of Auto Save.
-        bool  freeFlight   = false;
-        float flightSpeed  = 8.0f;
-        int   flyUpKeyVk   = 0x14; // VK_CAPITAL (Caps Lock)
-        int   flyDownKeyVk = 0x11; // VK_CONTROL (Ctrl)
+        std::atomic<bool>  freeFlight   = false;
+        std::atomic<float> flightSpeed  = 8.0f;
+        std::atomic<int>   flyUpKeyVk   = 0x14; // VK_CAPITAL (Caps Lock)
+        std::atomic<int>   flyDownKeyVk = 0x11; // VK_CONTROL (Ctrl)
         // Controller equivalents - XInput button masks that must be held in
         // full (same model as openPadMask). kPadLTrigger/kPadRTrigger (above)
         // stand in for the analog triggers, which aren't wButtons bits.
         // Defaults: RB rises, Right Trigger sinks. 0 disables that direction
         // on the pad. (RB = XINPUT_GAMEPAD_RIGHT_SHOULDER = 0x0200; 0x0008
         // would be D-Pad Right.)
-        unsigned int flyUpPadMask   = 0x0200;  // Right Shoulder (RB)
-        unsigned int flyDownPadMask = 0x20000; // Right Trigger (RT)
+        std::atomic<unsigned int> flyUpPadMask   = 0x0200;  // Right Shoulder (RB)
+        std::atomic<unsigned int> flyDownPadMask = 0x20000; // Right Trigger (RT)
 
         // Trust Multiplier (friendly.cpp). Scales the trust ("Friendly")
         // GAINED when gifting NPCs or feeding/taming animals, at the friendly-
         // apply funnel. Only real interactions are scaled (save-load is not);
         // the value still caps at the game's max (100), so a high multiplier
         // just reaches max / tames in fewer gifts. 1.0x = game behavior.
-        bool  trustMult    = false;
-        float trustMultVal = 3.0f;
+        std::atomic<bool>  trustMult    = false;
+        std::atomic<float> trustMultVal = 3.0f;
 
         // World features (world.cpp). Game Speed forces the engine's fixed
         // frame-timestep so the whole simulation runs at gameSpeedMult of the
         // 60-FPS-equivalent rate; the toggle off restores the engine's own
         // real-time delta.
-        bool  gameSpeed     = false;
-        float gameSpeedMult = 1.0f;
+        std::atomic<bool>  gameSpeed     = false;
+        std::atomic<float> gameSpeedMult = 1.0f;
 
         // Time of Day (world.cpp). Freeze holds BOTH the numeric clock (via the
         // field-time tick hook, delta 0) AND the visible sun (via the render
         // manager's lower==upper clamp) while set, with the rest of the sim
         // untouched - the sun needs its own layer or it keeps moving.
         // Advance is a one-shot action (menu.cpp), not persisted state.
-        bool  timeFrozen = false;
+        std::atomic<bool>  timeFrozen = false;
 
         // Inventory-wide overrides (inventory.cpp). Unlike the quantity editor
         // these write into the game's own ItemInfo / InventoryInfo data
         // tables - one number re-stamps every item / storage type at once,
         // and turning the toggle back off restores each row's own original
         // value.
-        bool invSlotSize     = false;
-        int  invSlotSizeVal  = 2000;
-        bool invStackSize    = false;
-        int  invStackSizeVal = 999999;
+        std::atomic<bool> invSlotSize     = false;
+        std::atomic<int>  invSlotSizeVal  = 2000;
+        std::atomic<bool> invStackSize    = false;
+        std::atomic<int>  invStackSizeVal = 999999;
 
         // Weather (weather.cpp). Re-stamps a handful of fields across every
         // weather preset the game has loaded, so the sky blend lands on the
@@ -143,22 +144,22 @@ namespace trinity
         // weatherPreset indexes Weather::SkyNames(); weatherIntensity scales
         // how far the preset pushes (1.0 = as strong as the game's own
         // heaviest authored weather).
-        bool  weatherOverride  = false;
-        int   weatherPreset    = 0;     // 0 = Clear
-        float weatherIntensity = 1.0f;
+        std::atomic<bool>  weatherOverride  = false;
+        std::atomic<int>   weatherPreset    = 0;     // 0 = Clear
+        std::atomic<float> weatherIntensity = 1.0f;
 
         // Shows a large preview of the highlighted item beside the menu.
         // On by default: the row icons are too small to choose gear by, which
         // is the whole reason people spawn a hundred items to compare them.
-        bool  itemPreview = true;
+        std::atomic<bool>  itemPreview = true;
 
         // Overlay extras.
-        bool showFps = false;
+        std::atomic<bool> showFps = false;
 
         // Persistence (settings.cpp). While on, every feature change is
         // written to Trinity.ini and restored on the next launch. The flag
         // itself always persists so the preference survives sessions.
-        bool autoSave = false;
+        std::atomic<bool> autoSave = false;
 
         static State& Get()
         {

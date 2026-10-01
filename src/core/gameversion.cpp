@@ -87,7 +87,9 @@ namespace trinity
 
     bool GameVersion::isVerified() const
     {
-        if (!known) return false;
+        // A revision alone is not an executable identity: never grant gameplay
+        // hooks to a different major/minor/build tuple reusing that revision.
+        if (!known || major != 1 || minor != 0 || build != 0) return false;
         for (const KnownBuild& k : kKnown)
             if (k.revision == revision) return k.verified;
         return false;

@@ -377,7 +377,8 @@ namespace trinity::ui
         dl->AddCircleFilled(ImVec2(kx0 + (kx1 - kx0) * k, cy), kr, knob);
     }
 
-    bool Toggle(const char* label, bool* value, const char* desc)
+    template <typename T>
+    bool Toggle(const char* label, T* value, const char* desc)
     {
         RowResult  r       = RowBase(label, desc, RowKind::Toggle);
         const bool changed = r.activated || r.left || r.right;
@@ -396,7 +397,8 @@ namespace trinity::ui
         return changed;
     }
 
-    bool FloatOption(const char* label, float* value, float minV, float maxV,
+    template <typename T>
+    bool FloatOption(const char* label, T* value, float minV, float maxV,
                      float step, float defV, const char* fmt, const char* desc)
     {
         RowResult r       = RowBase(label, desc, RowKind::Value);
@@ -430,8 +432,8 @@ namespace trinity::ui
         else
         {
             const float st = step * (g_nav.adjustBoost ? 10.0f : 1.0f);
-            if (r.left)  { *value -= st; changed = true; }
-            if (r.right) { *value += st; changed = true; }
+            if (r.left)  { *value = *value - st; changed = true; }
+            if (r.right) { *value = *value + st; changed = true; }
             if (r.activated && !g_nav.selectPad)
             {
                 EditBegin(value);
@@ -455,13 +457,14 @@ namespace trinity::ui
         else
         {
             char buf[64];
-            snprintf(buf, sizeof(buf), fmt, *value);
+            snprintf(buf, sizeof(buf), fmt, static_cast<double>(*value));
             DrawRowValue(r, buf, true);
         }
         return changed;
     }
 
-    bool ToggleFloat(const char* label, bool* enabled, float* value,
+    template <typename B, typename T>
+    bool ToggleFloat(const char* label, B* enabled, T* value,
                      float minV, float maxV, float step, float defV,
                      const char* fmt, const char* desc)
     {
@@ -475,8 +478,8 @@ namespace trinity::ui
             changed  = true;
         }
         const float st = step * (g_nav.adjustBoost ? 10.0f : 1.0f);
-        if (r.left)  { *value -= st; changed = true; }
-        if (r.right) { *value += st; changed = true; }
+        if (r.left)  { *value = *value - st; changed = true; }
+        if (r.right) { *value = *value + st; changed = true; }
         if (r.clear)
         {
             g_nav.clear = false;
@@ -501,7 +504,7 @@ namespace trinity::ui
             // The gap leaves room for the right arrow to render between the
             // value and the switch when the row is selected.
             char buf[64];
-            snprintf(buf, sizeof(buf), fmt, *value);
+            snprintf(buf, sizeof(buf), fmt, static_cast<double>(*value));
             const float  th      = g_fontBody->FontSize;
             const ImVec2 ts      = g_fontBody->CalcTextSizeA(th, FLT_MAX, 0.0f, buf);
             const float  valRight = trackRight - trackW - 20.0f * s;
@@ -521,7 +524,8 @@ namespace trinity::ui
         return changed;
     }
 
-    bool ToggleInt(const char* label, bool* enabled, int* value,
+    template <typename B, typename T>
+    bool ToggleInt(const char* label, B* enabled, T* value,
                    int minV, int maxV, int step, int defV,
                    const char* desc)
     {
@@ -535,8 +539,8 @@ namespace trinity::ui
             changed  = true;
         }
         const int st = step * (g_nav.adjustBoost ? 10 : 1);
-        if (r.left)  { *value -= st; changed = true; }
-        if (r.right) { *value += st; changed = true; }
+        if (r.left)  { *value = *value - st; changed = true; }
+        if (r.right) { *value = *value + st; changed = true; }
         if (r.clear)
         {
             g_nav.clear = false;
@@ -559,7 +563,7 @@ namespace trinity::ui
 
             // Value + adjust arrows, right-aligned just left of the switch.
             char buf[32];
-            snprintf(buf, sizeof(buf), "%d", *value);
+            snprintf(buf, sizeof(buf), "%d", static_cast<int>(*value));
             const float  th      = g_fontBody->FontSize;
             const ImVec2 ts      = g_fontBody->CalcTextSizeA(th, FLT_MAX, 0.0f, buf);
             const float  valRight = trackRight - trackW - 20.0f * s;
@@ -1372,5 +1376,15 @@ namespace trinity::ui
 
         return result;
     }
+
+    // Both local UI values and shared atomic settings use the same widgets.
+    template bool Toggle<bool>(const char*, bool*, const char*);
+    template bool FloatOption<float>(const char*, float*, float, float, float, float, const char*, const char*);
+    template bool ToggleFloat<bool, float>(const char*, bool*, float*, float, float, float, float, const char*, const char*);
+    template bool ToggleInt<bool, int>(const char*, bool*, int*, int, int, int, int, const char*);
+    template bool Toggle<std::atomic<bool>>(const char*, std::atomic<bool>*, const char*);
+    template bool FloatOption<std::atomic<float>>(const char*, std::atomic<float>*, float, float, float, float, const char*, const char*);
+    template bool ToggleFloat<std::atomic<bool>, std::atomic<float>>(const char*, std::atomic<bool>*, std::atomic<float>*, float, float, float, float, const char*, const char*);
+    template bool ToggleInt<std::atomic<bool>, std::atomic<int>>(const char*, std::atomic<bool>*, std::atomic<int>*, int, int, int, int, const char*);
 }
 

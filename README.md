@@ -106,6 +106,19 @@ cmake --build build --config Release
 
 Output: `build/Release/Trinity.asi`.
 
+Optional local regression checks (no game process required):
+
+```powershell
+cmake -S . -B build -DTRINITY_BUILD_CHECKS=ON
+cmake --build build --config Release
+ctest --test-dir build -C Release --output-on-failure
+python -B -m unittest discover tools/TrinitySignatureAudit -v
+```
+
+The C++ checks cover malformed/non-finite INI floats, exact version gating,
+atomic setting access, and hook-install rollback/retry with a mocked MinHook
+backend. They do not establish in-game compatibility or successful parries.
+
 ## Install / run
 
 1. Get an ASI loader (e.g. Ultimate ASI Loader). Ship its proxy DLL next to the
@@ -135,6 +148,9 @@ count result; it is never treated as proof that a hook is semantically safe.
 Game builds not explicitly marked as verified start in diagnostics-only mode:
 the overlay and logging remain available, but Trinity installs no gameplay
 hooks until that build's signatures and semantics have been validated.
+The historical experimental gameplay path for unverified builds is disabled.
+Shared scalar settings use atomic access; invalid INI float values retain their
+default (or the preceding valid value for a repeated key).
 
 ## Dependencies
 

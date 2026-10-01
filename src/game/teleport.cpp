@@ -1131,7 +1131,7 @@ namespace trinity::game
 
                 flyingNow = up ^ down; // exactly one direction held
                 if (flyingNow)
-                    RawWriteFloat(vel + 1, up ? st.flightSpeed : -st.flightSpeed);
+                    RawWriteFloat(vel + 1, up ? st.flightSpeed.load() : -st.flightSpeed.load());
             }
             if (isPlayer)
                 g_flightEngaged.store(flyingNow, std::memory_order_relaxed);

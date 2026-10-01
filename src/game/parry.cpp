@@ -2,6 +2,7 @@
 
 #include <Windows.h>
 #include <cstring>
+#include <atomic>
 
 #include "offsets.h"
 #include "../core/logger.h"
@@ -37,7 +38,7 @@ namespace trinity::game
         constexpr uint8_t   kForce[3] = { 0xB0, 0x01, 0x90 }; // mov al,1 ; nop
 
         uintptr_t g_site = 0;    // address of the seta (patch fallback only)
-        bool      g_on   = false;
+        std::atomic<bool> g_on{false};
 
         // --- Evaluator hook (preferred) --------------------------------------
         // The verdict patch above forces the attacker-side timing verdict, but

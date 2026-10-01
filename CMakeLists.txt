@@ -105,3 +105,13 @@ if(MSVC)
     target_link_options(Trinity PRIVATE
         /DYNAMICBASE /HIGHENTROPYVA /NXCOMPAT /guard:cf)
 endif()
+
+option(TRINITY_BUILD_CHECKS "Build local runtime contract checks (no game required)" OFF)
+if(TRINITY_BUILD_CHECKS)
+    enable_testing()
+    add_executable(trinity_checks tests/runtime_checks.cpp src/core/gameversion.cpp)
+    target_include_directories(trinity_checks PRIVATE src ${minhook_SOURCE_DIR}/include)
+    target_compile_definitions(trinity_checks PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX _CRT_SECURE_NO_WARNINGS)
+    target_compile_options(trinity_checks PRIVATE /utf-8 /UNDEBUG)
+    add_test(NAME runtime_contracts COMMAND trinity_checks)
+endif()

@@ -1,6 +1,26 @@
 # Crimson Desert Compatibility Matrix
 
-Target executable fingerprint:
+## Current safety corrections (2026-10-01)
+
+- Unverified builds now receive only the overlay and logging. Removed the
+  historical research branch that installed gameplay hooks on every unverified
+  executable. PE 1.0.0.2976 remains enabled by the existing verified-build table;
+  verification now checks the full 1.0.0 version prefix as well as the revision.
+- Shared scalar settings and the parry enable flag use atomic access across
+  render, input, and game threads. Menu edit/animation identity still uses the
+  stable setting address.
+- Invalid, partial, overflowing, and non-finite INI floats retain the prior
+  default/valid value before range clamping.
+- Both shared hook installers roll back hooks they created when activation
+  fails, allowing a subsequent retry without removing another caller's hook.
+- Local Release build and runtime contract checks passed; the three offline
+  signature-auditor tests passed. No deployment or new in-game validation.
+  Easy Parry's input-pulse behavior is unchanged by these safety corrections.
+
+The sections below preserve the chronological research history; earlier
+experimental hook-enabling instructions do not override the current gate.
+
+Original TU 2.01.00 target executable fingerprint:
 
 ```text
 Game version: 2.01.00
@@ -10,9 +30,9 @@ PE timestamp: 0x6A998DC4 (2026-09-03T15:09:56Z)
 SizeOfImage: 0x16F1F000
 ```
 
-The current port branch may be loaded only in its diagnostics-only mode. The
+At the initial TU 2.01.00 audit, the port could be loaded only in diagnostics-only mode. The
 table below combines the offline signature audit, targeted static analysis, and
-the explicitly identified smoke test. No gameplay behavior has been tested. A
+the explicitly identified smoke test. No gameplay behavior had yet been tested at that initial audit. A
 single match means only that the byte sequence exists once.
 
 | Feature | TU 2.01.00 status | Evidence / next gate |

@@ -379,7 +379,7 @@ namespace trinity::game
             int idx = st.weatherPreset;
             if (idx < 0 || idx >= kSkyCount) idx = 0;
             LOG("weather: '%s' applied across %u preset(s) at %.2f intensity.",
-                kSkies[idx].name, g_count.load(std::memory_order_acquire), st.weatherIntensity);
+                kSkies[idx].name, g_count.load(std::memory_order_acquire), st.weatherIntensity.load());
         }
     }
 }
