@@ -1,0 +1,228 @@
+06:58:25.919 [TID 33960] [INFO] Trinity v1.4.2 (vTweak by Lian) initializing (built Sep 20 2026 19:29:00).
+06:58:27.571 [TID 33960] [OK] version: Game version detected: Crimson Desert TU 2.03.00 (Active) [PE: 1.0.0.2976]
+06:58:27.571 [TID 33960] [OK] localization: discovered 1 language(s)
+06:58:31.284 [TID 33960] [INFO] Factory CreateSwapChainForHwnd (patching) @ 00007FFAA87FDE40 in dxgi.dll
+06:58:31.284 [TID 33960] [INFO] FG: CreateSwapChainForHwnd patched - new swapchains will be wrapped.
+06:58:31.284 [TID 33960] [INFO] DX12 hooks installed (CrimsonDesert.exe, pid 34480).
+06:58:31.426 [TID 33960] [OK] player: char-manager successfully resolved (consensus: 9/9 anchors).
+06:58:31.635 [TID 33960] [OK] player: stat-commit hook installed @ 000000014C7EFDE0
+06:58:31.951 [TID 33960] [OK] player: damage-apply hook installed @ 00000001417AE080
+06:58:33.642 [TID 33960] [OK] player: just-window-eval hook installed @ 00000001408738B0 (easy parry/evade live)
+06:58:34.841 [TID 33960] [OK] teleport: destination marker UI global resolved to 0x0000000146D691E8 (from 48 8B 05 ?? ?? ?? ?? 48 8B 98 A8 00 00 00 C4 C1 78 10 04 24).
+06:58:34.927 [TID 33960] [OK] teleport: authoritative destination pin setter hooked @ 0x0000000143836DE8.
+06:58:34.936 [TID 33960] [OK] teleport: destination marker dispatcher resolved (call at 0x0000000140DF9DBF, expectedRet=0x0000000140DF9DC4).
+06:58:35.417 [TID 33960] [OK] teleport: marker origin address resolved to 0x0000000146D56500 (21 votes).
+06:58:36.356 [TID 33960] [OK] teleport: map marker teleport subsystem initialized (destUI=0x0000000146D691E8, authHooks=yes, destMarkerHook=yes, hooks=5/5, ready=yes).
+06:58:36.461 [TID 34492] [INFO] Present queue pinned from swapchain creation - owns the back buffers.
+06:58:36.461 [TID 34492] [INFO] Wrapped swapchain Present @ 00007FFAA87E9530 in dxgi.dll
+06:58:36.461 [TID 34492] [OK] Swapchain wrapped - overlay composites before Frame Generation (2560x1440, 3 buffers, flags 0x800).
+06:58:36.708 [TID 33960] [INFO] inventory: legacy money hooks skipped (TU 2.00+, offsets no longer valid).
+06:58:37.067 [TID 33960] [OK] inventory: TrItemValue native ctor resolved at 0000000142409970 (matches=1)
+06:58:38.236 [TID 33960] [OK] inventory: core global resolved at 0x0000000146D69190 (anchor 0x0000000140362560)
+06:58:38.244 [TID 33960] [OK] inventory: table 'iteminfo' resolved via string-anchor -> 0000000146D69AA8
+06:58:38.252 [TID 33960] [OK] inventory: table 'characterinfo' resolved via string-anchor -> 0000000146D69A48
+06:58:38.279 [TID 33960] [OK] inventory: table 'stringinfo' resolved via string-anchor -> 0000000146D69A80
+06:58:38.285 [TID 33960] [OK] inventory: table 'Inventory' resolved via string-anchor -> 0000000146D69A88
+06:58:38.387 [TID 33960] [OK] world: FrameTimerUpdate hook installed @ 0x0000000140AD1300 (true game time scale engine control).
+06:58:41.035 [TID 33960] [INFO] dye: native client registry global @ 0000000146D69188 (unique dye-ack anchor).
+06:58:41.804 [TID 33960] [INFO] dye: batch apply @ 00000001409911F0, durable upsert @ 000000014240EA60.
+06:58:42.356 [TID 33960] [INFO] dye: DyeVisualSet @ 0000000140991CE0, DyeVisualClear @ 0000000140993390 (validated client targets); DyeApplySlot disabled.
+06:58:42.356 [TID 33960] [INFO] equipment: TU 2.02 false refresh signature disabled (native ChallengeDescription UI, not equipment).
+06:58:42.470 [TID 33960] [OK] friendly: SetNpc multiplier hook installed & enabled @ 0x0000000141ECB810
+06:58:42.693 [TID 33960] [OK] friendly: SetPet multiplier hook installed & enabled @ 0x000000014DBB7750
+06:58:42.693 [TID 33960] [OK] Ready - INSERT (or LB + DOWN on controller) toggles the menu in-game.
+06:58:25.919 [TID 33960] [INFO] Trinity v1.4.2 (vTweak by Lian) initializing (built Sep 20 2026 19:29:00).
+06:58:27.571 [TID 33960] [OK] version: Game version detected: Crimson Desert TU 2.03.00 (Active) [PE: 1.0.0.2976]
+06:58:27.571 [TID 33960] [OK] localization: discovered 1 language(s)
+06:58:31.284 [TID 33960] [INFO] Factory CreateSwapChainForHwnd (patching) @ 00007FFAA87FDE40 in dxgi.dll
+06:58:31.284 [TID 33960] [INFO] FG: CreateSwapChainForHwnd patched - new swapchains will be wrapped.
+06:58:31.284 [TID 33960] [INFO] DX12 hooks installed (CrimsonDesert.exe, pid 34480).
+06:58:31.426 [TID 33960] [OK] player: char-manager successfully resolved (consensus: 9/9 anchors).
+06:58:31.635 [TID 33960] [OK] player: stat-commit hook installed @ 000000014C7EFDE0
+06:58:31.951 [TID 33960] [OK] player: damage-apply hook installed @ 00000001417AE080
+06:58:33.642 [TID 33960] [OK] player: just-window-eval hook installed @ 00000001408738B0 (easy parry/evade live)
+06:58:34.841 [TID 33960] [OK] teleport: destination marker UI global resolved to 0x0000000146D691E8 (from 48 8B 05 ?? ?? ?? ?? 48 8B 98 A8 00 00 00 C4 C1 78 10 04 24).
+06:58:34.927 [TID 33960] [OK] teleport: authoritative destination pin setter hooked @ 0x0000000143836DE8.
+06:58:34.936 [TID 33960] [OK] teleport: destination marker dispatcher resolved (call at 0x0000000140DF9DBF, expectedRet=0x0000000140DF9DC4).
+06:58:35.417 [TID 33960] [OK] teleport: marker origin address resolved to 0x0000000146D56500 (21 votes).
+06:58:36.356 [TID 33960] [OK] teleport: map marker teleport subsystem initialized (destUI=0x0000000146D691E8, authHooks=yes, destMarkerHook=yes, hooks=5/5, ready=yes).
+06:58:36.461 [TID 34492] [INFO] Present queue pinned from swapchain creation - owns the back buffers.
+06:58:36.461 [TID 34492] [INFO] Wrapped swapchain Present @ 00007FFAA87E9530 in dxgi.dll
+06:58:36.461 [TID 34492] [OK] Swapchain wrapped - overlay composites before Frame Generation (2560x1440, 3 buffers, flags 0x800).
+06:58:36.708 [TID 33960] [INFO] inventory: legacy money hooks skipped (TU 2.00+, offsets no longer valid).
+06:58:37.067 [TID 33960] [OK] inventory: TrItemValue native ctor resolved at 0000000142409970 (matches=1)
+06:58:38.236 [TID 33960] [OK] inventory: core global resolved at 0x0000000146D69190 (anchor 0x0000000140362560)
+06:58:38.244 [TID 33960] [OK] inventory: table 'iteminfo' resolved via string-anchor -> 0000000146D69AA8
+06:58:38.252 [TID 33960] [OK] inventory: table 'characterinfo' resolved via string-anchor -> 0000000146D69A48
+06:58:38.279 [TID 33960] [OK] inventory: table 'stringinfo' resolved via string-anchor -> 0000000146D69A80
+06:58:38.285 [TID 33960] [OK] inventory: table 'Inventory' resolved via string-anchor -> 0000000146D69A88
+06:58:38.387 [TID 33960] [OK] world: FrameTimerUpdate hook installed @ 0x0000000140AD1300 (true game time scale engine control).
+06:58:41.035 [TID 33960] [INFO] dye: native client registry global @ 0000000146D69188 (unique dye-ack anchor).
+06:58:41.804 [TID 33960] [INFO] dye: batch apply @ 00000001409911F0, durable upsert @ 000000014240EA60.
+06:58:42.356 [TID 33960] [INFO] dye: DyeVisualSet @ 0000000140991CE0, DyeVisualClear @ 0000000140993390 (validated client targets); DyeApplySlot disabled.
+06:58:42.356 [TID 33960] [INFO] equipment: TU 2.02 false refresh signature disabled (native ChallengeDescription UI, not equipment).
+06:58:42.470 [TID 33960] [OK] friendly: SetNpc multiplier hook installed & enabled @ 0x0000000141ECB810
+06:58:42.693 [TID 33960] [OK] friendly: SetPet multiplier hook installed & enabled @ 0x000000014DBB7750
+06:58:42.693 [TID 33960] [OK] Ready - INSERT (or LB + DOWN on controller) toggles the menu in-game.
+06:58:46.600 [TID 32780] [OK] Overlay ready - 2560x1440, 3 back buffers.
+06:58:46.600 [TID 32780] [INFO] overlay: 4 submission slots; allocator/upload fences independent of back-buffer index.
+07:01:44.571 [TID 34492] [INFO] player: client stat source char=1 mount=0 owner=0000029C14B0DD40 root=0000029C14B0DAC0 array=0000029C4899C000 count=20
+07:01:44.572 [TID 34492] [INFO] player: client stat source char=0 mount=0 owner=0000029C71ED9EC0 root=0000029C71ED9D80 array=0000029B995D7800 count=20
+07:01:44.572 [TID 34492] [INFO] player: client stat source char=-1 mount=1 owner=0000029C14B0FB40 root=0000029C14B0FC80 array=0000029C984B0000 count=20
+07:01:44.605 [TID 34492] [OK] inventory: table 'WantedInfo' resolved via string-anchor -> 0000000146D8AAD0
+07:01:44.605 [TID 34492] [INFO] world: WantedInfo table @ 0000000146D8AAD0 - No Bounty available.
+07:01:44.605 [TID 34492] [OK] world: No Bounty reverted - price zeroed on 0/35 wanted row(s).
+07:01:46.516 [TID 34492] [INFO] player: client stat source char=1 mount=0 owner=0000029C14B0DD40 root=0000029C14B0DAC0 array=0000029C4899C000 count=20
+07:01:46.516 [TID 34492] [INFO] player: client stat source char=0 mount=0 owner=0000029C71ED9EC0 root=0000029C71ED9D80 array=0000029B995D7800 count=20
+07:01:46.516 [TID 34492] [INFO] player: client stat source char=-1 mount=1 owner=0000029C14B0FB40 root=0000029C14B0FC80 array=0000029C984B0000 count=20
+07:13:46.107 [TID 34076] [INFO] inventory: catalog table ready - global=0000000146D69AA8 table=0000029B98F88100 rows=6816.
+07:13:46.315 [TID 34076] [INFO] inventory: catalog built - named=6815 groups=51.
+07:14:42.945 [TID 34492] [INFO] player: client stat source char=1 mount=0 owner=0000029C14B0DD40 root=0000029C14B0DAC0 array=0000029C4899C000 count=20
+07:14:42.946 [TID 34492] [INFO] player: client stat source char=0 mount=0 owner=0000029C71ED9EC0 root=0000029C71ED9D80 array=0000029B995D7800 count=20
+07:14:42.946 [TID 34492] [INFO] player: client stat source char=-1 mount=1 owner=0000029C14B0FB40 root=0000029C14B0FC80 array=0000029C984B0000 count=20
+07:15:26.950 [TID 34492] [INFO] player: client stat source char=1 mount=0 owner=0000029C14B0DD40 root=0000029C14B0DAC0 array=0000029C4899C000 count=20
+07:15:27.080 [TID 34492] [INFO] player: client stat source char=0 mount=0 owner=0000029C71ED9EC0 root=0000029C71ED9D80 array=0000029B995D7800 count=20
+07:15:27.080 [TID 34492] [INFO] player: client stat source char=-1 mount=1 owner=0000029C14B0FB40 root=0000029C14B0FC80 array=0000029C984B0000 count=20
+07:16:52.002 [TID 34492] [INFO] player: client stat source char=1 mount=0 owner=0000029C14B0DD40 root=0000029C14B0DAC0 array=0000029C4899C000 count=20
+07:16:52.004 [TID 34492] [INFO] player: client stat source char=0 mount=0 owner=0000029C71ED9EC0 root=0000029C71ED9D80 array=0000029B995D7800 count=20
+07:16:52.004 [TID 34492] [INFO] player: client stat source char=-1 mount=1 owner=0000029C14B0FB40 root=0000029C14B0FC80 array=0000029C984B0000 count=20
+07:18:27.473 [TID 32780] [INFO] inventory: SetDirectSilver -> 1000000 Silver (100000000 Copper) [status=1].
+07:20:59.034 [TID 34492] [INFO] player: client stat source char=0 mount=0 owner=0000029C71ED9EC0 root=0000029C71ED9D80 array=0000029B995D7800 count=20
+07:20:59.034 [TID 34492] [INFO] player: client stat source char=1 mount=0 owner=0000029C14B0DD40 root=0000029C14B0DAC0 array=0000029C4899C000 count=20
+07:21:27.056 [TID 34492] [INFO] player: client stat source char=-1 mount=1 owner=0000029C14B0FB40 root=0000029C14B0FC80 array=0000029C984B0000 count=20
+07:21:52.703 [TID 34492] [INFO] player: client stat source char=0 mount=0 owner=0000029C71ED9EC0 root=0000029C71ED9D80 array=0000029B995D7800 count=20
+07:47:44.375 [TID 34492] [INFO] player: client stat source char=-1 mount=1 owner=0000029C14B0FB40 root=0000029C14B0FC80 array=0000029C984B0000 count=20
+07:47:45.122 [TID 34492] [INFO] player: client stat source char=0 mount=0 owner=0000029C71ED9EC0 root=0000029C71ED9D80 array=0000029B995D7800 count=20
+07:47:45.500 [TID 34492] [INFO] player: client stat source char=1 mount=0 owner=0000029C14B0DD40 root=0000029C14B0DAC0 array=0000029C4899C000 count=20
+12:49:05.794 [TID 4436] [INFO] Trinity v1.4.2 (vTweak by Lian) initializing (built Sep 20 2026 19:29:00).
+12:49:07.467 [TID 4436] [OK] version: Game version detected: Crimson Desert TU 2.03.00 (Active) [PE: 1.0.0.2976]
+12:49:07.467 [TID 4436] [OK] localization: discovered 1 language(s)
+12:49:07.473 [TID 4436] [OK] Trinity.ini loaded - restored feature settings from last session.
+12:49:11.754 [TID 4436] [INFO] Factory CreateSwapChainForHwnd (patching) @ 00007FFCF635DE40 in dxgi.dll
+12:49:11.754 [TID 4436] [INFO] FG: CreateSwapChainForHwnd patched - new swapchains will be wrapped.
+12:49:11.755 [TID 4436] [INFO] DX12 hooks installed (CrimsonDesert.exe, pid 26472).
+12:49:11.921 [TID 4436] [OK] player: char-manager successfully resolved (consensus: 9/9 anchors).
+12:49:12.186 [TID 4436] [OK] player: stat-commit hook installed @ 000000014C7EFDE0
+12:49:12.530 [TID 4436] [OK] player: damage-apply hook installed @ 00000001417AE080
+12:49:14.343 [TID 4436] [OK] player: just-window-eval hook installed @ 00000001408738B0 (easy parry/evade live)
+12:49:15.548 [TID 4436] [OK] teleport: destination marker UI global resolved to 0x0000000146D691E8 (from 48 8B 05 ?? ?? ?? ?? 48 8B 98 A8 00 00 00 C4 C1 78 10 04 24).
+12:49:15.631 [TID 4436] [OK] teleport: authoritative destination pin setter hooked @ 0x0000000143836DE8.
+12:49:15.641 [TID 4436] [OK] teleport: destination marker dispatcher resolved (call at 0x0000000140DF9DBF, expectedRet=0x0000000140DF9DC4).
+12:49:16.148 [TID 4436] [OK] teleport: marker origin address resolved to 0x0000000146D56500 (21 votes).
+12:49:17.142 [TID 4436] [OK] teleport: map marker teleport subsystem initialized (destUI=0x0000000146D691E8, authHooks=yes, destMarkerHook=yes, hooks=5/5, ready=yes).
+12:49:17.486 [TID 4436] [INFO] inventory: legacy money hooks skipped (TU 2.00+, offsets no longer valid).
+12:49:17.818 [TID 31852] [INFO] Present queue pinned from swapchain creation - owns the back buffers.
+12:49:17.818 [TID 31852] [INFO] Wrapped swapchain Present @ 00007FFCF6349530 in dxgi.dll
+12:49:17.818 [TID 31852] [OK] Swapchain wrapped - overlay composites before Frame Generation (2560x1440, 3 buffers, flags 0x800).
+12:49:17.859 [TID 4436] [OK] inventory: TrItemValue native ctor resolved at 0000000142409970 (matches=1)
+12:49:19.054 [TID 4436] [OK] inventory: core global resolved at 0x0000000146D69190 (anchor 0x0000000140362560)
+12:49:19.058 [TID 4436] [OK] inventory: table 'iteminfo' resolved via string-anchor -> 0000000146D69AA8
+12:49:19.061 [TID 4436] [OK] inventory: table 'characterinfo' resolved via string-anchor -> 0000000146D69A48
+12:49:19.084 [TID 4436] [OK] inventory: table 'stringinfo' resolved via string-anchor -> 0000000146D69A80
+12:49:19.090 [TID 4436] [OK] inventory: table 'Inventory' resolved via string-anchor -> 0000000146D69A88
+12:49:19.174 [TID 4436] [OK] world: FrameTimerUpdate hook installed @ 0x0000000140AD1300 (true game time scale engine control).
+12:49:21.717 [TID 4436] [INFO] dye: native client registry global @ 0000000146D69188 (unique dye-ack anchor).
+12:49:22.382 [TID 4436] [INFO] dye: batch apply @ 00000001409911F0, durable upsert @ 000000014240EA60.
+12:49:22.815 [TID 4436] [INFO] dye: DyeVisualSet @ 0000000140991CE0, DyeVisualClear @ 0000000140993390 (validated client targets); DyeApplySlot disabled.
+12:49:22.816 [TID 4436] [INFO] equipment: TU 2.02 false refresh signature disabled (native ChallengeDescription UI, not equipment).
+12:49:22.927 [TID 4436] [OK] friendly: SetNpc multiplier hook installed & enabled @ 0x0000000141ECB810
+12:49:23.141 [TID 4436] [OK] friendly: SetPet multiplier hook installed & enabled @ 0x000000014DBB7750
+12:49:23.142 [TID 4436] [OK] Ready - INSERT (or LB + DOWN on controller) toggles the menu in-game.
+12:49:05.794 [TID 4436] [INFO] Trinity v1.4.2 (vTweak by Lian) initializing (built Sep 20 2026 19:29:00).
+12:49:07.467 [TID 4436] [OK] version: Game version detected: Crimson Desert TU 2.03.00 (Active) [PE: 1.0.0.2976]
+12:49:07.467 [TID 4436] [OK] localization: discovered 1 language(s)
+12:49:07.473 [TID 4436] [OK] Trinity.ini loaded - restored feature settings from last session.
+12:49:11.754 [TID 4436] [INFO] Factory CreateSwapChainForHwnd (patching) @ 00007FFCF635DE40 in dxgi.dll
+12:49:11.754 [TID 4436] [INFO] FG: CreateSwapChainForHwnd patched - new swapchains will be wrapped.
+12:49:11.755 [TID 4436] [INFO] DX12 hooks installed (CrimsonDesert.exe, pid 26472).
+12:49:11.921 [TID 4436] [OK] player: char-manager successfully resolved (consensus: 9/9 anchors).
+12:49:12.186 [TID 4436] [OK] player: stat-commit hook installed @ 000000014C7EFDE0
+12:49:12.530 [TID 4436] [OK] player: damage-apply hook installed @ 00000001417AE080
+12:49:14.343 [TID 4436] [OK] player: just-window-eval hook installed @ 00000001408738B0 (easy parry/evade live)
+12:49:15.548 [TID 4436] [OK] teleport: destination marker UI global resolved to 0x0000000146D691E8 (from 48 8B 05 ?? ?? ?? ?? 48 8B 98 A8 00 00 00 C4 C1 78 10 04 24).
+12:49:15.631 [TID 4436] [OK] teleport: authoritative destination pin setter hooked @ 0x0000000143836DE8.
+12:49:15.641 [TID 4436] [OK] teleport: destination marker dispatcher resolved (call at 0x0000000140DF9DBF, expectedRet=0x0000000140DF9DC4).
+12:49:16.148 [TID 4436] [OK] teleport: marker origin address resolved to 0x0000000146D56500 (21 votes).
+12:49:17.142 [TID 4436] [OK] teleport: map marker teleport subsystem initialized (destUI=0x0000000146D691E8, authHooks=yes, destMarkerHook=yes, hooks=5/5, ready=yes).
+12:49:17.486 [TID 4436] [INFO] inventory: legacy money hooks skipped (TU 2.00+, offsets no longer valid).
+12:49:17.818 [TID 31852] [INFO] Present queue pinned from swapchain creation - owns the back buffers.
+12:49:17.818 [TID 31852] [INFO] Wrapped swapchain Present @ 00007FFCF6349530 in dxgi.dll
+12:49:17.818 [TID 31852] [OK] Swapchain wrapped - overlay composites before Frame Generation (2560x1440, 3 buffers, flags 0x800).
+12:49:17.859 [TID 4436] [OK] inventory: TrItemValue native ctor resolved at 0000000142409970 (matches=1)
+12:49:19.054 [TID 4436] [OK] inventory: core global resolved at 0x0000000146D69190 (anchor 0x0000000140362560)
+12:49:19.058 [TID 4436] [OK] inventory: table 'iteminfo' resolved via string-anchor -> 0000000146D69AA8
+12:49:19.061 [TID 4436] [OK] inventory: table 'characterinfo' resolved via string-anchor -> 0000000146D69A48
+12:49:19.084 [TID 4436] [OK] inventory: table 'stringinfo' resolved via string-anchor -> 0000000146D69A80
+12:49:19.090 [TID 4436] [OK] inventory: table 'Inventory' resolved via string-anchor -> 0000000146D69A88
+12:49:19.174 [TID 4436] [OK] world: FrameTimerUpdate hook installed @ 0x0000000140AD1300 (true game time scale engine control).
+12:49:21.717 [TID 4436] [INFO] dye: native client registry global @ 0000000146D69188 (unique dye-ack anchor).
+12:49:22.382 [TID 4436] [INFO] dye: batch apply @ 00000001409911F0, durable upsert @ 000000014240EA60.
+12:49:22.815 [TID 4436] [INFO] dye: DyeVisualSet @ 0000000140991CE0, DyeVisualClear @ 0000000140993390 (validated client targets); DyeApplySlot disabled.
+12:49:22.816 [TID 4436] [INFO] equipment: TU 2.02 false refresh signature disabled (native ChallengeDescription UI, not equipment).
+12:49:22.927 [TID 4436] [OK] friendly: SetNpc multiplier hook installed & enabled @ 0x0000000141ECB810
+12:49:23.141 [TID 4436] [OK] friendly: SetPet multiplier hook installed & enabled @ 0x000000014DBB7750
+12:49:23.142 [TID 4436] [OK] Ready - INSERT (or LB + DOWN on controller) toggles the menu in-game.
+12:49:28.022 [TID 33044] [OK] Overlay ready - 2560x1440, 3 back buffers.
+12:49:28.022 [TID 33044] [INFO] overlay: 4 submission slots; allocator/upload fences independent of back-buffer index.
+12:50:38.481 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AD95508C00 root=000004AD95509740 array=000004AE84654800 count=20
+12:50:38.481 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AE3BDB1E00 root=000004AE3BDB03C0 array=000004AD71F7B400 count=20
+12:50:38.511 [TID 31852] [OK] inventory: table 'WantedInfo' resolved via string-anchor -> 0000000146D8AAD0
+12:50:38.512 [TID 31852] [INFO] world: WantedInfo table @ 0000000146D8AAD0 - No Bounty available.
+12:50:38.512 [TID 31852] [OK] world: No Bounty reverted - price zeroed on 0/35 wanted row(s).
+12:50:38.595 [TID 31852] [INFO] player: client stat source char=-1 mount=1 owner=000004AD9550F140 root=000004AD9550F280 array=000004AE8465A800 count=20
+12:51:27.888 [TID 1584] [INFO] inventory: catalog table ready - global=0000000146D69AA8 table=000004AD657A7F80 rows=6816.
+12:51:28.091 [TID 1584] [INFO] inventory: catalog built - named=6815 groups=51.
+12:55:25.828 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AD95508C00 root=000004AD95509740 array=000004AE84654800 count=20
+12:55:25.828 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AE3BDB1E00 root=000004AE3BDB03C0 array=000004AD71F7B400 count=20
+12:55:25.961 [TID 31852] [INFO] player: client stat source char=-1 mount=1 owner=000004AD9550F140 root=000004AD9550F280 array=000004AE8465A800 count=20
+12:55:33.047 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AD95508C00 root=000004AD95509740 array=000004AE84654800 count=20
+12:55:33.047 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AE3BDB1E00 root=000004AE3BDB03C0 array=000004AD71F7B400 count=20
+12:55:33.047 [TID 31852] [INFO] player: client stat source char=-1 mount=1 owner=000004AD9550F140 root=000004AD9550F280 array=000004AE8465A800 count=20
+12:55:36.077 [TID 31852] [INFO] --- [Previous message repeated 1 times] ---
+12:55:36.077 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AE3BDB1E00 root=000004AE3BDB03C0 array=000004AD71F7B400 count=20
+12:55:36.774 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AD95508C00 root=000004AD95509740 array=000004AE84654800 count=20
+13:08:14.752 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AD95508C00 root=000004AD95509740 array=000004AE84654800 count=20
+13:08:14.877 [TID 31852] [INFO] player: client stat source char=-1 mount=1 owner=000004AD9550F140 root=000004AD9550F280 array=000004AE8465A800 count=20
+13:08:14.878 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AE3BDB1E00 root=000004AE3BDB03C0 array=000004AD71F7B400 count=20
+13:09:27.379 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AE3BDB1E00 root=000004AE3BDB03C0 array=000004AD71F7B400 count=20
+13:09:27.504 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AD95508C00 root=000004AD95509740 array=000004AE84654800 count=20
+13:09:27.628 [TID 31852] [INFO] player: client stat source char=-1 mount=1 owner=000004AD9550F140 root=000004AD9550F280 array=000004AE8465A800 count=20
+13:09:46.755 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AD95508C00 root=000004AD95509740 array=000004AE84654800 count=20
+13:21:47.624 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AE3BDB1E00 root=000004AE3BDB03C0 array=000004AD71F7B400 count=20
+13:21:48.001 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AD95508C00 root=000004AD95509740 array=000004AE84654800 count=20
+13:21:48.001 [TID 31852] [INFO] player: client stat source char=-1 mount=1 owner=000004AD9550F140 root=000004AD9550F280 array=000004AE8465A800 count=20
+13:26:24.044 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AD95508C00 root=000004AD95509740 array=000004AE84654800 count=20
+13:32:07.396 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AE3BDB1E00 root=000004AE3BDB03C0 array=000004AD71F7B400 count=20
+13:32:07.502 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AD95508C00 root=000004AD95509740 array=000004AE84654800 count=20
+17:39:52.081 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AE3BDB1E00 root=000004AE3BDB03C0 array=000004AD71F7B400 count=20
+17:39:52.458 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AD95508C00 root=000004AD95509740 array=000004AE84654800 count=20
+17:39:52.582 [TID 31852] [INFO] player: client stat source char=-1 mount=1 owner=000004AD9550F140 root=000004AD9550F280 array=000004AE8465A800 count=20
+17:49:00.380 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AD95508C00 root=000004AD95509740 array=000004AE84654800 count=20
+18:07:05.295 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AE3BDB1E00 root=000004AE3BDB03C0 array=000004AD71F7B400 count=20
+18:07:05.426 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AD95508C00 root=000004AD95509740 array=000004AE84654800 count=20
+18:07:05.427 [TID 31852] [INFO] player: client stat source char=-1 mount=1 owner=000004AD9550F140 root=000004AD9550F280 array=000004AE8465A800 count=20
+18:09:25.006 [TID 31852] [INFO] player: client stat source char=-1 mount=1 owner=000004AD9550F140 root=000004AD9550F280 array=000004AE8465A800 count=20
+18:18:29.454 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AE3BDB1E00 root=000004AE3BDB03C0 array=000004AD71F7B400 count=20
+18:18:39.075 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AD95508C00 root=000004AD95509740 array=000004AE84654800 count=20
+18:39:49.701 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AD95508C00 root=000004AD95509740 array=000004AE84654800 count=20
+18:39:49.827 [TID 31852] [INFO] player: client stat source char=-1 mount=1 owner=000004AD9550F140 root=000004AD9550F280 array=000004AE8465A800 count=20
+18:39:50.204 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AE3BDB1E00 root=000004AE3BDB03C0 array=000004AD71F7B400 count=20
+18:41:05.957 [TID 31852] [INFO] player: client stat source char=-1 mount=1 owner=000004AD9550F140 root=000004AD9550F280 array=000004AE8465A800 count=20
+18:43:54.825 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AE3BDB1E00 root=000004AE3BDB03C0 array=000004AD71F7B400 count=20
+18:46:04.629 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AD95508C00 root=000004AD95509740 array=000004AE84654800 count=20
+18:46:04.630 [TID 31852] [INFO] player: client stat source char=-1 mount=1 owner=000004AD9550F140 root=000004AD9550F280 array=000004AE8465A800 count=20
+18:46:04.877 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AE3BDB1E00 root=000004AE3BDB03C0 array=000004AD71F7B400 count=20
+18:52:39.203 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AD95508C00 root=000004AD95509740 array=000004AE84654800 count=20
+18:54:13.802 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AE3BDB1E00 root=000004AE3BDB03C0 array=000004AD71F7B400 count=20
+19:28:58.503 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AE3BDB1E00 root=000004AE3BDB03C0 array=000004AD71F7B400 count=20
+19:31:10.758 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AE8F299380 root=000004AE8F290F00 array=000004AE85453000 count=20
+19:31:10.758 [TID 31852] [INFO] player: client stat source char=-1 mount=1 owner=000004AE9A65C300 root=000004AE9A65A3C0 array=000004AE85455400 count=20
+19:31:10.872 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AEC895A500 root=000004AEC8952F80 array=000004AE8545CC00 count=20
+19:41:58.631 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AE8F299380 root=000004AE8F290F00 array=000004AE85453000 count=20
+19:41:58.632 [TID 31852] [INFO] player: client stat source char=-1 mount=1 owner=000004AE9A65C300 root=000004AE9A65A3C0 array=000004AE85455400 count=20
+19:41:58.762 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AEC895A500 root=000004AEC8952F80 array=000004AE8545CC00 count=20
+19:42:14.502 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AEC895A500 root=000004AEC8952F80 array=000004AE8545CC00 count=20
+19:42:15.751 [TID 31852] [INFO] player: client stat source char=-1 mount=1 owner=000004AE9A65C300 root=000004AE9A65A3C0 array=000004AE85455400 count=20
+19:43:13.458 [TID 31852] [INFO] player: client stat source char=1 mount=0 owner=000004AE8F299380 root=000004AE8F290F00 array=000004AE85453000 count=20
+19:43:13.458 [TID 31852] [INFO] player: client stat source char=-1 mount=1 owner=000004AE9A65C300 root=000004AE9A65A3C0 array=000004AE85455400 count=20
+19:43:14.329 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AEC895A500 root=000004AEC8952F80 array=000004AE8545CC00 count=20

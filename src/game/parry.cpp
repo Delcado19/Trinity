@@ -1,4 +1,5 @@
 #include "parry.h"
+#include "parry_output.h"
 
 #include <Windows.h>
 #include <cstring>
@@ -62,6 +63,29 @@ namespace trinity::game
         void*            g_target   = nullptr;
         ULONGLONG        g_lastPulse = 0;
 
+        // Evaluator calls are not confirmed counterattacks: the same attack
+        // can be evaluated repeatedly and for actors other than the player.
+        // Keep separate cumulative totals for on/off comparisons; atomic
+        // counters avoid introducing a lock into this game hook.
+        struct Diagnostics
+        {
+            std::atomic<unsigned long long> calls{0}, eligible{0}, perfect{0},
+                unreadable{0}, lowStackOutputs{0}, forced{0}, writeFailures{0}, pulses{0};
+            std::atomic<ULONGLONG> lastLog{0};
+        };
+        Diagnostics g_diagnostics[2];
+
+        void LogDiagnostics(bool enabled)
+        {
+            auto& d = g_diagnostics[enabled ? 1 : 0];
+            LOG("parry: evaluator totals easy=%s calls=%llu eligible=%llu "
+                "originalPerfect=%llu unreadable=%llu lowStackOutputs=%llu forced=%llu writeFailures=%llu "
+                "pulseRequests=%llu (not confirmed counters)",
+                enabled ? "on" : "off", d.calls.load(), d.eligible.load(),
+                d.perfect.load(), d.unreadable.load(), d.lowStackOutputs.load(), d.forced.load(),
+                d.writeFailures.load(), d.pulses.load());
+        }
+
         // A rate, not an edge: consecutive swings keep the window open, so a
         // rising edge only parried the first attack of a combo.
         constexpr ULONGLONG kPulseIntervalMs = 250;
@@ -110,30 +134,51 @@ namespace trinity::game
         bool __fastcall hkParryEvaluator(void* a, void* b, float range, bool evade, bool* perfect)
         {
             const bool eligible = g_original ? g_original(a, b, range, evade, perfect) : false;
-            if (evade || !g_on)
-                return eligible;
+            if (evade)
+                return eligible; // dodge evaluations are outside the parry comparison
+
+            const bool enabled = g_on.load();
+            auto& d = g_diagnostics[enabled ? 1 : 0];
+            ++d.calls;
+            uint8_t before = 0xFF;
+            if (eligible)
+            {
+                ++d.eligible;
+                if (perfect && detail::ReadParryOutput(perfect, &before))
+                {
+                    if (reinterpret_cast<uintptr_t>(perfect) < kMinPointer)
+                        ++d.lowStackOutputs;
+                    if (before == 1) ++d.perfect;
+                }
+                else
+                    ++d.unreadable;
+            }
 
             const ULONGLONG now = GetTickCount64();
-            const bool pulse = eligible && now - g_lastPulse >= kPulseIntervalMs;
-            if (pulse)
+            if (enabled)
             {
-                hooks::PulseButtonRelease();   // pad
-                PulseHeldKeys();               // keyboard and mouse
-                g_lastPulse = now;
+                if (eligible && now - g_lastPulse >= kPulseIntervalMs)
+                {
+                    hooks::PulseButtonRelease();
+                    PulseHeldKeys();
+                    g_lastPulse = now;
+                    ++d.pulses; // requested, not proof that a held block was re-pressed
+                }
+                if (eligible && perfect)
+                {
+                    if (detail::WriteParryOutput(perfect))
+                    {
+                        if (before == 0) ++d.forced;
+                    }
+                    else
+                        ++d.writeFailures;
+                }
             }
-            uint8_t before = 0xFF;   // the game's own verdict, 0xFF = unreadable
-            if (eligible && perfect)
-            {
-                mem::Read8(reinterpret_cast<uintptr_t>(perfect), &before);
-                mem::Write8(reinterpret_cast<uintptr_t>(perfect), 1);
-            }
-            // One line per parry window (the pulse rate limits it to ~4/s):
-            // shows the hook sees the window, whether it re-pressed the block,
-            // and what the game itself had decided. Added because the effect on
-            // a held block could not be judged from the log (live 2026-09-30).
-            if (pulse)
-                LOG("parry: window open - block re-pressed, game's own verdict was %s",
-                    before == 1 ? "perfect" : before == 0 ? "not perfect" : "unreadable");
+            // At most one summary per mode every ten seconds while the
+            // evaluator is active. Totals are lifetime calls, not unique hits.
+            auto last = d.lastLog.load();
+            if (now - last >= 10000 && d.lastLog.compare_exchange_strong(last, now))
+                LogDiagnostics(enabled);
             return eligible;
         }
 
@@ -161,7 +206,8 @@ namespace trinity::game
                              "falling back to the verdict patch",
                              &hkParryEvaluator, &g_original, &g_target))
         {
-            LOG("parry: evaluator hook installed @ %p - Easy Parry available.", g_target);
+            LOG("parry: evaluator hook installed @ %p - Easy Parry available; "
+                "on/off evaluator diagnostics enabled (not confirmed counters).", g_target);
             return true;
         }
 
@@ -196,7 +242,8 @@ namespace trinity::game
             g_site = 0;
             return false;
         }
-        LOG("parry: verdict site @ %p - Easy Parry available.", reinterpret_cast<void*>(g_site));
+        LOG("parry: verdict site @ %p - Easy Parry available; "
+            "evaluator diagnostics unavailable in patch fallback mode.", reinterpret_cast<void*>(g_site));
         return true;
     }
 
@@ -218,6 +265,7 @@ namespace trinity::game
         if (on == g_on) return;
         if (g_target)   // hook mode: the hook itself checks g_on
         {
+            LogDiagnostics(g_on.load()); // capture the end of this test mode
             g_on = on;
             LOG("parry: Easy Parry %s.", on ? "on" : "off");
             return;

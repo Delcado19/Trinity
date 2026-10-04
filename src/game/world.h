@@ -1,7 +1,25 @@
 #pragma once
 
+#include <cstdint>
+#include <limits>
+
 namespace trinity::game
 {
+    namespace detail
+    {
+        // Carry signed hour steps without overflowing the engine's int32 day.
+        inline bool ShiftClockHours(int day, int hour, int hours, int& newDay, int& newHour)
+        {
+            if (day < 0 || hour < 0 || hour > 23) return false;
+            int64_t total = static_cast<int64_t>(day) * 24 + hour + hours;
+            if (total > static_cast<int64_t>(std::numeric_limits<int>::max()) * 24 + 23) return false;
+            if (total < 0) total = 0;
+            newDay = static_cast<int>(total / 24);
+            newHour = static_cast<int>(total % 24);
+            return true;
+        }
+    }
+
     // World features: Game Speed (a global time-dilation control built on the
     // engine's fixed-timestep override) and Time of Day (freeze / advance the
     // day-night clock). Both resolve independently at Install() - either can
@@ -39,7 +57,8 @@ namespace trinity::game
     //    (2), Freeze "only froze the clock" while the sun kept moving. Physics,
     //    AI and combat keep running throughout.
     //  - Advance adds whole hours to the clock (carrying into the day so the
-    //    two stay consistent); the change sticks and the clock keeps flowing.
+    //    two stay consistent). Queued steps update the tick accumulator and
+    //    realm/render mirrors on the field-clock thread; runtime persistence still requires verification.
     class World
     {
     public:
@@ -61,9 +80,9 @@ namespace trinity::game
         // True once the field-clock globals resolved (the feature is available).
         static bool TimeOfDayReady();
 
-        // Adds `hours` to the in-game clock (carrying into the day). Returns
-        // false if Time of Day did not resolve or the clock can't be read right
-        // now (e.g. not yet in-world). While frozen, advances the pinned time.
+        // Queues one signed step (-240..240 hours). False if unavailable, zero,
+        // out of range, or another step is pending. True means accepted, not applied;
+        // the field tick validates live memory before updating the clock.
         static bool AdvanceTimeOfDayHours(int hours);
     };
 }

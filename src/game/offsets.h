@@ -699,7 +699,7 @@ namespace trinity::game
 
     // The engine's OWN slot-expansion setter (IDB sub_1CE8190) - what the game
     // itself runs when your expansion count changes:
-    //     void* f(holder, int* outErr, void* unused, u16 bucketType, u16 count)
+    //     void* f(holder, int* outErr, u16 bucketType, u16 count)
     // It finds the bucket the same way we do (bucket+0x10 == bucketType), then:
     //     bucket[0x16] = count            ; buff accumulator
     //     bucket[0x1A] = count            ; _varyExpandSlotCount (the real one)
@@ -710,7 +710,7 @@ namespace trinity::game
     // read gates a dead branch), so counts past the table max do take effect.
     // Preferred over writing kOff_InvBucket_MaxSlots directly, which only
     // pokes a cache the engine recomputes - see kOff_InvBucket_ExpandSlots.
-    // 3rd arg is dead (forwarded to a resolver that ignores it): pass nullptr.
+    // TU 2.03.02 uses four arguments (gugi e0d287e); bucketType is arg3.
     //
     // HOOKED, not just called, because the engine re-stamps VANILLA values
     // through it behind our back (found 2026-07-15 chasing "inventory full"
@@ -729,7 +729,8 @@ namespace trinity::game
     // cap. Substituting the count inside the hook makes the engine's own
     // re-stamps apply the override, which closes the window for good.
     inline constexpr const char* kSig_InvSetExpandSlots =
-        "48 89 5C 24 ? 56 48 83 EC 20 48 8B 41 ? 48 8B F2 8B 49";
+        "48 89 6C 24 ?? 48 89 74 24 ?? 48 89 7C 24 ?? 41 56 48 83 EC "
+        "20 48 8B 41 18 41 0F B7 E9";
 
     // The FREE-SPACE GATE (IDB sub_1CE8F40) - the check that actually throws
     // "inventory full" on a world pickup, BEFORE the insert planner runs:
@@ -794,8 +795,9 @@ namespace trinity::game
     // reachable points at that arena. Capture-at-load is the route; this is it.
     // Unique byte signature.
     inline constexpr const char* kSig_InvCommit =
-        "4C 89 44 24 ? 48 89 54 24 ? 48 89 4C 24 ? 55 53 56 57 41 54 41 55 41 56 "
-        "41 57 48 8D 6C 24 ? 48 81 EC 48 01 00 00 4D 8B D0 48 8B D1";
+        "48 89 5C 24 ?? 4C 89 44 24 ?? 48 89 54 24 ?? 48 89 4C 24 ?? "
+        "55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ?? 48 81 EC ?? "
+        "?? ?? ?? 4D 8B F9 4D 8B E0";
 
     // Fallback container resolution (the hook above only captures the
     // container when the game happens to query an item count, which is NOT
@@ -950,10 +952,11 @@ namespace trinity::game
     inline constexpr uint16_t  kInvSlot_EmptyType     = 0xFFFF;
 
     // --- Creating an item from nothing (the add-item path) --------------------
-    // A slot IS a TrItemValue (same 0xC0 stride), and the game's own recipe for
+    // A slot contains the current 0xC8-byte TrItemValue payload; and the game's own recipe for
     // making one lives in the server reconcile (IDB sub_25568A0, 0x2556FA0..
     // 0x255717B) - it creates a stack from nothing using these primitives. We
-    // replay it verbatim; every step below was live-validated 2026-07-15 (a real,
+    // retain its sequence with the TU 2.03.02 ABI/layout port below. The historical
+    // recipe was live-validated 2026-07-15 (a real,
     // usable, persistent item that survives save/reload):
     //
     //   container = *(holder+8)                       // kOff_InvHolder_Container
@@ -965,8 +968,9 @@ namespace trinity::game
     //   itemVal+0x00 = InterlockedIncrement64(alloc+0x20)   // THE unique id
     //   bucket = the holder bucket whose +0x10 == itemDef+66
     //   plan(bucket, &err, container, {itemVal,1,1}, 0, &out, 0, 0, 1)
-    //   for each 216-byte placement p in out:
-    //       commit(holder, &err, 0, p, *(u16*)(p+208))
+    //   for each 224-byte placement p in out:
+    //       commit(holder, &err, p, *(u16*)(p+216))
+    //   publishRevision(holder) if any placement committed
     //   freePlacements(&out); dtor(itemVal)
     //
     // WHY EACH PIECE MATTERS (each was a separate failed attempt):
@@ -999,7 +1003,9 @@ namespace trinity::game
     // returns the lower address - which is not this one, so the add path was
     // calling an unrelated function with (itemVal, u16*, i64) and faulting on
     // its first instruction (logged as "exception (built=0 planned=0)").
-    // Extended through the ctor's own opening writes, which are its identity
+    // TU 2.03.02 uses the unique gugi e0d287e constructor prologue below.
+    // Runtime add/persistence must be verified again for this port.
+    // Historical signatures extended through the opening writes, its identity
     // and match the documented prototype exactly:
     //     mov qword ptr [rcx], -1        ; instance id, left for the caller
     //     movzx eax, word ptr [rdx]      ; typeId  (arg2, u16*)
@@ -1007,18 +1013,22 @@ namespace trinity::game
     //     mov qword ptr [rcx+0x10], r8   ; quantity (arg3, i64)
     // Unique.
     inline constexpr const char* kSig_TrItemValueCtor =
-        "48 89 5C 24 ? 48 89 4C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8B EC "
-        "48 83 EC 60 4C 8B EA 48 8B F1 48 C7 01 FF FF FF FF 0F B7 02 66 89 41 08 "
-        "4C 89 41 10";
+        "48 89 5C 24 ?? 48 89 4C 24 ?? 55 56 57 41 54 41 55 41 56 41 "
+        "57 48 8B EC 48 83 EC 70 4C 8B F2 4C 8B E1";
+    // Publish successful inserts so equipment/ammo observers refresh (gugi e0d287e).
+    inline constexpr const char* kSig_InvBumpRevision =
+        "40 57 48 83 EC 20 8B 81 08 01 00 00 48 8B F9 39 81 00 01 00 "
+        "00 0F 85";
+
     // Per-placement COMMIT (IDB sub_1CE1020):
-    //     void* f(holder, int* outErr, void* unused, void* placement, u16 slotIdx)
+    //     void* f(holder, int* outErr, void* placement, u16 slotIdx)
     // Re-finds the bucket from the item's own def (+66) and calls sub_ED65670,
     // which validates the item may live in that storage, copies it into an empty
     // slot (or merges onto an existing stack) and maintains the used-slot count.
-    // 3rd arg is a genuine don't-care: it only supplies the high bits of a
-    // scratch whose low word is immediately overwritten with the typeId.
+    // TU 2.03.02: placement is arg3, slotIdx is arg4; no unused argument.
     inline constexpr const char* kSig_InvCommitPlacement =
-        "48 89 5C 24 ? 4C 89 44 24 ? 55 56 57 48 83 EC 30 41 0F B7 59";
+        "48 89 5C 24 ?? 48 89 6C 24 ?? 56 57 41 56 48 83 EC 30 41 0F "
+        "B7 58 08 48 8B F1";
     // Free the planner's placement vector (IDB sub_7D13B10, reached via the
     // 5-byte jmp thunk sub_332C40 - thunks cannot be signatured, so this is the
     // target; calling it is identical). Its `imul rcx, rax, 0E0h` in the
@@ -1029,8 +1039,8 @@ namespace trinity::game
     // the return address and `ret` jump to a stack value - which is exactly
     // the "faulting module: unknown" access violation Add Item was dying on.
     inline constexpr const char* kSig_InvFreePlacements =
-        "48 89 5C 24 ? 57 48 83 EC 20 48 8B D9 48 8B 09 48 85 C9 74 ?? 33 FF "
-        "39 7B ?? 76 ?? 0F 1F 40 ?? 8B C7 48 69 C8 E0 00 00 00";
+        "48 89 5C 24 ?? 57 48 83 EC 20 48 89 CB 48 83 39 00 74 ?? 31 "
+        "FF 39 79 08 76 ?? 66 0F 1F 44 00 00 89 F8 48 69 C8 E0 00 00 00";
     // Byte offset of that `imul` immediate inside the match. We re-read it at
     // load and refuse Add Item unless it agrees with kPlacement_Stride - the
     // stride moving under us is precisely how a placement loop would start
@@ -1477,8 +1487,8 @@ namespace trinity::game
     // followed by the two `vmovups ymm0, cs:<global>` (server if TLS[498], else
     // client). The two RIP operands resolve to the server and client globals.
     inline constexpr const char* kSig_FieldTimeRealm =
-        "BA F6 01 00 00 48 8B 08 0F B6 04 0A 84 C0 74 0A "
-        "C5 FC 10 05 ?? ?? ?? ?? EB 08 C5 FC 10 05 ?? ?? ?? ??";
+        "BA EC 01 00 00 48 8B 08 0F B6 04 0A 84 C0 74 0A C5 FC 10 05 "
+        "?? ?? ?? ?? EB 08 C5 FC 10 05 ?? ?? ?? ??";
     // Within the match: server `vmovups` at +0x10, client `vmovups` at +0x1A;
     // each is 8 bytes (4-byte opcode C5 FC 10 05 + 4-byte disp at its tail).
     inline constexpr uintptr_t kOff_FieldTime_ServerVmovups = 0x10;
@@ -1504,14 +1514,15 @@ namespace trinity::game
     // race against this very function: it rewrites the globals every game tick
     // from its accumulator, so a per-frame pin from another thread never held.
     //
-    // The tick is __fastcall(rcx=mgr, xmm1=delta, xmm2=unused); the delta is a
+    // TU 2.03.02 port: the tick takes only (mgr, delta); no third argument.
+    // The tick is __fastcall(rcx=mgr, xmm1=delta); the delta is a
     // single float in xmm1, so the detour prototype declares `float delta` to
     // land on xmm1 and zeroes it. Signature = the ABI-fixed prologue plus the
     // distinctive accumulator add `vaddss xmm0, xmm1, [rcx+2Ch]`
     // (make_signature_for_function, unique in this build).
     inline constexpr const char* kSig_FieldTimeTick =
-        "48 89 5C 24 ?? 48 89 74 24 ?? 48 89 7C 24 ?? 55 41 56 41 57 48 8B EC "
-        "48 83 EC 70 48 8B F9 C5 F2 58 41 2C";
+        "48 89 5C 24 ?? 48 89 74 24 ?? 48 89 7C 24 ?? 4C 89 64 24 ?? "
+        "55 41 56 41 57 48 8B EC 48 83 EC 70 48 8B F9 C5 F2 58 41 2C";
 
     // --- Time of Day: FREEZE the visible SUN via the RENDER manager ----------
     // The numeric field clock above is only half the story. The visible

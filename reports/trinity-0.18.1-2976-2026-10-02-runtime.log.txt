@@ -1,0 +1,38 @@
+20:38:05 [INFO] Trinity v0.18.1 initializing (built Oct  2 2026 12:36:52).
+20:38:05 [INFO] version: Crimson Desert 1.0.0.2976 (TU 2.03.02) - the build this release was checked against.
+20:38:05 [INFO] DRED armed - a device removal will report GPU breadcrumbs + page faults.
+20:38:07 [INFO] Factory CreateSwapChainForHwnd (patching) @ 00007FFCF635DE40 in dxgi.dll
+20:38:07 [INFO] FG: CreateSwapChainForHwnd patched - new swapchains will be wrapped.
+20:38:07 [INFO] DX12 hooks installed (CrimsonDesert.exe, pid 34880).
+20:38:10 [INFO] player: char-manager resolved from 2/6 anchors (the others need re-deriving; features are unaffected).
+20:38:11 [WARN] player: stat-commit matched fallback pattern #1 - this game build moved the current one, so please report it.
+20:38:11 [INFO] player/diag: damage-apply GT - VA=0x141718500 read=1 bytes=8B C7 EB 29 0F B7 53 14 oDamageApply=000000013FFC0F80 g_damageHookTarget=00000001417AE080
+20:38:11 [INFO] teleport: marker world-origin resolved @ 0000000146D56500.
+20:38:13 [WARN] teleport: locomotion-stepper matched fallback pattern #1 - this game build moved the current one, so please report it.
+20:38:13 [INFO] teleport: locomotion-stepper hook installed @ 000000014369FFC0.
+20:38:13 [INFO] teleport: airborne mover @ 00000001436A4C00..00000001436A55CC - Free Flight ready.
+20:38:14 [WARN] teleport: pathing-helper matched fallback pattern #1 - this game build moved the current one, so please report it.
+20:38:14 [INFO] teleport: pathing helper hook installed @ 00000001436A9590.
+20:38:18 [INFO] Present queue pinned from swapchain creation - owns the back buffers.
+20:38:18 [INFO] Wrapped swapchain Present @ 00007FFCF6349530 in dxgi.dll
+20:38:18 [OK  ] Swapchain wrapped - overlay composites before Frame Generation (2560x1440, 3 buffers, flags 0x800).
+20:38:18 [INFO] inventory: ItemGroupInfo table resolved @ 0000000146D69AA0.
+20:38:18 [INFO] inventory: stringinfo table resolved @ 0000000146D69A80.
+20:38:18 [INFO] inventory: InventoryInfo table resolved @ 0000000146D69A88.
+20:38:18 [INFO] inventory: localisation getter @ 00000001412C01C0 (provider +0x18, size +0x60, data +0x58).
+20:38:18 [WARN] world: master frame update matched fallback pattern #1 - this game build moved the current one, so please report it.
+20:38:19 [INFO] world: master frame update hook installed @ 0000000140AD1300 - Game Speed ready.
+20:38:19 [ERR ] world: game-speed signature NOT FOUND - Game Speed disabled.
+20:38:21 [ERR ] dye: apply-batch signature NOT FOUND - armor dyeing disabled.
+20:38:22 [WARN] friendly: NPC trust setter matched fallback pattern #2 - this game build moved the current one, so please report it.
+20:38:23 [WARN] friendly: pet trust setter matched fallback pattern #1 - this game build moved the current one, so please report it.
+20:38:24 [INFO] parry: evaluator hook installed @ 00000001408738B0 - Easy Parry available.
+20:38:24 [OK  ] Ready - INSERT (or LB + DOWN on controller) toggles the menu in-game.
+20:38:27 [INFO] localisation: discovered 5 language(s) (including built-ins).
+20:38:27 [OK  ] Overlay ready - 2560x1440, 3 back buffers.
+20:42:52 [INFO] player: stat scan over 32 entries - 1 stamina, 1 spirit gauge(s).
+20:42:58 [INFO] teleport: no destination marker - actors tracked=5, with nav component=1, first nav dest=(0.0, 0.0, 0.0)
+20:56:43 [INFO] teleport: no destination marker - actors tracked=6, with nav component=1, first nav dest=(0.0, 0.0, 0.0)
+20:59:50 [INFO] player/damage: delta=-9000 status=0 actor=34C4A1B0400 attacker=1 self=1 - blocked
+20:59:59 [INFO] player/damage: delta=-3000 status=0 actor=34C4A1B0400 attacker=1 self=1 - blocked
+21:03:20 [INFO] teleport: no destination marker - actors tracked=6, with nav component=1, first nav dest=(0.0, 0.0, 0.0)

@@ -16,12 +16,22 @@ controller.
 | **Player** | God Mode, Infinite Stamina, Infinite Spirit, Super Run, Super Jump, Free Flight, Trust Multiplier, incoming/outgoing damage multipliers, equipment dyeing (full RGB, presets from the game's own palette tables) and an Abyss Gear socket editor |
 | **Travel** | Fast travel to any node in the game, grouped and named from the engine's own level tables |
 | **Inventory** | Browse and edit what you're carrying, edit stack quantities, and add any item in the game — categories, names and icons all read live from the game's data tables |
-| **World** | Game speed, freeze / advance time of day |
+| **World** | Game speed, freeze / shift time of day forward or backward |
 | **System** | Rebindable keys and pad buttons, FPS counter, persisted settings |
 
 Item and category icons are decoded straight out of the game's `.paz` pak
 archives at runtime, so the menu shows the game's own art rather than
 placeholders.
+
+## 0.18.1 compatibility build
+
+The TU 2.03.02 port updates inventory transaction/slot/add-item contracts and
+field-clock discovery. **Shift Time** accepts signed hours (-240..240); positive
+values move forward, negative values move backward. Requests apply on the
+field-clock thread and update its accumulator as well as the clock mirrors.
+Build/check success and unique signature matches are static evidence; inventory
+persistence and time changes still need in-game validation. See
+[COMPATIBILITY.md](COMPATIBILITY.md) and the reports under `reports/`.
 
 ## Architecture
 
@@ -162,3 +172,25 @@ Fetched automatically by CMake:
 ## License
 
 [MIT](LICENSE).
+
+### Parry diagnostics
+
+With the evaluator hook installed, `Trinity.log` records cumulative evaluator
+statistics separately for Easy Parry on and off, at most once every ten seconds
+while evaluations occur and when switching modes. Dodge evaluations are excluded.
+`eligible` counts open windows, `originalPerfect` counts the game's timing verdict
+before modification, `forced` counts successful changes from false to true, and
+`pulseRequests` counts input release requests. `unreadable` and `writeFailures`
+identify memory-access failures. Repeated evaluations and other actors may be
+included: these values are **not confirmed counterattacks or unique attacks**.
+Subtract successive totals for the same mode to compare test intervals. File
+logging must be enabled. The verdict-patch fallback cannot provide these statistics.
+
+### 0.18.2 parry output access
+
+Parry verdict access now accepts output bytes on the current thread's stack,
+including addresses below the shared heap pointer threshold. SEH guards remain
+in place. Diagnostics report `lowStackOutputs` for successfully read outputs
+that the old threshold would reject. Runtime evidence on PE 2976 confirms 3038 low-stack outputs and zero read/write
+failures across 4043 eligible evaluations. This validates verdict access, not
+confirmed counterattacks or held-block effectiveness.

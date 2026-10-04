@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "game": "Crimson Desert",
+  "gameVersion": "2.03.02",
+  "baseline": {
+    "label": "Trinity 0.18.1 compatibility port",
+    "gameVersion": "2.03.02",
+    "commit": "working tree based on d0cd168"
+  },
+  "executable": {
+    "name": "CrimsonDesert.exe",
+    "size": 384521624,
+    "sha256": "57da440d72f4db974f25fef047cf84c4dadd999a88cb2a3c5af4c9bd67fde1e7",
+    "fileVersion": "1.0.0.2976",
+    "peTimestamp": "0x6AB28F00",
+    "peTimestampUtc": "2026-09-22T14:21:52Z",
+    "sizeOfImage": "0x173AB000"
+  },
+  "scan": {
+    "primarySections": [
+      ".rsrc",
+      ".xtls"
+    ],
+    "fallbackSections": [
+      ".xdata",
+      ".rdata",
+      ".00cfg",
+      ".tls$",
+      ".tls",
+      ".xtext",
+      ".text",
+      ".shared",
+      ".impdata",
+      ".trace"
+    ],
+    "excludedNonExecutableSectionPrefix": ".debug",
+    "maxRecordedLocationsPerSignature": 64,
+    "note": "Count results are mechanical only; semantic status remains UNKNOWN."
+  },
+  "signatures": {
+    "InvSetExpandSlots": {
+      "feature": "InvSetExpandSlots",
+      "source": "Trinity 0.18.1; gugi e0d287e ABI port",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x21358A0",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "InvCommit": {
+      "feature": "InvCommit",
+      "source": "Trinity 0.18.1; gugi e0d287e ABI port",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x2132D30",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "TrItemValueCtor": {
+      "feature": "TrItemValueCtor",
+      "source": "Trinity 0.18.1; gugi e0d287e ABI port",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x2409970",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "InvCommitPlacement": {
+      "feature": "InvCommitPlacement",
+      "source": "Trinity 0.18.1; gugi e0d287e ABI port",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x212DE50",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "InvFreePlacements": {
+      "feature": "InvFreePlacements",
+      "source": "Trinity 0.18.1; gugi e0d287e ABI port",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x885E600",
+          "section": ".xtls"
+        }
+      ]
+    },
+    "FieldTimeRealm": {
+      "feature": "FieldTimeRealm",
+      "source": "Trinity 0.18.1; gugi e0d287e ABI port",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x20E5604",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "FieldTimeTick": {
+      "feature": "FieldTimeTick",
+      "source": "Trinity 0.18.1; gugi e0d287e ABI port",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0xA384A0",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "InvBumpRevision": {
+      "feature": "Inventory observers",
+      "source": "gugi e0d287e",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x2B63270",
+          "section": ".rsrc"
+        }
+      ]
+    }
+  }
+}

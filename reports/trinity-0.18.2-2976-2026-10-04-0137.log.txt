@@ -1,0 +1,398 @@
+21:49:21 [INFO] Trinity v0.18.2 initializing (built Oct  3 2026 21:45:19).
+21:49:21 [INFO] version: Crimson Desert 1.0.0.2976 (TU 2.03.02) - the build this release was checked against.
+21:49:21 [INFO] DRED armed - a device removal will report GPU breadcrumbs + page faults.
+21:49:27 [INFO] Factory CreateSwapChainForHwnd (patching) @ 00007FFAFE53DE40 in dxgi.dll
+21:49:27 [INFO] FG: CreateSwapChainForHwnd patched - new swapchains will be wrapped.
+21:49:27 [INFO] DX12 hooks installed (CrimsonDesert.exe, pid 42176).
+21:49:29 [INFO] player: char-manager resolved from 2/6 anchors (the others need re-deriving; features are unaffected).
+21:49:30 [WARN] player: stat-commit matched fallback pattern #1 - this game build moved the current one, so please report it.
+21:49:31 [INFO] player/diag: damage-apply GT - VA=0x141718500 read=1 bytes=8B C7 EB 29 0F B7 53 14 oDamageApply=000000013FFB0F80 g_damageHookTarget=00000001417AE080
+21:49:31 [INFO] teleport: marker world-origin resolved @ 0000000146D56500.
+21:49:32 [WARN] teleport: locomotion-stepper matched fallback pattern #1 - this game build moved the current one, so please report it.
+21:49:32 [INFO] teleport: locomotion-stepper hook installed @ 000000014369FFC0.
+21:49:33 [INFO] teleport: airborne mover @ 00000001436A4C00..00000001436A55CC - Free Flight ready.
+21:49:33 [WARN] teleport: pathing-helper matched fallback pattern #1 - this game build moved the current one, so please report it.
+21:49:34 [INFO] teleport: pathing helper hook installed @ 00000001436A9590.
+21:49:35 [INFO] Present queue pinned from swapchain creation - owns the back buffers.
+21:49:35 [INFO] Wrapped swapchain Present @ 00007FFAFE529530 in dxgi.dll
+21:49:35 [OK  ] Swapchain wrapped - overlay composites before Frame Generation (2560x1440, 3 buffers, flags 0x800).
+21:49:37 [INFO] inventory: ItemGroupInfo table resolved @ 0000000146D69AA0.
+21:49:37 [INFO] inventory: stringinfo table resolved @ 0000000146D69A80.
+21:49:37 [INFO] inventory: InventoryInfo table resolved @ 0000000146D69A88.
+21:49:37 [INFO] inventory: localisation getter @ 00000001412C01C0 (provider +0x18, size +0x60, data +0x58).
+21:49:38 [WARN] world: master frame update matched fallback pattern #1 - this game build moved the current one, so please report it.
+21:49:38 [INFO] world: master frame update hook installed @ 0000000140AD1300 - Game Speed ready.
+21:49:39 [ERR ] world: game-speed signature NOT FOUND - Game Speed disabled.
+21:49:40 [ERR ] dye: apply-batch signature NOT FOUND - armor dyeing disabled.
+21:49:42 [WARN] friendly: NPC trust setter matched fallback pattern #2 - this game build moved the current one, so please report it.
+21:49:43 [WARN] friendly: pet trust setter matched fallback pattern #1 - this game build moved the current one, so please report it.
+21:49:44 [INFO] parry: evaluator hook installed @ 00000001408738B0 - Easy Parry available; on/off evaluator diagnostics enabled (not confirmed counters).
+21:49:44 [OK  ] Ready - INSERT (or LB + DOWN on controller) toggles the menu in-game.
+21:49:46 [INFO] localisation: discovered 5 language(s) (including built-ins).
+21:49:46 [OK  ] Overlay ready - 2560x1440, 3 back buffers.
+22:04:33 [INFO] player: stat scan over 32 entries - 1 stamina, 1 spirit gauge(s).
+22:04:39 [INFO] parry: evaluator totals easy=off calls=0 eligible=0 originalPerfect=0 unreadable=0 lowStackOutputs=0 forced=0 writeFailures=0 pulseRequests=0 (not confirmed counters)
+22:04:39 [INFO] parry: Easy Parry on.
+23:03:35 [INFO] parry: evaluator totals easy=on calls=1 eligible=0 originalPerfect=0 unreadable=0 lowStackOutputs=0 forced=0 writeFailures=0 pulseRequests=0 (not confirmed counters)
+23:03:47 [INFO] parry: evaluator totals easy=on calls=162 eligible=21 originalPerfect=10 unreadable=0 lowStackOutputs=13 forced=11 writeFailures=0 pulseRequests=2 (not confirmed counters)
+23:03:48 [INFO] player/damage: delta=-1000 status=0 actor=2D8836AE800 attacker=1 self=0
+23:03:48 [INFO] player/damage: delta=-3000 status=0 actor=2D8836AE800 attacker=1 self=0
+23:03:57 [INFO] parry: evaluator totals easy=on calls=330 eligible=33 originalPerfect=16 unreadable=0 lowStackOutputs=23 forced=17 writeFailures=0 pulseRequests=3 (not confirmed counters)
+23:04:13 [INFO] parry: evaluator totals easy=on calls=544 eligible=64 originalPerfect=30 unreadable=0 lowStackOutputs=49 forced=34 writeFailures=0 pulseRequests=6 (not confirmed counters)
+23:07:02 [INFO] parry: evaluator totals easy=on calls=569 eligible=64 originalPerfect=30 unreadable=0 lowStackOutputs=49 forced=34 writeFailures=0 pulseRequests=6 (not confirmed counters)
+23:07:16 [INFO] parry: evaluator totals easy=on calls=816 eligible=124 originalPerfect=57 unreadable=0 lowStackOutputs=92 forced=67 writeFailures=0 pulseRequests=10 (not confirmed counters)
+23:07:27 [INFO] parry: evaluator totals easy=on calls=1729 eligible=199 originalPerfect=93 unreadable=0 lowStackOutputs=148 forced=106 writeFailures=0 pulseRequests=17 (not confirmed counters)
+23:07:37 [INFO] parry: evaluator totals easy=on calls=2151 eligible=286 originalPerfect=146 unreadable=0 lowStackOutputs=203 forced=140 writeFailures=0 pulseRequests=27 (not confirmed counters)
+23:07:48 [INFO] parry: evaluator totals easy=on calls=2564 eligible=331 originalPerfect=167 unreadable=0 lowStackOutputs=233 forced=164 writeFailures=0 pulseRequests=31 (not confirmed counters)
+23:07:58 [INFO] parry: evaluator totals easy=on calls=3176 eligible=378 originalPerfect=189 unreadable=0 lowStackOutputs=267 forced=189 writeFailures=0 pulseRequests=37 (not confirmed counters)
+23:08:16 [INFO] parry: evaluator totals easy=on calls=3906 eligible=495 originalPerfect=258 unreadable=0 lowStackOutputs=350 forced=237 writeFailures=0 pulseRequests=46 (not confirmed counters)
+23:08:30 [INFO] parry: evaluator totals easy=on calls=4199 eligible=524 originalPerfect=270 unreadable=0 lowStackOutputs=371 forced=254 writeFailures=0 pulseRequests=49 (not confirmed counters)
+23:08:45 [INFO] parry: evaluator totals easy=on calls=4334 eligible=535 originalPerfect=276 unreadable=0 lowStackOutputs=380 forced=259 writeFailures=0 pulseRequests=50 (not confirmed counters)
+23:08:55 [INFO] parry: evaluator totals easy=on calls=4633 eligible=579 originalPerfect=296 unreadable=0 lowStackOutputs=406 forced=283 writeFailures=0 pulseRequests=55 (not confirmed counters)
+23:09:05 [INFO] parry: evaluator totals easy=on calls=4916 eligible=615 originalPerfect=313 unreadable=0 lowStackOutputs=436 forced=302 writeFailures=0 pulseRequests=59 (not confirmed counters)
+23:09:27 [INFO] parry: evaluator totals easy=on calls=4920 eligible=615 originalPerfect=313 unreadable=0 lowStackOutputs=436 forced=302 writeFailures=0 pulseRequests=59 (not confirmed counters)
+23:09:56 [INFO] parry: evaluator totals easy=on calls=4982 eligible=615 originalPerfect=313 unreadable=0 lowStackOutputs=436 forced=302 writeFailures=0 pulseRequests=59 (not confirmed counters)
+23:10:06 [INFO] parry: evaluator totals easy=on calls=5211 eligible=628 originalPerfect=318 unreadable=0 lowStackOutputs=444 forced=310 writeFailures=0 pulseRequests=61 (not confirmed counters)
+23:10:17 [INFO] parry: evaluator totals easy=on calls=5881 eligible=725 originalPerfect=359 unreadable=0 lowStackOutputs=513 forced=366 writeFailures=0 pulseRequests=69 (not confirmed counters)
+23:10:27 [INFO] parry: evaluator totals easy=on calls=6113 eligible=753 originalPerfect=370 unreadable=0 lowStackOutputs=531 forced=383 writeFailures=0 pulseRequests=71 (not confirmed counters)
+23:10:37 [INFO] parry: evaluator totals easy=on calls=6428 eligible=807 originalPerfect=397 unreadable=0 lowStackOutputs=569 forced=410 writeFailures=0 pulseRequests=76 (not confirmed counters)
+23:11:41 [INFO] parry: evaluator totals easy=on calls=6915 eligible=866 originalPerfect=430 unreadable=0 lowStackOutputs=611 forced=436 writeFailures=0 pulseRequests=82 (not confirmed counters)
+23:11:58 [INFO] parry: evaluator totals easy=on calls=7120 eligible=886 originalPerfect=442 unreadable=0 lowStackOutputs=628 forced=444 writeFailures=0 pulseRequests=84 (not confirmed counters)
+23:12:17 [INFO] parry: evaluator totals easy=on calls=7161 eligible=904 originalPerfect=448 unreadable=0 lowStackOutputs=642 forced=456 writeFailures=0 pulseRequests=86 (not confirmed counters)
+23:12:29 [INFO] parry: evaluator totals easy=on calls=7245 eligible=922 originalPerfect=456 unreadable=0 lowStackOutputs=649 forced=466 writeFailures=0 pulseRequests=88 (not confirmed counters)
+23:12:40 [INFO] parry: evaluator totals easy=on calls=7584 eligible=955 originalPerfect=471 unreadable=0 lowStackOutputs=677 forced=484 writeFailures=0 pulseRequests=91 (not confirmed counters)
+23:13:01 [INFO] parry: evaluator totals easy=on calls=7598 eligible=955 originalPerfect=471 unreadable=0 lowStackOutputs=677 forced=484 writeFailures=0 pulseRequests=91 (not confirmed counters)
+23:13:11 [INFO] parry: evaluator totals easy=on calls=7940 eligible=972 originalPerfect=480 unreadable=0 lowStackOutputs=691 forced=492 writeFailures=0 pulseRequests=93 (not confirmed counters)
+23:13:27 [INFO] parry: evaluator totals easy=on calls=8196 eligible=992 originalPerfect=489 unreadable=0 lowStackOutputs=699 forced=503 writeFailures=0 pulseRequests=95 (not confirmed counters)
+23:13:58 [INFO] parry: evaluator totals easy=on calls=8558 eligible=1038 originalPerfect=513 unreadable=0 lowStackOutputs=730 forced=525 writeFailures=0 pulseRequests=100 (not confirmed counters)
+23:14:18 [INFO] parry: evaluator totals easy=on calls=8642 eligible=1060 originalPerfect=524 unreadable=0 lowStackOutputs=742 forced=536 writeFailures=0 pulseRequests=102 (not confirmed counters)
+23:14:28 [INFO] parry: evaluator totals easy=on calls=9162 eligible=1136 originalPerfect=568 unreadable=0 lowStackOutputs=798 forced=568 writeFailures=0 pulseRequests=110 (not confirmed counters)
+23:14:53 [INFO] parry: evaluator totals easy=on calls=9477 eligible=1193 originalPerfect=588 unreadable=0 lowStackOutputs=841 forced=605 writeFailures=0 pulseRequests=115 (not confirmed counters)
+23:15:05 [INFO] parry: evaluator totals easy=on calls=9892 eligible=1246 originalPerfect=616 unreadable=0 lowStackOutputs=879 forced=630 writeFailures=0 pulseRequests=120 (not confirmed counters)
+23:15:15 [INFO] parry: evaluator totals easy=on calls=10098 eligible=1256 originalPerfect=621 unreadable=0 lowStackOutputs=884 forced=635 writeFailures=0 pulseRequests=121 (not confirmed counters)
+23:15:25 [INFO] parry: evaluator totals easy=on calls=10358 eligible=1285 originalPerfect=635 unreadable=0 lowStackOutputs=905 forced=650 writeFailures=0 pulseRequests=126 (not confirmed counters)
+23:15:42 [INFO] parry: evaluator totals easy=on calls=10474 eligible=1291 originalPerfect=636 unreadable=0 lowStackOutputs=909 forced=655 writeFailures=0 pulseRequests=128 (not confirmed counters)
+23:15:52 [INFO] parry: evaluator totals easy=on calls=10810 eligible=1327 originalPerfect=650 unreadable=0 lowStackOutputs=935 forced=677 writeFailures=0 pulseRequests=132 (not confirmed counters)
+23:16:02 [INFO] parry: evaluator totals easy=on calls=11124 eligible=1379 originalPerfect=678 unreadable=0 lowStackOutputs=979 forced=701 writeFailures=0 pulseRequests=136 (not confirmed counters)
+23:16:28 [INFO] parry: evaluator totals easy=on calls=11494 eligible=1419 originalPerfect=698 unreadable=0 lowStackOutputs=1011 forced=721 writeFailures=0 pulseRequests=140 (not confirmed counters)
+23:16:41 [INFO] parry: evaluator totals easy=on calls=11680 eligible=1430 originalPerfect=703 unreadable=0 lowStackOutputs=1020 forced=727 writeFailures=0 pulseRequests=142 (not confirmed counters)
+23:16:51 [INFO] parry: evaluator totals easy=on calls=11844 eligible=1441 originalPerfect=709 unreadable=0 lowStackOutputs=1028 forced=732 writeFailures=0 pulseRequests=143 (not confirmed counters)
+23:17:02 [INFO] parry: evaluator totals easy=on calls=11898 eligible=1441 originalPerfect=709 unreadable=0 lowStackOutputs=1028 forced=732 writeFailures=0 pulseRequests=143 (not confirmed counters)
+23:17:12 [INFO] parry: evaluator totals easy=on calls=12293 eligible=1470 originalPerfect=725 unreadable=0 lowStackOutputs=1050 forced=745 writeFailures=0 pulseRequests=146 (not confirmed counters)
+23:19:24 [INFO] parry: evaluator totals easy=on calls=12365 eligible=1491 originalPerfect=732 unreadable=0 lowStackOutputs=1064 forced=759 writeFailures=0 pulseRequests=148 (not confirmed counters)
+23:19:35 [INFO] parry: evaluator totals easy=on calls=12659 eligible=1539 originalPerfect=749 unreadable=0 lowStackOutputs=1100 forced=790 writeFailures=0 pulseRequests=153 (not confirmed counters)
+23:19:45 [INFO] parry: evaluator totals easy=on calls=13004 eligible=1559 originalPerfect=760 unreadable=0 lowStackOutputs=1116 forced=799 writeFailures=0 pulseRequests=155 (not confirmed counters)
+23:19:55 [INFO] parry: evaluator totals easy=on calls=13712 eligible=1632 originalPerfect=802 unreadable=0 lowStackOutputs=1174 forced=830 writeFailures=0 pulseRequests=163 (not confirmed counters)
+23:20:05 [INFO] parry: evaluator totals easy=on calls=14473 eligible=1709 originalPerfect=839 unreadable=0 lowStackOutputs=1233 forced=870 writeFailures=0 pulseRequests=171 (not confirmed counters)
+23:20:15 [INFO] parry: evaluator totals easy=on calls=15128 eligible=1736 originalPerfect=862 unreadable=0 lowStackOutputs=1251 forced=874 writeFailures=0 pulseRequests=173 (not confirmed counters)
+23:20:25 [INFO] parry: evaluator totals easy=on calls=16091 eligible=1747 originalPerfect=868 unreadable=0 lowStackOutputs=1258 forced=879 writeFailures=0 pulseRequests=174 (not confirmed counters)
+23:20:35 [INFO] parry: evaluator totals easy=on calls=16535 eligible=1794 originalPerfect=894 unreadable=0 lowStackOutputs=1292 forced=900 writeFailures=0 pulseRequests=179 (not confirmed counters)
+23:20:46 [INFO] parry: evaluator totals easy=on calls=17245 eligible=1858 originalPerfect=927 unreadable=0 lowStackOutputs=1339 forced=931 writeFailures=0 pulseRequests=186 (not confirmed counters)
+23:20:57 [INFO] parry: evaluator totals easy=on calls=17908 eligible=1915 originalPerfect=957 unreadable=0 lowStackOutputs=1377 forced=958 writeFailures=0 pulseRequests=193 (not confirmed counters)
+23:21:07 [INFO] parry: evaluator totals easy=on calls=18247 eligible=1946 originalPerfect=973 unreadable=0 lowStackOutputs=1399 forced=973 writeFailures=0 pulseRequests=196 (not confirmed counters)
+23:21:17 [INFO] parry: evaluator totals easy=on calls=18695 eligible=1970 originalPerfect=986 unreadable=0 lowStackOutputs=1416 forced=984 writeFailures=0 pulseRequests=199 (not confirmed counters)
+23:21:32 [INFO] parry: evaluator totals easy=on calls=18960 eligible=2004 originalPerfect=1005 unreadable=0 lowStackOutputs=1441 forced=999 writeFailures=0 pulseRequests=203 (not confirmed counters)
+23:21:42 [INFO] parry: evaluator totals easy=on calls=19037 eligible=2010 originalPerfect=1010 unreadable=0 lowStackOutputs=1446 forced=1000 writeFailures=0 pulseRequests=204 (not confirmed counters)
+23:21:52 [INFO] parry: evaluator totals easy=on calls=19687 eligible=2066 originalPerfect=1037 unreadable=0 lowStackOutputs=1496 forced=1029 writeFailures=0 pulseRequests=210 (not confirmed counters)
+23:22:02 [INFO] parry: evaluator totals easy=on calls=20296 eligible=2132 originalPerfect=1077 unreadable=0 lowStackOutputs=1553 forced=1055 writeFailures=0 pulseRequests=216 (not confirmed counters)
+23:22:13 [INFO] parry: evaluator totals easy=on calls=20839 eligible=2243 originalPerfect=1125 unreadable=0 lowStackOutputs=1624 forced=1118 writeFailures=0 pulseRequests=227 (not confirmed counters)
+23:22:23 [INFO] parry: evaluator totals easy=on calls=21173 eligible=2289 originalPerfect=1142 unreadable=0 lowStackOutputs=1657 forced=1147 writeFailures=0 pulseRequests=232 (not confirmed counters)
+23:22:34 [INFO] parry: evaluator totals easy=on calls=21426 eligible=2328 originalPerfect=1162 unreadable=0 lowStackOutputs=1688 forced=1166 writeFailures=0 pulseRequests=236 (not confirmed counters)
+23:36:15 [INFO] parry: evaluator totals easy=on calls=21505 eligible=2328 originalPerfect=1162 unreadable=0 lowStackOutputs=1688 forced=1166 writeFailures=0 pulseRequests=236 (not confirmed counters)
+23:36:26 [INFO] parry: evaluator totals easy=on calls=21788 eligible=2379 originalPerfect=1188 unreadable=0 lowStackOutputs=1724 forced=1191 writeFailures=0 pulseRequests=241 (not confirmed counters)
+23:50:14 [INFO] parry: evaluator totals easy=on calls=21971 eligible=2397 originalPerfect=1196 unreadable=0 lowStackOutputs=1736 forced=1201 writeFailures=0 pulseRequests=243 (not confirmed counters)
+23:50:26 [INFO] parry: evaluator totals easy=on calls=22218 eligible=2411 originalPerfect=1201 unreadable=0 lowStackOutputs=1748 forced=1210 writeFailures=0 pulseRequests=246 (not confirmed counters)
+23:50:41 [INFO] parry: evaluator totals easy=on calls=22744 eligible=2464 originalPerfect=1231 unreadable=0 lowStackOutputs=1789 forced=1233 writeFailures=0 pulseRequests=252 (not confirmed counters)
+23:50:51 [INFO] parry: evaluator totals easy=on calls=22896 eligible=2473 originalPerfect=1235 unreadable=0 lowStackOutputs=1796 forced=1238 writeFailures=0 pulseRequests=253 (not confirmed counters)
+23:51:04 [INFO] parry: evaluator totals easy=on calls=23326 eligible=2500 originalPerfect=1250 unreadable=0 lowStackOutputs=1820 forced=1250 writeFailures=0 pulseRequests=256 (not confirmed counters)
+23:51:14 [INFO] parry: evaluator totals easy=on calls=23514 eligible=2519 originalPerfect=1261 unreadable=0 lowStackOutputs=1835 forced=1258 writeFailures=0 pulseRequests=258 (not confirmed counters)
+23:59:29 [INFO] parry: evaluator totals easy=on calls=23607 eligible=2537 originalPerfect=1269 unreadable=0 lowStackOutputs=1851 forced=1268 writeFailures=0 pulseRequests=260 (not confirmed counters)
+23:59:42 [INFO] parry: evaluator totals easy=on calls=23743 eligible=2558 originalPerfect=1281 unreadable=0 lowStackOutputs=1867 forced=1277 writeFailures=0 pulseRequests=262 (not confirmed counters)
+00:43:35 [INFO] parry: evaluator totals easy=on calls=23779 eligible=2564 originalPerfect=1281 unreadable=0 lowStackOutputs=1871 forced=1283 writeFailures=0 pulseRequests=263 (not confirmed counters)
+00:43:45 [INFO] parry: evaluator totals easy=on calls=24293 eligible=2620 originalPerfect=1311 unreadable=0 lowStackOutputs=1905 forced=1309 writeFailures=0 pulseRequests=268 (not confirmed counters)
+00:44:08 [INFO] parry: evaluator totals easy=on calls=24344 eligible=2620 originalPerfect=1311 unreadable=0 lowStackOutputs=1905 forced=1309 writeFailures=0 pulseRequests=268 (not confirmed counters)
+00:44:16 [INFO] player/damage: out status=0 delta=-6000 x1000.00 -> -6000000 (one-hit kill)
+00:44:22 [INFO] parry: evaluator totals easy=on calls=24666 eligible=2664 originalPerfect=1338 unreadable=0 lowStackOutputs=1939 forced=1326 writeFailures=0 pulseRequests=272 (not confirmed counters)
+00:44:23 [INFO] player/damage: out status=0 delta=-75000 x1000.00 -> -75000000 (one-hit kill)
+00:44:25 [INFO] player/damage: out status=0 delta=-8000 x1000.00 -> -8000000 (one-hit kill)
+00:44:27 [INFO] player/damage: out status=0 delta=-23000 x1000.00 -> -23000000 (one-hit kill)
+00:44:33 [INFO] player/damage: out status=0 delta=-6000 x1000.00 -> -6000000 (one-hit kill)
+00:45:19 [INFO] parry: evaluator totals easy=on calls=24913 eligible=2700 originalPerfect=1352 unreadable=0 lowStackOutputs=1966 forced=1348 writeFailures=0 pulseRequests=277 (not confirmed counters)
+00:45:19 [INFO] player/damage: out status=0 delta=-10000 x1000.00 -> -10000000 (one-hit kill)
+00:45:22 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+00:45:25 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+00:45:27 [INFO] player/damage: out status=0 delta=-3000 x1000.00 -> -3000000 (one-hit kill)
+00:45:30 [INFO] parry: evaluator totals easy=on calls=25069 eligible=2717 originalPerfect=1358 unreadable=0 lowStackOutputs=1980 forced=1359 writeFailures=0 pulseRequests=279 (not confirmed counters)
+00:45:33 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+00:45:35 [INFO] player/damage: out status=0 delta=-5000 x1000.00 -> -5000000 (one-hit kill)
+00:45:37 [INFO] player/damage: out status=0 delta=-8000 x1000.00 -> -8000000 (one-hit kill)
+00:45:38 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+00:45:40 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+00:45:44 [INFO] parry: evaluator totals easy=on calls=25460 eligible=2748 originalPerfect=1374 unreadable=0 lowStackOutputs=2004 forced=1374 writeFailures=0 pulseRequests=282 (not confirmed counters)
+00:45:44 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+00:45:50 [INFO] player/damage: out status=0 delta=-7000 x1000.00 -> -7000000 (one-hit kill)
+00:46:00 [INFO] parry: evaluator totals easy=on calls=25488 eligible=2748 originalPerfect=1374 unreadable=0 lowStackOutputs=2004 forced=1374 writeFailures=0 pulseRequests=282 (not confirmed counters)
+00:46:00 [INFO] player/damage: out status=0 delta=-14000 x1000.00 -> -14000000 (one-hit kill)
+00:55:51 [INFO] parry: evaluator totals easy=on calls=25527 eligible=2748 originalPerfect=1374 unreadable=0 lowStackOutputs=2004 forced=1374 writeFailures=0 pulseRequests=282 (not confirmed counters)
+00:55:52 [INFO] player/damage: out status=0 delta=-19000 x1000.00 -> -19000000 (one-hit kill)
+00:57:35 [INFO] parry: evaluator totals easy=on calls=25537 eligible=2748 originalPerfect=1374 unreadable=0 lowStackOutputs=2004 forced=1374 writeFailures=0 pulseRequests=282 (not confirmed counters)
+00:57:41 [INFO] player/damage: out status=0 delta=-3000 x1000.00 -> -3000000 (one-hit kill)
+00:57:45 [INFO] parry: evaluator totals easy=on calls=25675 eligible=2748 originalPerfect=1374 unreadable=0 lowStackOutputs=2004 forced=1374 writeFailures=0 pulseRequests=282 (not confirmed counters)
+00:57:46 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+00:57:54 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+00:57:56 [INFO] player/damage: out status=0 delta=-5000 x1000.00 -> -5000000 (one-hit kill)
+00:57:57 [INFO] parry: evaluator totals easy=on calls=25682 eligible=2748 originalPerfect=1374 unreadable=0 lowStackOutputs=2004 forced=1374 writeFailures=0 pulseRequests=282 (not confirmed counters)
+00:57:57 [INFO] player/damage: out status=0 delta=-5000 x1000.00 -> -5000000 (one-hit kill)
+00:57:58 [INFO] player/damage: out status=0 delta=-10000 x1000.00 -> -10000000 (one-hit kill)
+00:57:59 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+00:58:03 [INFO] player/damage: out status=0 delta=-3000 x1000.00 -> -3000000 (one-hit kill)
+00:58:04 [INFO] player/damage: out status=0 delta=-7000 x1000.00 -> -7000000 (one-hit kill)
+00:58:08 [INFO] parry: evaluator totals easy=on calls=25838 eligible=2768 originalPerfect=1384 unreadable=0 lowStackOutputs=2021 forced=1384 writeFailures=0 pulseRequests=284 (not confirmed counters)
+00:58:10 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+00:58:17 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+00:58:20 [INFO] parry: evaluator totals easy=on calls=26032 eligible=2782 originalPerfect=1392 unreadable=0 lowStackOutputs=2035 forced=1390 writeFailures=0 pulseRequests=286 (not confirmed counters)
+00:58:21 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+00:58:40 [INFO] parry: evaluator totals easy=on calls=26078 eligible=2791 originalPerfect=1395 unreadable=0 lowStackOutputs=2043 forced=1396 writeFailures=0 pulseRequests=287 (not confirmed counters)
+00:58:40 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+00:58:41 [INFO] player/damage: out status=0 delta=-10000 x1000.00 -> -10000000 (one-hit kill)
+00:58:49 [INFO] player/damage: out status=0 delta=-10000 x1000.00 -> -10000000 (one-hit kill)
+00:58:51 [INFO] parry: evaluator totals easy=on calls=26231 eligible=2791 originalPerfect=1395 unreadable=0 lowStackOutputs=2043 forced=1396 writeFailures=0 pulseRequests=287 (not confirmed counters)
+00:58:55 [INFO] player/damage: out status=0 delta=-7000 x1000.00 -> -7000000 (one-hit kill)
+00:58:55 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+00:59:00 [INFO] player/damage: out status=0 delta=-10000 x1000.00 -> -10000000 (one-hit kill)
+00:59:07 [INFO] parry: evaluator totals easy=on calls=26458 eligible=2802 originalPerfect=1401 unreadable=0 lowStackOutputs=2053 forced=1401 writeFailures=0 pulseRequests=288 (not confirmed counters)
+00:59:13 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+00:59:14 [INFO] player/damage: out status=0 delta=-7000 x1000.00 -> -7000000 (one-hit kill)
+00:59:15 [INFO] player/damage: out status=0 delta=-11000 x1000.00 -> -11000000 (one-hit kill)
+00:59:17 [INFO] player/damage: out status=0 delta=-3000 x1000.00 -> -3000000 (one-hit kill)
+00:59:17 [INFO] parry: evaluator totals easy=on calls=26628 eligible=2818 originalPerfect=1407 unreadable=0 lowStackOutputs=2069 forced=1411 writeFailures=0 pulseRequests=289 (not confirmed counters)
+00:59:18 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+00:59:20 [INFO] player/damage: out status=0 delta=-11000 x1000.00 -> -11000000 (one-hit kill)
+00:59:26 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+00:59:26 [INFO] player/damage: out status=0 delta=-3000 x1000.00 -> -3000000 (one-hit kill)
+00:59:27 [INFO] parry: evaluator totals easy=on calls=27237 eligible=2888 originalPerfect=1438 unreadable=0 lowStackOutputs=2128 forced=1450 writeFailures=0 pulseRequests=296 (not confirmed counters)
+00:59:27 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+00:59:27 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+00:59:28 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+00:59:28 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+00:59:28 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+00:59:31 [INFO] player/damage: out status=0 delta=-11000 x1000.00 -> -11000000 (one-hit kill)
+00:59:37 [INFO] parry: evaluator totals easy=on calls=27516 eligible=2918 originalPerfect=1453 unreadable=0 lowStackOutputs=2152 forced=1465 writeFailures=0 pulseRequests=299 (not confirmed counters)
+00:59:42 [INFO] player/damage: out status=0 delta=-5000 x1000.00 -> -5000000 (one-hit kill)
+00:59:43 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+00:59:44 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+00:59:45 [INFO] player/damage: out status=0 delta=-11000 x1000.00 -> -11000000 (one-hit kill)
+00:59:53 [INFO] player/damage: out status=0 delta=-17000 x1000.00 -> -17000000 (one-hit kill)
+01:00:16 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:01:30 [INFO] parry: evaluator totals easy=on calls=27771 eligible=2929 originalPerfect=1458 unreadable=0 lowStackOutputs=2160 forced=1471 writeFailures=0 pulseRequests=300 (not confirmed counters)
+01:01:30 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:01:31 [INFO] player/damage: out status=0 delta=-3000 x1000.00 -> -3000000 (one-hit kill)
+01:01:40 [INFO] player/damage: out status=0 delta=-8000 x1000.00 -> -8000000 (one-hit kill)
+01:07:28 [INFO] parry: evaluator totals easy=on calls=27820 eligible=2929 originalPerfect=1458 unreadable=0 lowStackOutputs=2160 forced=1471 writeFailures=0 pulseRequests=300 (not confirmed counters)
+01:07:33 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+01:07:33 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+01:07:34 [INFO] player/damage: out status=0 delta=-5000 x1000.00 -> -5000000 (one-hit kill)
+01:07:37 [INFO] player/damage: out status=0 delta=-5000 x1000.00 -> -5000000 (one-hit kill)
+01:07:40 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+01:07:41 [INFO] player/damage: out status=0 delta=-5000 x1000.00 -> -5000000 (one-hit kill)
+01:07:42 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:07:42 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:07:43 [INFO] player/damage: out status=0 delta=-25000 x1000.00 -> -25000000 (one-hit kill)
+01:07:43 [INFO] player/damage: out status=0 delta=-8000 x1000.00 -> -8000000 (one-hit kill)
+01:07:44 [INFO] parry: evaluator totals easy=on calls=28327 eligible=2979 originalPerfect=1485 unreadable=0 lowStackOutputs=2198 forced=1494 writeFailures=0 pulseRequests=305 (not confirmed counters)
+01:07:44 [INFO] player/damage: out status=0 delta=-8000 x1000.00 -> -8000000 (one-hit kill)
+01:07:45 [INFO] player/damage: out status=0 delta=-25000 x1000.00 -> -25000000 (one-hit kill)
+01:07:47 [INFO] player/damage: out status=0 delta=-5000 x1000.00 -> -5000000 (one-hit kill)
+01:07:49 [INFO] player/damage: out status=0 delta=-3000 x1000.00 -> -3000000 (one-hit kill)
+01:07:52 [INFO] player/damage: out status=0 delta=-35000 x1000.00 -> -35000000 (one-hit kill)
+01:07:55 [INFO] player/damage: out status=0 delta=-3000 x1000.00 -> -3000000 (one-hit kill)
+01:07:55 [INFO] player/damage: out status=0 delta=-25000 x1000.00 -> -25000000 (one-hit kill)
+01:07:56 [INFO] parry: evaluator totals easy=on calls=28360 eligible=2979 originalPerfect=1485 unreadable=0 lowStackOutputs=2198 forced=1494 writeFailures=0 pulseRequests=305 (not confirmed counters)
+01:07:56 [INFO] player/damage: out status=0 delta=-5000 x1000.00 -> -5000000 (one-hit kill)
+01:08:00 [INFO] player/damage: out status=0 delta=-8000 x1000.00 -> -8000000 (one-hit kill)
+01:08:04 [INFO] player/damage: out status=0 delta=-25000 x1000.00 -> -25000000 (one-hit kill)
+01:08:06 [INFO] player/damage: out status=0 delta=-5000 x1000.00 -> -5000000 (one-hit kill)
+01:08:11 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:08:13 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:08:15 [INFO] player/damage: out status=0 delta=-3000 x1000.00 -> -3000000 (one-hit kill)
+01:08:18 [INFO] parry: evaluator totals easy=on calls=28363 eligible=2979 originalPerfect=1485 unreadable=0 lowStackOutputs=2198 forced=1494 writeFailures=0 pulseRequests=305 (not confirmed counters)
+01:08:21 [INFO] player/damage: out status=0 delta=-3000 x1000.00 -> -3000000 (one-hit kill)
+01:08:24 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:09:35 [INFO] parry: evaluator totals easy=on calls=28488 eligible=2988 originalPerfect=1489 unreadable=0 lowStackOutputs=2206 forced=1499 writeFailures=0 pulseRequests=306 (not confirmed counters)
+01:09:47 [INFO] parry: evaluator totals easy=on calls=28579 eligible=3005 originalPerfect=1498 unreadable=0 lowStackOutputs=2217 forced=1507 writeFailures=0 pulseRequests=308 (not confirmed counters)
+01:09:48 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+01:10:06 [INFO] player/damage: out status=0 delta=-7000 x1000.00 -> -7000000 (one-hit kill)
+01:10:07 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+01:10:07 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+01:10:09 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:10:11 [INFO] player/damage: out status=0 delta=-8000 x1000.00 -> -8000000 (one-hit kill)
+01:10:12 [INFO] parry: evaluator totals easy=on calls=28664 eligible=3005 originalPerfect=1498 unreadable=0 lowStackOutputs=2217 forced=1507 writeFailures=0 pulseRequests=308 (not confirmed counters)
+01:10:14 [INFO] player/damage: out status=0 delta=-3000 x1000.00 -> -3000000 (one-hit kill)
+01:10:18 [INFO] player/damage: out status=0 delta=-7000 x1000.00 -> -7000000 (one-hit kill)
+01:10:19 [INFO] player/damage: out status=0 delta=-3000 x1000.00 -> -3000000 (one-hit kill)
+01:10:23 [INFO] parry: evaluator totals easy=on calls=28689 eligible=3005 originalPerfect=1498 unreadable=0 lowStackOutputs=2217 forced=1507 writeFailures=0 pulseRequests=308 (not confirmed counters)
+01:10:33 [INFO] player/damage: out status=0 delta=-10000 x1000.00 -> -10000000 (one-hit kill)
+01:10:37 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:10:39 [INFO] player/damage: out status=0 delta=-25000 x1000.00 -> -25000000 (one-hit kill)
+01:10:42 [INFO] parry: evaluator totals easy=on calls=28842 eligible=3023 originalPerfect=1508 unreadable=0 lowStackOutputs=2229 forced=1515 writeFailures=0 pulseRequests=310 (not confirmed counters)
+01:10:45 [INFO] player/damage: out status=0 delta=-3000 x1000.00 -> -3000000 (one-hit kill)
+01:10:58 [INFO] parry: evaluator totals easy=on calls=28954 eligible=3032 originalPerfect=1513 unreadable=0 lowStackOutputs=2237 forced=1519 writeFailures=0 pulseRequests=311 (not confirmed counters)
+01:10:59 [INFO] player/damage: out status=0 delta=-7000 x1000.00 -> -7000000 (one-hit kill)
+01:11:00 [INFO] player/damage: out status=0 delta=-5000 x1000.00 -> -5000000 (one-hit kill)
+01:11:02 [INFO] player/damage: out status=0 delta=-11000 x1000.00 -> -11000000 (one-hit kill)
+01:11:05 [INFO] player/damage: out status=0 delta=-11000 x1000.00 -> -11000000 (one-hit kill)
+01:11:08 [INFO] player/damage: out status=0 delta=-25000 x1000.00 -> -25000000 (one-hit kill)
+01:11:10 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:11:10 [INFO] player/damage: out status=0 delta=-25000 x1000.00 -> -25000000 (one-hit kill)
+01:11:12 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+01:11:13 [INFO] player/damage: out status=0 delta=-3000 x1000.00 -> -3000000 (one-hit kill)
+01:11:13 [INFO] player/damage: out status=0 delta=-18000 x1000.00 -> -18000000 (one-hit kill)
+01:11:16 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:11:17 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:11:18 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+01:11:18 [INFO] player/damage: out status=0 delta=-18000 x1000.00 -> -18000000 (one-hit kill)
+01:11:19 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:11:20 [INFO] parry: evaluator totals easy=on calls=29054 eligible=3043 originalPerfect=1517 unreadable=0 lowStackOutputs=2246 forced=1526 writeFailures=0 pulseRequests=313 (not confirmed counters)
+01:11:20 [INFO] player/damage: out status=0 delta=-5000 x1000.00 -> -5000000 (one-hit kill)
+01:11:22 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:11:23 [INFO] player/damage: out status=0 delta=-7000 x1000.00 -> -7000000 (one-hit kill)
+01:11:23 [INFO] player/damage: out status=0 delta=-5000 x1000.00 -> -5000000 (one-hit kill)
+01:11:26 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:11:32 [INFO] player/damage: out status=0 delta=-7000 x1000.00 -> -7000000 (one-hit kill)
+01:11:32 [INFO] player/damage: out status=0 delta=-5000 x1000.00 -> -5000000 (one-hit kill)
+01:11:33 [INFO] parry: evaluator totals easy=on calls=29173 eligible=3050 originalPerfect=1521 unreadable=0 lowStackOutputs=2251 forced=1529 writeFailures=0 pulseRequests=314 (not confirmed counters)
+01:11:34 [INFO] player/damage: out status=0 delta=-12000 x1000.00 -> -12000000 (one-hit kill)
+01:11:38 [INFO] player/damage: out status=0 delta=-7000 x1000.00 -> -7000000 (one-hit kill)
+01:11:41 [INFO] player/damage: out status=0 delta=-5000 x1000.00 -> -5000000 (one-hit kill)
+01:11:41 [INFO] player/damage: out status=0 delta=-4000 x1000.00 -> -4000000 (one-hit kill)
+01:11:42 [INFO] player/damage: out status=0 delta=-5000 x1000.00 -> -5000000 (one-hit kill)
+01:11:42 [INFO] player/damage: out status=0 delta=-11000 x1000.00 -> -11000000 (one-hit kill)
+01:11:43 [INFO] player/damage: out status=0 delta=-3000 x1000.00 -> -3000000 (one-hit kill)
+01:11:43 [INFO] parry: evaluator totals easy=on calls=29231 eligible=3058 originalPerfect=1524 unreadable=0 lowStackOutputs=2256 forced=1534 writeFailures=0 pulseRequests=315 (not confirmed counters)
+01:11:44 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:11:45 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+01:11:58 [INFO] player/damage: out status=0 delta=-5000 x1000.00 -> -5000000 (one-hit kill)
+01:11:59 [INFO] player/damage: out status=0 delta=-7000 x1000.00 -> -7000000 (one-hit kill)
+01:11:59 [INFO] player/damage: out status=0 delta=-10000 x1000.00 -> -10000000 (one-hit kill)
+01:12:00 [INFO] player/damage: out status=0 delta=-12000 x1000.00 -> -12000000 (one-hit kill)
+01:12:01 [INFO] player/damage: out status=0 delta=-18000 x1000.00 -> -18000000 (one-hit kill)
+01:12:04 [INFO] player/damage: out status=0 delta=-7000 x1000.00 -> -7000000 (one-hit kill)
+01:12:05 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:12:08 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:12:09 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:12:10 [INFO] parry: evaluator totals easy=on calls=29271 eligible=3065 originalPerfect=1528 unreadable=0 lowStackOutputs=2260 forced=1537 writeFailures=0 pulseRequests=316 (not confirmed counters)
+01:12:23 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+01:12:24 [INFO] player/damage: out status=0 delta=-5000 x1000.00 -> -5000000 (one-hit kill)
+01:12:28 [INFO] parry: evaluator totals easy=on calls=29635 eligible=3108 originalPerfect=1551 unreadable=0 lowStackOutputs=2293 forced=1557 writeFailures=0 pulseRequests=320 (not confirmed counters)
+01:12:31 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+01:12:33 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:12:34 [INFO] player/damage: out status=0 delta=-25000 x1000.00 -> -25000000 (one-hit kill)
+01:12:40 [INFO] parry: evaluator totals easy=on calls=29717 eligible=3124 originalPerfect=1560 unreadable=0 lowStackOutputs=2306 forced=1564 writeFailures=0 pulseRequests=322 (not confirmed counters)
+01:12:40 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:12:43 [INFO] player/damage: out status=0 delta=-3000 x1000.00 -> -3000000 (one-hit kill)
+01:12:44 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+01:12:50 [INFO] parry: evaluator totals easy=on calls=29850 eligible=3142 originalPerfect=1570 unreadable=0 lowStackOutputs=2316 forced=1572 writeFailures=0 pulseRequests=324 (not confirmed counters)
+01:12:50 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+01:13:01 [INFO] parry: evaluator totals easy=on calls=29885 eligible=3142 originalPerfect=1570 unreadable=0 lowStackOutputs=2316 forced=1572 writeFailures=0 pulseRequests=324 (not confirmed counters)
+01:13:04 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+01:13:07 [INFO] player/damage: out status=0 delta=-18000 x1000.00 -> -18000000 (one-hit kill)
+01:13:07 [INFO] player/damage: out status=0 delta=-6000 x1000.00 -> -6000000 (one-hit kill)
+01:13:16 [INFO] parry: evaluator totals easy=on calls=29994 eligible=3160 originalPerfect=1580 unreadable=0 lowStackOutputs=2332 forced=1580 writeFailures=0 pulseRequests=326 (not confirmed counters)
+01:13:16 [INFO] player/damage: out status=0 delta=-7000 x1000.00 -> -7000000 (one-hit kill)
+01:13:46 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:13:48 [INFO] parry: evaluator totals easy=on calls=30020 eligible=3160 originalPerfect=1580 unreadable=0 lowStackOutputs=2332 forced=1580 writeFailures=0 pulseRequests=326 (not confirmed counters)
+01:13:48 [INFO] player/damage: out status=0 delta=-11000 x1000.00 -> -11000000 (one-hit kill)
+01:13:58 [INFO] player/damage: out status=0 delta=-8000 x1000.00 -> -8000000 (one-hit kill)
+01:14:01 [INFO] parry: evaluator totals easy=on calls=30038 eligible=3160 originalPerfect=1580 unreadable=0 lowStackOutputs=2332 forced=1580 writeFailures=0 pulseRequests=326 (not confirmed counters)
+01:14:02 [INFO] player/damage: out status=0 delta=-14000 x1000.00 -> -14000000 (one-hit kill)
+01:14:02 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+01:14:04 [INFO] player/damage: out status=0 delta=-7000 x1000.00 -> -7000000 (one-hit kill)
+01:14:04 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+01:14:09 [INFO] player/damage: out status=0 delta=-14000 x1000.00 -> -14000000 (one-hit kill)
+01:14:14 [INFO] player/damage: out status=0 delta=-27000 x1000.00 -> -27000000 (one-hit kill)
+01:14:50 [INFO] player/damage: out status=0 delta=-12000 x1000.00 -> -12000000 (one-hit kill)
+01:14:51 [INFO] parry: evaluator totals easy=on calls=30397 eligible=3197 originalPerfect=1600 unreadable=0 lowStackOutputs=2357 forced=1597 writeFailures=0 pulseRequests=330 (not confirmed counters)
+01:14:53 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:14:54 [INFO] player/damage: out status=0 delta=-3000 x1000.00 -> -3000000 (one-hit kill)
+01:14:55 [INFO] player/damage: out status=0 delta=-10000 x1000.00 -> -10000000 (one-hit kill)
+01:14:57 [INFO] player/damage: out status=0 delta=-25000 x1000.00 -> -25000000 (one-hit kill)
+01:14:58 [INFO] player/damage: out status=0 delta=-8000 x1000.00 -> -8000000 (one-hit kill)
+01:15:00 [INFO] player/damage: out status=0 delta=-18000 x1000.00 -> -18000000 (one-hit kill)
+01:15:02 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:15:04 [INFO] parry: evaluator totals easy=on calls=30681 eligible=3228 originalPerfect=1617 unreadable=0 lowStackOutputs=2382 forced=1611 writeFailures=0 pulseRequests=333 (not confirmed counters)
+01:15:04 [INFO] player/damage: out status=0 delta=-25000 x1000.00 -> -25000000 (one-hit kill)
+01:15:10 [INFO] player/damage: out status=0 delta=-11000 x1000.00 -> -11000000 (one-hit kill)
+01:15:16 [INFO] parry: evaluator totals easy=on calls=30782 eligible=3239 originalPerfect=1623 unreadable=0 lowStackOutputs=2392 forced=1616 writeFailures=0 pulseRequests=334 (not confirmed counters)
+01:15:18 [INFO] player/damage: out status=0 delta=-3000 x1000.00 -> -3000000 (one-hit kill)
+01:15:20 [INFO] player/damage: out status=0 delta=-2000 x1000.00 -> -2000000 (one-hit kill)
+01:15:25 [INFO] player/damage: out status=0 delta=-3000 x1000.00 -> -3000000 (one-hit kill)
+01:15:29 [INFO] player/damage: out status=0 delta=-1000 x1000.00 -> -1000000 (one-hit kill)
+01:16:05 [INFO] parry: evaluator totals easy=on calls=30975 eligible=3246 originalPerfect=1629 unreadable=0 lowStackOutputs=2398 forced=1617 writeFailures=0 pulseRequests=335 (not confirmed counters)
+01:16:20 [INFO] parry: evaluator totals easy=on calls=31393 eligible=3298 originalPerfect=1657 unreadable=0 lowStackOutputs=2440 forced=1641 writeFailures=0 pulseRequests=339 (not confirmed counters)
+01:16:40 [INFO] parry: evaluator totals easy=on calls=31496 eligible=3320 originalPerfect=1663 unreadable=0 lowStackOutputs=2458 forced=1657 writeFailures=0 pulseRequests=341 (not confirmed counters)
+01:16:50 [INFO] parry: evaluator totals easy=on calls=31766 eligible=3373 originalPerfect=1681 unreadable=0 lowStackOutputs=2498 forced=1692 writeFailures=0 pulseRequests=345 (not confirmed counters)
+01:17:00 [INFO] parry: evaluator totals easy=on calls=32176 eligible=3478 originalPerfect=1740 unreadable=0 lowStackOutputs=2581 forced=1738 writeFailures=0 pulseRequests=354 (not confirmed counters)
+01:17:10 [INFO] parry: evaluator totals easy=on calls=32551 eligible=3557 originalPerfect=1772 unreadable=0 lowStackOutputs=2644 forced=1785 writeFailures=0 pulseRequests=360 (not confirmed counters)
+01:17:20 [INFO] parry: evaluator totals easy=on calls=32914 eligible=3591 originalPerfect=1780 unreadable=0 lowStackOutputs=2673 forced=1811 writeFailures=0 pulseRequests=362 (not confirmed counters)
+01:17:30 [INFO] parry: evaluator totals easy=on calls=33284 eligible=3628 originalPerfect=1797 unreadable=0 lowStackOutputs=2703 forced=1831 writeFailures=0 pulseRequests=365 (not confirmed counters)
+01:17:43 [INFO] parry: evaluator totals easy=on calls=33646 eligible=3640 originalPerfect=1803 unreadable=0 lowStackOutputs=2712 forced=1837 writeFailures=0 pulseRequests=366 (not confirmed counters)
+01:18:00 [INFO] parry: evaluator totals easy=on calls=33763 eligible=3661 originalPerfect=1814 unreadable=0 lowStackOutputs=2728 forced=1847 writeFailures=0 pulseRequests=368 (not confirmed counters)
+01:18:10 [INFO] parry: evaluator totals easy=on calls=34206 eligible=3699 originalPerfect=1830 unreadable=0 lowStackOutputs=2757 forced=1869 writeFailures=0 pulseRequests=371 (not confirmed counters)
+01:18:25 [INFO] parry: evaluator totals easy=on calls=34550 eligible=3732 originalPerfect=1848 unreadable=0 lowStackOutputs=2786 forced=1884 writeFailures=0 pulseRequests=374 (not confirmed counters)
+01:18:36 [INFO] parry: evaluator totals easy=on calls=34649 eligible=3743 originalPerfect=1851 unreadable=0 lowStackOutputs=2795 forced=1892 writeFailures=0 pulseRequests=375 (not confirmed counters)
+01:18:47 [INFO] parry: evaluator totals easy=on calls=34873 eligible=3766 originalPerfect=1862 unreadable=0 lowStackOutputs=2815 forced=1904 writeFailures=0 pulseRequests=377 (not confirmed counters)
+01:18:57 [INFO] parry: evaluator totals easy=on calls=35279 eligible=3777 originalPerfect=1868 unreadable=0 lowStackOutputs=2825 forced=1909 writeFailures=0 pulseRequests=378 (not confirmed counters)
+01:19:51 [INFO] parry: evaluator totals easy=on calls=35407 eligible=3777 originalPerfect=1868 unreadable=0 lowStackOutputs=2825 forced=1909 writeFailures=0 pulseRequests=378 (not confirmed counters)
+01:20:02 [INFO] parry: evaluator totals easy=on calls=35576 eligible=3779 originalPerfect=1870 unreadable=0 lowStackOutputs=2826 forced=1909 writeFailures=0 pulseRequests=379 (not confirmed counters)
+01:20:15 [INFO] parry: evaluator totals easy=on calls=35898 eligible=3779 originalPerfect=1870 unreadable=0 lowStackOutputs=2826 forced=1909 writeFailures=0 pulseRequests=379 (not confirmed counters)
+01:20:26 [INFO] parry: evaluator totals easy=on calls=36338 eligible=3836 originalPerfect=1891 unreadable=0 lowStackOutputs=2874 forced=1945 writeFailures=0 pulseRequests=383 (not confirmed counters)
+01:20:36 [INFO] parry: evaluator totals easy=on calls=36443 eligible=3848 originalPerfect=1898 unreadable=0 lowStackOutputs=2882 forced=1950 writeFailures=0 pulseRequests=384 (not confirmed counters)
+01:21:00 [INFO] parry: evaluator totals easy=on calls=36506 eligible=3848 originalPerfect=1898 unreadable=0 lowStackOutputs=2882 forced=1950 writeFailures=0 pulseRequests=384 (not confirmed counters)
+01:21:03 [INFO] player/damage: out status=0 delta=-3000 x16.00 -> -48000
+01:21:06 [INFO] player/damage: out status=0 delta=-1000 x16.00 -> -16000
+01:21:07 [INFO] player/damage: out status=0 delta=-10000 x16.00 -> -160000
+01:21:08 [INFO] player/damage: out status=0 delta=-4000 x16.00 -> -64000
+01:21:09 [INFO] player/damage: out status=0 delta=-1000 x16.00 -> -16000
+01:21:10 [INFO] player/damage: out status=0 delta=-10000 x16.00 -> -160000
+01:21:11 [INFO] parry: evaluator totals easy=on calls=36693 eligible=3848 originalPerfect=1898 unreadable=0 lowStackOutputs=2882 forced=1950 writeFailures=0 pulseRequests=384 (not confirmed counters)
+01:21:13 [INFO] player/damage: out status=0 delta=-1000 x16.00 -> -16000
+01:21:13 [INFO] player/damage: out status=0 delta=-10000 x16.00 -> -160000
+01:21:15 [INFO] player/damage: out status=0 delta=-1000 x16.00 -> -16000
+01:21:15 [INFO] player/damage: out status=0 delta=-10000 x16.00 -> -160000
+01:21:17 [INFO] player/damage: out status=0 delta=-4000 x16.00 -> -64000
+01:36:12 [INFO] parry: evaluator totals easy=on calls=36825 eligible=3848 originalPerfect=1898 unreadable=0 lowStackOutputs=2882 forced=1950 writeFailures=0 pulseRequests=384 (not confirmed counters)
+01:36:13 [INFO] player/damage: out status=0 delta=-6000 x16.00 -> -96000
+01:36:16 [INFO] player/damage: out status=0 delta=-120000 x16.00 -> -1920000
+01:36:16 [INFO] player/damage: out status=0 delta=-1000 x16.00 -> -16000
+01:36:16 [INFO] player/damage: out status=0 delta=-1000 x16.00 -> -16000
+01:36:20 [INFO] player/damage: out status=0 delta=-3000 x16.00 -> -48000
+01:36:20 [INFO] player/damage: out status=0 delta=-2000 x16.00 -> -32000
+01:36:22 [INFO] parry: evaluator totals easy=on calls=37812 eligible=3947 originalPerfect=1943 unreadable=0 lowStackOutputs=2959 forced=2004 writeFailures=0 pulseRequests=393 (not confirmed counters)
+01:36:22 [INFO] player/damage: out status=0 delta=-23000 x16.00 -> -368000
+01:36:23 [INFO] player/damage: out status=0 delta=-18000 x16.00 -> -288000
+01:36:24 [INFO] player/damage: out status=0 delta=-6000 x16.00 -> -96000
+01:36:24 [INFO] player/damage: out status=0 delta=-18000 x16.00 -> -288000
+01:36:25 [INFO] player/damage: out status=0 delta=-18000 x16.00 -> -288000
+01:36:26 [INFO] player/damage: out status=0 delta=-1000 x16.00 -> -16000
+01:36:27 [INFO] player/damage: out status=0 delta=-1000 x16.00 -> -16000
+01:36:28 [INFO] player/damage: out status=0 delta=-1000 x16.00 -> -16000
+01:36:35 [INFO] parry: evaluator totals easy=on calls=38641 eligible=4031 originalPerfect=1982 unreadable=0 lowStackOutputs=3027 forced=2049 writeFailures=0 pulseRequests=400 (not confirmed counters)
+01:36:35 [INFO] player/damage: out status=0 delta=-18000 x16.00 -> -288000
+01:36:36 [INFO] player/damage: out status=0 delta=-23000 x16.00 -> -368000
+01:36:38 [INFO] player/damage: out status=0 delta=-2000 x16.00 -> -32000
+01:36:38 [INFO] player/damage: out status=0 delta=-2000 x16.00 -> -32000
+01:36:41 [INFO] player/damage: out status=0 delta=-18000 x16.00 -> -288000
+01:36:41 [INFO] player/damage: out status=0 delta=-23000 x16.00 -> -368000
+01:36:44 [INFO] player/damage: out status=0 delta=-24000 x16.00 -> -384000
+01:36:44 [INFO] player/damage: out status=0 delta=-3000 x16.00 -> -48000
+01:36:45 [INFO] parry: evaluator totals easy=on calls=38810 eligible=4043 originalPerfect=1988 unreadable=0 lowStackOutputs=3038 forced=2055 writeFailures=0 pulseRequests=401 (not confirmed counters)
+01:36:45 [INFO] player/damage: out status=0 delta=-2000 x16.00 -> -32000
+01:36:48 [INFO] player/damage: out status=0 delta=-6000 x16.00 -> -96000
+01:36:57 [INFO] parry: evaluator totals easy=on calls=38856 eligible=4043 originalPerfect=1988 unreadable=0 lowStackOutputs=3038 forced=2055 writeFailures=0 pulseRequests=401 (not confirmed counters)
+01:36:58 [INFO] player/damage: out status=0 delta=-23000 x16.00 -> -368000
+01:36:58 [INFO] player/damage: out status=0 delta=-2000 x16.00 -> -32000
+01:36:59 [INFO] player/damage: out status=0 delta=-2000 x16.00 -> -32000
+01:36:59 [INFO] player/damage: out status=0 delta=-18000 x16.00 -> -288000
+01:37:02 [INFO] player/damage: out status=0 delta=-30000 x16.00 -> -480000
+01:37:03 [INFO] player/damage: out status=0 delta=-6000 x16.00 -> -96000
+01:37:07 [INFO] player/damage: out status=0 delta=-24000 x16.00 -> -384000

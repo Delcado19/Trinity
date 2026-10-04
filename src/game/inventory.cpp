@@ -56,22 +56,26 @@ namespace trinity::game
         // Full 9-arg prototype so the trampoline forwards every argument.
         using HolderInsert_t = void*(__fastcall*)(void*, void*, void*, void*, uint16_t,
                                                   void*, uint8_t, uint8_t, uint8_t);
-        // Transaction commit: (holder, err, CONTAINER, items, out, c, c).
-        using Commit_t = void*(__fastcall*)(void*, void*, void*, void*, void*, uint8_t, uint8_t);
+        // TU 2.03.02 transaction commit has eight arguments; forward both flags
+        // and both output pointers (gugi e0d287e), including the stack arguments.
+        using Commit_t = void*(__fastcall*)(void*, void*, void*, void*, uint8_t, uint8_t, void*, void*);
         // The game's own slot-expansion setter (kSig_InvSetExpandSlots):
-        // (holder, &err, unused, bucketType, expansionCount). See offsets.h -
+        // (holder, &err, bucketType, expansionCount). TU 2.03.02 has no unused
+        // third argument; shifting the type/count would corrupt the call. See offsets.h -
         // `count` is the expansion beyond _defaultSlotCount, not the cap.
-        using SetExpandSlots_t = void*(__fastcall*)(void*, int*, void*, uint16_t, uint16_t);
+        using SetExpandSlots_t = void*(__fastcall*)(void*, int*, uint16_t, uint16_t);
         // --- The add-item primitives (see the add-item note in offsets.h) ----
         // Resolved, not hooked: we CALL these. oHolderInsert above doubles as
         // the insert PLANNER - it is the same function (kSig_InvHolderInsert),
         // and calling its trampoline runs the original without re-entering our
         // own capture hook.
         using ItemValueCtor_t   = void*(__fastcall*)(void* itemVal, uint16_t* typeId, int64_t qty);
-        using CommitPlacement_t = void*(__fastcall*)(void* holder, int* err, void* unused,
+        using CommitPlacement_t = void*(__fastcall*)(void* holder, int* err,
                                                      void* placement, uint16_t slotIdx);
         using FreePlacements_t  = void(__fastcall*)(void* vec);
         using ItemValueDtor_t   = void(__fastcall*)(void* itemVal);
+        using BumpRevision_t    = void(__fastcall*)(void* holder);
+        BumpRevision_t oBumpRevision = nullptr;
         GetItemQty_t      oGetItemQty      = nullptr;
         GetHolder_t       oGetHolder       = nullptr;
         HolderInsert_t    oHolderInsert    = nullptr;
@@ -1026,10 +1030,10 @@ namespace trinity::game
 
         // --- The commit hook: where the server container shows up at load ---
         void* __fastcall hkCommit(void* holder, void* err, void* container, void* items,
-                                  void* out, uint8_t a6, uint8_t a7)
+                                  uint8_t a5, uint8_t a6, void* a7, void* a8)
         {
             NoteContainer(container);
-            return oCommit(holder, err, container, items, out, a6, a7);
+            return oCommit(holder, err, container, items, a5, a6, a7, a8);
         }
 
         // --- The holder-insert hook: second capture path ---------------------
@@ -1100,7 +1104,7 @@ namespace trinity::game
             return 0;
         }
 
-        void* __fastcall hkSetExpandSlots(void* holder, int* outErr, void* a3,
+        void* __fastcall hkSetExpandSlots(void* holder, int* outErr,
                                           uint16_t type, uint16_t count)
         {
             const State& st = State::Get();
@@ -1115,7 +1119,7 @@ namespace trinity::game
                     count = expand;
                 }
             }
-            return oSetExpandSlots(holder, outErr, a3, type, count);
+            return oSetExpandSlots(holder, outErr, type, count);
         }
 
         // --- Used-count repair ------------------------------------------------
@@ -1271,12 +1275,20 @@ namespace trinity::game
         // Item is refused, and every other inventory feature still works).
         // These are CALLED, not hooked. The insert planner is oHolderInsert,
         // resolved by the hook above - same function.
-        const uintptr_t ctorAddr   = mem::FindPattern(kSig_TrItemValueCtor);
-        const uintptr_t commitAddr = mem::FindPattern(kSig_InvCommitPlacement);
-        uintptr_t       freeAddr   = mem::FindPattern(kSig_InvFreePlacements);
+        const uintptr_t ctorAddr   = mem::CountMatches(kSig_TrItemValueCtor, 2) == 1
+            ? mem::FindPattern(kSig_TrItemValueCtor) : 0;
+        const uintptr_t commitAddr = mem::CountMatches(kSig_InvCommitPlacement, 2) == 1
+            ? mem::FindPattern(kSig_InvCommitPlacement) : 0;
+        uintptr_t       freeAddr   = mem::CountMatches(kSig_InvFreePlacements, 2) == 1
+            ? mem::FindPattern(kSig_InvFreePlacements) : 0;
         if (ctorAddr)   oItemValueCtor   = reinterpret_cast<ItemValueCtor_t>(ctorAddr);
         if (commitAddr) oCommitPlacement = reinterpret_cast<CommitPlacement_t>(commitAddr);
         if (freeAddr)   oFreePlacements  = reinterpret_cast<FreePlacements_t>(freeAddr);
+        const uintptr_t bumpAddr = mem::CountMatches(kSig_InvBumpRevision, 2) == 1
+            ? mem::FindPattern(kSig_InvBumpRevision) : 0;
+        oBumpRevision = reinterpret_cast<BumpRevision_t>(bumpAddr);
+        if (!oBumpRevision)
+            LOG_WARN("inventory: revision publisher unavailable - added items may need an inventory action to refresh observers.");
         // Self-check: freePlacements walks the vector with `imul rcx, rax, <stride>`,
         // so the live stride is right there in the code. If it ever disagrees with
         // what we plan against, the placement layout moved and every slot index we
@@ -1442,6 +1454,7 @@ namespace trinity::game
 
     void Inventory::Remove()
     {
+        oBumpRevision = nullptr;
         // Leave the tables as vanilla found them on unload, same as World does
         // for Game Speed.
         if (g_stackApplied) { SetAllMaxStackSizes(false, 0); g_stackApplied = false; }
@@ -2108,7 +2121,7 @@ namespace trinity::game
                 }
 
                 int err = 0;
-                oSetExpandSlots(reinterpret_cast<void*>(holder), &err, nullptr, type, expand);
+                oSetExpandSlots(reinterpret_cast<void*>(holder), &err, type, expand);
                 if (err == 0) any = true;
             }
             return any;
@@ -2546,10 +2559,9 @@ namespace trinity::game
                         const uint16_t slotIdx =
                             *reinterpret_cast<uint16_t*>(p + kOff_Placement_SlotIdx);
                         int err2 = 0;
-                        // 3rd arg: the game's own commit loop leaves the CONTAINER
-                        // in r8 here - match it rather than passing null.
+                        // TU 2.03.02: r8 is the placement, r9w is the slot index.
+                        // This helper has no container argument (gugi e0d287e).
                         oCommitPlacement(reinterpret_cast<void*>(holder), &err2,
-                                         reinterpret_cast<void*>(container),
                                          reinterpret_cast<void*>(p), slotIdx);
                         if (err2 == 0) ++committed;
                         else if (!firstErr2) firstErr2 = err2;
@@ -2557,6 +2569,15 @@ namespace trinity::game
                 }
             }
             __except (EXCEPTION_EXECUTE_HANDLER) { excepted = true; }
+
+            // TU 2.03.02 inserts must publish the holder revision; equipment/ammo
+            // observers otherwise keep their cached inventory (gugi e0d287e).
+            if (committed > 0 && oBumpRevision)
+            {
+                __try { oBumpRevision(reinterpret_cast<void*>(holder)); }
+                __except (EXCEPTION_EXECUTE_HANDLER)
+                { LOG_WARN("inventory: add[%s] revision notification failed.", realm); }
+            }
 
             // Name the exact stage on failure - "PARTIAL (server=0 client=0)"
             // alone proved undebuggable (frequent in the field, cleared by a

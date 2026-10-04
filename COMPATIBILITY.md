@@ -1558,3 +1558,201 @@ walk unless a stat feature (God Mode, multipliers, ...) is on
 (`AnyStatFeatureActive`), and the nav-component read needs the tracked actors.
 It worked on 2026-09-29 only because One-Hit Kill / a multiplier was on. Fix: the
 walk also runs while the menu is open. Not yet live-tested.
+
+### vTweak v1.4.2 runtime log review (2026-10-02)
+
+Reviewed `F:\Steam\steamapps\common\Crimson Desert\bin64\Trinity.log`,
+last modified 2026-10-02 07:47:45, with `Trinity.asi` vTweak v1.4.2 (built
+2026-09-20; 2,488,320 bytes) and game PE 1.0.0.2976. This is Lian's build,
+not this repository's v0.18.0 build.
+
+The log confirms startup reached `Ready`, the destination-marker subsystem
+initialized (`hooks=5/5`, `ready=yes`), the just-window evaluator hook for
+Easy Parry installed at `0x1408738B0`, and the frame-timer hook installed at
+`0x140AD1300`. Inventory runtime evidence is stronger than startup resolution
+alone: the catalog table was read at 07:13 (`rows=6816`) and built at 07:13
+(`named=6815`, `groups=51`); at 07:18 `SetDirectSilver` reported setting
+1,000,000 Silver / 100,000,000 Copper with `status=1`.
+
+The log has no time-of-day advance/freeze hook or action entries. The frame
+timer hook is for game-time scaling and does not establish that time-of-day
+controls work. It also contains no add-item, quantity-edit, or slot-size action
+results. Therefore catalog construction and a reported Silver setter request are
+observed for this run; time-of-day behavior and those other inventory writes
+remain unverified from this log. The absence of their log entries is not proof
+that the features are unsupported or failed.
+
+**Correction after source review:** `SetDirectSilver` reporting `status=1` is
+not proof of successful or persistent writes. The public v1.4.2 source sets
+`written = true` unconditionally before logging and returning. It also enables
+a wallet spoof. The log confirms the request and reported status; the actual
+balance, spending, and save/reload persistence require gameplay evidence.
+The catalog counts are direct runtime observations, not a claim that all
+inventory mutations work. The original log is preserved in
+[`reports/lian-vtweak-1.4.2-2976-2026-10-02.log.txt`](reports/lian-vtweak-1.4.2-2976-2026-10-02.log.txt).
+
+### Inventory and time-of-day source comparison on PE 2976 (2026-10-02)
+
+Compared our `d0cd168` source, gugi97's `e0d287e`, and Lian's public
+[`v2.00-update` branch at `0c7c345`](https://github.com/ReXooGen/Trinity/tree/0c7c3454f9f722ea2de95e84ef81caf465637068).
+Lian's default `master` branch is the older v1.3.2 source (`094e561`) and is
+not the appropriate v1.4.2 reference. The newer branch identifies itself as
+v1.4.2 and contains the frame-timer and inventory log messages seen here, but
+its commit date is later than the binary's build date. Exact binary/source
+correspondence remains unverified.
+
+Ran the existing read-only signature auditor against the installed EXE:
+PE 1.0.0.2976, SHA-256
+`57da440d72f4db974f25fef047cf84c4dadd999a88cb2a3c5af4c9bd67fde1e7`.
+The reproducible manifest and generated reports are
+[`reports/trinity-2976-inventory-world-comparison-manifest.json`](reports/trinity-2976-inventory-world-comparison-manifest.json),
+[`reports/trinity-2976-inventory-world-comparison.json`](reports/trinity-2976-inventory-world-comparison.json),
+and [`reports/trinity-2976-inventory-world-comparison.md`](reports/trinity-2976-inventory-world-comparison.md).
+Every RVA below is a unique raw match; it is not runtime or ABI validation.
+
+| Path | Our pattern | Lian v1.4.2 pattern RVA | gugi pattern RVA |
+| --- | --- | --- | --- |
+| Field clock globals | 0 matches | `0x20E5604` | `0x20E5604` |
+| Field-time tick | 0 matches | `0xA384A0` | `0xA384A0` |
+| Slot expansion setter | 0 matches | `0x21358A0` | `0x21358A0` |
+| Transaction commit capture | 0 matches | `0x2B699D0` | `0x2132D30` |
+| Native item constructor | 0 matches | `0x2409970` | `0x2409970` |
+| Placement commit | 0 matches | `0x2130D70` | `0x212DE50` |
+| Placement-vector cleanup | 0 matches | `0x4880C0` | `0x885E600` |
+
+The constructor match agrees with Lian's runtime address `0x142409970`.
+The working gugi item-count pattern already used by us matches once at
+`0x240F8D0`; our holder resolver matches once at `0x212A150`. Our secondary
+holder-insert capture pattern also matches once (`0x24077D0`). Thus a missing
+primary commit hook prevents reliable capture at save load, but does not by
+itself prove that every quantity edit will revert: the secondary hook can
+capture a server container on a later add/drop/buy. Its actual capture and
+persistence have not been established for our current run.
+
+Concrete porting differences, beyond changing signatures:
+
+- **Time of day:** our field-clock pattern still selects TLS byte `0x1F6`;
+  gugi's exact pattern selects `0x1EC` and Lian wildcards that byte. The tick
+  prologue gained an R12 spill. Lian's advance/set functions additionally
+  update the captured tick manager's accumulator at `+0x2C` and the visible
+  render hour; ours writes the clock globals and only adjusts the render
+  target while frozen. Merely restoring lookup would leave a separate risk
+  of the tick overwriting the requested time. Any port must respect game-thread
+  ownership and the shared-pointer access rules added on 2026-10-01.
+- **Slot expansion:** both newer references use the four-argument setter
+  `(holder, error, bucketType, expansionCount)`; ours still uses five, with an
+  obsolete third parameter. Update the detour, trampoline type, and every
+  direct call together so bucket type and count land in the correct registers.
+- **Inventory commits:** the references resolve different functions. gugi's
+  primary commit detour forwards eight arguments and its placement helper
+  takes four; ours forwards seven to the primary commit and five to the
+  placement helper. Lian retains different targets and conventions. Do not
+  copy a signature independently of its matching function contract.
+- **Add Item:** the constructor alone is not enough. Placement commit, cleanup,
+  destructor resolution, vector layout, realm selection, and instance-ID
+  allocation must be checked as one transaction before enabling writes.
+  Lian also contains broad constructor fallbacks; the audit finds 46, 117,
+  1241, and 763 matches for several of them. Those are not safe substitutes
+  for a constructor signature with a validated identity.
+
+This pass preserves comparison evidence and identifies the required fixes;
+it changes no runtime code and does not deploy a build to the game directory.
+
+
+### 2026-10-02 — 0.18.1 inventory and field-clock compatibility port
+
+Ported the uniquely matched TU 2.03.02 signatures from gugi `e0d287e` together
+with their actual contracts: eight-argument transaction capture, four-argument
+slot setter and placement commit, and two-argument field-clock tick. The item
+constructor and placement-vector destructor now resolve uniquely; the installed
+PE confirms the 224-byte placement stride and destructor call at offset `0x31`.
+Successful item inserts publish the holder revision so equipment/ammo observers
+can refresh. No broad Lian constructor fallbacks were adopted.
+
+Signed time steps (-240..240 hours) are queued from the menu and applied in the
+field-clock hook, updating the `+0x2C` accumulator as in Lian v1.4.2, both realm
+mirrors and the render hour. Sub-hour time is preserved. The UI now accepts
+negative steps and reports acceptance as queued rather than claiming completion.
+A pending request is refused instead of overwritten; invalid live clocks are
+not edited. The pure hour/day arithmetic is checked for rollover, backward
+steps, day-zero clamping, invalid input and int32 overflow.
+
+Evidence: `reports/trinity-0.18.1-2976-manifest.json` and matching JSON/Markdown
+scan results. All eight patterns match once in PE `1.0.0.2976`. This establishes
+static discovery, not runtime safety or persistence. Pending in-game checks:
+forward/backward time while running and frozen; save-load server capture;
+quantity edits surviving reconciliation; slot expansion and real pickup;
+adding a usable item, equipment/ammo refresh, and save/reload persistence.
+The local build does not deploy to the game installation.
+
+Validation completed: Release build of `build/Release/Trinity.asi` (0.18.1),
+CTest `runtime_contracts` (1/1), signature-auditor unit checks (3/3), and
+`git diff --check`. The eight current patterns each match uniquely; the
+placement stride/destructor-call bytes were also checked directly in the PE.
+Graphify AST data was refreshed. No install-directory write or publication.
+
+
+### 2026-10-02 — evening Lian runtime-log refresh
+
+The log grew to 28,387 bytes and now ends at 19:43:14.329. Preserved separately
+in `reports/lian-vtweak-1.4.2-2976-2026-10-02-evening.log.txt`; see the matching
+`evening-review.md` for hash, counts and evidence boundaries. The new distinct
+session starts at 12:49 and is still Lian vTweak 1.4.2, not our 0.18.1 build.
+Its initialization is duplicated in the log. Catalog discovery succeeds again
+(6815 named items, 51 groups). Stat-source observations continue through the
+evening and capture changed character/mount objects at 19:31. No warning/error
+entries or new inventory/time action results appear; this does not close the
+outstanding in-game verification checklist.
+
+## Destination teleport: landing failure reported (2026-10-03)
+
+The user reports that destination teleport reached the location, then the player
+fell through the landscape until the game reset. This corrects the earlier
+interpretation of the no-marker messages: destination teleport is not generally
+nonfunctional. The current runtime snapshot is
+`reports/trinity-0.18.1-2976-2026-10-03-teleport.log.txt`.
+At 17:05:33 the requested world target is (-11136.88, 762.06, -3446.96).
+At 17:05:35 the observed world position is (-11136.88, 792.06, -3446.96).
+Thus the existing destination-only rise of 30 engine coordinate units was
+applied, together with the six-frame position hold and velocity reset. This
+confirms placement, not terrain collision readiness or a valid ground height.
+No ground-probe samples occur in this snapshot. Missing collision streaming
+and an incorrect destination height remain hypotheses; neither is established.
+Increasing the fixed rise is not a verified fix. Ground-height validation and
+post-warp landing observations are needed before choosing a landing correction.
+
+## Parry output ABI and low-stack access guard (2026-10-03, 0.18.2)
+
+Offline disassembly of installed PE 2976 at RVA 0x8738B0 confirms the output
+pointer is the fifth argument: after pushes totaling 0x18 and `sub rsp,0x70`,
+`mov rsi,[rsp+0xB0]` reads entry-stack +0x28. The verdict store at RVA 0x873A9B
+is `mov byte ptr [rsi],al`. Range is XMM2, and the mode byte is R9B.
+Thus the existing argument positions agree with the executable and gugi's
+source. No ABI/signature change is justified by the current evidence.
+
+The shared Read8/Write8 guard rejects every address below 0x10000000, including
+potentially valid stack output bytes. Parry-specific output access now also
+accepts addresses within the current thread's StackLimit/StackBase, excluding
+addresses below 0x10000; SEH still rejects inaccessible memory. The shared
+pointer-chain guard is unchanged. `lowStackOutputs` counts successful eligible
+reads below the old threshold, allowing runtime confirmation of this hypothesis.
+The prior 690 failures are not yet proven to be low-stack outputs. Contract
+checks cover stack boundaries, null, an actual local verdict and unchanged
+acceptance of high addresses. Re-test verdict reads/writes in-game before
+claiming Easy Parry behavior is fixed.
+
+## 0.18.2 runtime verification of parry output access (2026-10-04)
+
+Snapshot: `reports/trinity-0.18.2-2976-2026-10-04-0137.log.txt`.
+Version 0.18.2 started at 21:49:21, built October 3 at 21:45:19.
+The last parry summary at 01:36:57 records 38856 calls, 4043 eligible,
+1988 original-perfect, 2055 forced, 3038 low-stack outputs, zero unreadable
+outputs, zero write failures and 401 pulse requests. Eligible equals original
+perfect plus forced. The old threshold would reject the 3038 low-stack outputs;
+this confirms the low-stack access problem and successful corrected access in
+this run. It does not retrospectively classify each failure in the earlier
+session, prove unique counter hits, or validate held-block effectiveness.
+No off-mode combat sample or teleport action is recorded in this session.
+Outgoing damage modifications are logged at multipliers 1000 and 16; actual
+kill outcomes are not established by the hook logs. Inventory persistence,
+time shifting, terrain landing and dye compatibility remain outstanding.

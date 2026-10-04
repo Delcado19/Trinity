@@ -20,15 +20,14 @@ namespace trinity::game
     // and keeps the overlap requirement, so a parry still has to be attempted
     // against a real attack - it just no longer has to be frame-perfect.
     //
-    // Deliberately a two-instruction code patch rather than a detour. The
-    // reference implementation hooks the whole function, which means matching a
-    // signature nobody has verified; the patch touches three bytes at a site
-    // that is unique in the image, restores them exactly when switched off, and
-    // cannot reach save data at all.
+    // Prefer the evaluator detour, which also requests fresh input edges for
+    // held block. The three-byte verdict patch is a compatibility fallback.
+    // Evaluator diagnostics include original timing verdicts in both modes;
+    // neither an eligible window nor a perfect verdict confirms a counter hit.
     class Parry
     {
     public:
-        static bool Install();   // locate the site; does not modify anything
+        static bool Install();   // install evaluator hook or locate fallback patch site
         static void Remove();    // restore the original bytes if patched
 
         static bool Available(); // was the site found?

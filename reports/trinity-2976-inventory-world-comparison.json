@@ -1,0 +1,1672 @@
+{
+  "schemaVersion": 1,
+  "game": "Crimson Desert",
+  "gameVersion": "2.03.02",
+  "baseline": {
+    "label": "Inventory/world source comparison against installed PE 2976",
+    "commit": "d0cd168",
+    "gameVersion": "2.03.02",
+    "fileVersion": "1.0.0.2976"
+  },
+  "executable": {
+    "name": "CrimsonDesert.exe",
+    "size": 384521624,
+    "sha256": "57da440d72f4db974f25fef047cf84c4dadd999a88cb2a3c5af4c9bd67fde1e7",
+    "fileVersion": "1.0.0.2976",
+    "peTimestamp": "0x6AB28F00",
+    "peTimestampUtc": "2026-09-22T14:21:52Z",
+    "sizeOfImage": "0x173AB000"
+  },
+  "scan": {
+    "primarySections": [
+      ".rsrc",
+      ".xtls"
+    ],
+    "fallbackSections": [
+      ".xdata",
+      ".rdata",
+      ".00cfg",
+      ".tls$",
+      ".tls",
+      ".xtext",
+      ".text",
+      ".shared",
+      ".impdata",
+      ".trace"
+    ],
+    "excludedNonExecutableSectionPrefix": ".debug",
+    "maxRecordedLocationsPerSignature": 64,
+    "note": "Count results are mechanical only; semantic status remains UNKNOWN."
+  },
+  "signatures": {
+    "ours_kSig_InvGetItemQty": {
+      "feature": "kSig_InvGetItemQty",
+      "source": "src/game/offsets.h at d0cd168",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "NOT_FOUND",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "ours_kSig_InvGetItemQty_Gugi": {
+      "feature": "kSig_InvGetItemQty_Gugi",
+      "source": "src/game/offsets.h at d0cd168",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x240F8D0",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "ours_kSig_InvGetHolder": {
+      "feature": "kSig_InvGetHolder",
+      "source": "src/game/offsets.h at d0cd168",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x212A150",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "ours_kSig_InvSetExpandSlots": {
+      "feature": "kSig_InvSetExpandSlots",
+      "source": "src/game/offsets.h at d0cd168",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "NOT_FOUND",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "ours_kSig_InvHolderInsert": {
+      "feature": "kSig_InvHolderInsert",
+      "source": "src/game/offsets.h at d0cd168",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x24077D0",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "ours_kSig_InvCommit": {
+      "feature": "kSig_InvCommit",
+      "source": "src/game/offsets.h at d0cd168",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "NOT_FOUND",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "ours_kSig_TrItemValueCtor": {
+      "feature": "kSig_TrItemValueCtor",
+      "source": "src/game/offsets.h at d0cd168",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "NOT_FOUND",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "ours_kSig_InvCommitPlacement": {
+      "feature": "kSig_InvCommitPlacement",
+      "source": "src/game/offsets.h at d0cd168",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "NOT_FOUND",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "ours_kSig_InvFreePlacements": {
+      "feature": "kSig_InvFreePlacements",
+      "source": "src/game/offsets.h at d0cd168",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "NOT_FOUND",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "ours_kSig_GameSpeed": {
+      "feature": "kSig_GameSpeed",
+      "source": "src/game/offsets.h at d0cd168",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "NOT_FOUND",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "ours_kSig_FieldTimeRealm": {
+      "feature": "kSig_FieldTimeRealm",
+      "source": "src/game/offsets.h at d0cd168",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "NOT_FOUND",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "ours_kSig_FieldTimeTick": {
+      "feature": "kSig_FieldTimeTick",
+      "source": "src/game/offsets.h at d0cd168",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "NOT_FOUND",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "ours_kSig_TodEngineGlobal": {
+      "feature": "kSig_TodEngineGlobal",
+      "source": "src/game/offsets.h at d0cd168",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x2CE53DA",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "gugi_kSig_InvGetItemQty": {
+      "feature": "kSig_InvGetItemQty",
+      "source": "gugi97/Trinity at e0d287e",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x240F8D0",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "gugi_kSig_InvGetHolder": {
+      "feature": "kSig_InvGetHolder",
+      "source": "gugi97/Trinity at e0d287e",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x212A150",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "gugi_kSig_InvSetExpandSlots": {
+      "feature": "kSig_InvSetExpandSlots",
+      "source": "gugi97/Trinity at e0d287e",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x21358A0",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "gugi_kSig_InvHolderInsert": {
+      "feature": "kSig_InvHolderInsert",
+      "source": "gugi97/Trinity at e0d287e",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x24077D0",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "gugi_kSig_InvCommit": {
+      "feature": "kSig_InvCommit",
+      "source": "gugi97/Trinity at e0d287e",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x2132D30",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "gugi_kSig_TrItemValueCtor": {
+      "feature": "kSig_TrItemValueCtor",
+      "source": "gugi97/Trinity at e0d287e",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x2409970",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "gugi_kSig_InvCommitPlacement": {
+      "feature": "kSig_InvCommitPlacement",
+      "source": "gugi97/Trinity at e0d287e",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x212DE50",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "gugi_kSig_InvFreePlacements": {
+      "feature": "kSig_InvFreePlacements",
+      "source": "gugi97/Trinity at e0d287e",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x885E600",
+          "section": ".xtls"
+        }
+      ]
+    },
+    "gugi_kSig_FieldTimeRealm": {
+      "feature": "kSig_FieldTimeRealm",
+      "source": "gugi97/Trinity at e0d287e",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x20E5604",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "gugi_kSig_FieldTimeTick": {
+      "feature": "kSig_FieldTimeTick",
+      "source": "gugi97/Trinity at e0d287e",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0xA384A0",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "gugi_kSig_TodEngineGlobal": {
+      "feature": "kSig_TodEngineGlobal",
+      "source": "gugi97/Trinity at e0d287e",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x2CE53DA",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "lian_kSig_InvGetItemQty": {
+      "feature": "kSig_InvGetItemQty",
+      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x17F8DF0",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "lian_kSig_InvGetHolder": {
+      "feature": "kSig_InvGetHolder",
+      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x212A150",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "lian_kSig_InvSetExpandSlots": {
+      "feature": "kSig_InvSetExpandSlots",
+      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x21358A0",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "lian_kSig_InvHolderInsert": {
+      "feature": "kSig_InvHolderInsert",
+      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x2AE7400",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "lian_kSig_InvCommit": {
+      "feature": "kSig_InvCommit",
+      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x2B699D0",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "lian_kSig_TrItemValueCtor": {
+      "feature": "kSig_TrItemValueCtor",
+      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x2409970",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "lian_kSig_InvCommitPlacement": {
+      "feature": "kSig_InvCommitPlacement",
+      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x2130D70",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "lian_kSig_InvFreePlacements": {
+      "feature": "kSig_InvFreePlacements",
+      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x4880C0",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "lian_kSig_FrameTimerBody": {
+      "feature": "kSig_FrameTimerBody",
+      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0xAD1300",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "lian_kSig_FieldTimeRealm": {
+      "feature": "kSig_FieldTimeRealm",
+      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x20E5604",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "lian_kSig_FieldTimeTick": {
+      "feature": "kSig_FieldTimeTick",
+      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0xA384A0",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "lian_kSig_TodEngineGlobal": {
+      "feature": "kSig_TodEngineGlobal",
+      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x2CE53DA",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "lian_ctor_fallback_1": {
+      "feature": "TrItemValue constructor fallback",
+      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 46,
+      "locationsRecorded": 46,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x3C4780",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x493C30",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x7944E0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x8A9090",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x8BE850",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x994A60",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCCA1D0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCCA720",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCCAC70",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCCB1C0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCCB710",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCCBC60",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCCDCA0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCCE1E0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCD2230",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCD2950",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCD3130",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCD47C0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCD7FA0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCE3150",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCE36A0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCE3BF0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCE4140",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1334B40",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1335080",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1335590",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1335AC0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1335F60",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1336430",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1EE4E30",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x20C3430",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x236C860",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x2409970",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x2409D20",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x240A090",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x2788E20",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x27B0FB0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x27F8E80",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x2A9ACC0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x3612600",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x3695DD0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x3696A20",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x36D4490",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x38E7450",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x3A926F0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x3CF8080",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "lian_ctor_fallback_2": {
+      "feature": "TrItemValue constructor fallback",
+      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 117,
+      "locationsRecorded": 64,
+      "locationsTruncated": true,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x3C4780",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x3F79C0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x457160",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x493C30",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x496300",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x5587A0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x665460",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x66A7B0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x741310",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x758F90",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x75D5F0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x7734A0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x7944E0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x8A9090",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x8BE850",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x8D7460",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x8F1830",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x994A60",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCCA1D0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCCA720",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCCAC70",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCCB1C0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCCB710",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCCBC60",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCCDCA0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCCE1E0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCD2230",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCD2950",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCD3130",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCD47C0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCD7FA0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCE3150",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCE36A0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCE3BF0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCE4140",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCEEA80",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xD4EFA0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xD67C30",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xE5C390",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x10887D0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x10D6C10",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1176DA0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x126BAA0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x12AF100",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x12D1F90",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1334B40",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1335080",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1335590",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1335AC0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1335F60",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1336430",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1792260",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1798510",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1EE4E30",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1FE4340",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x20C3430",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x20D1D20",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x2133310",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x2134320",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x2138A90",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x235F560",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x236A6B0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x236C860",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x2405BF0",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "lian_ctor_fallback_3": {
+      "feature": "TrItemValue constructor fallback",
+      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1241,
+      "locationsRecorded": 64,
+      "locationsTruncated": true,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x4AE580",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x5286B0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x558480",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x5FFF40",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x65C150",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x66A340",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x785D50",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x7C00F0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x85CB00",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x93BF20",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x9E3E70",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xA4F370",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xA8B2D0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xAFA940",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xC87810",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCB6390",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xCDA020",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xD18950",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xD6EB00",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xD84220",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xD8A2C0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xDED830",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0xFC5CB9",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x101DC10",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1028230",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1066200",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x10982B9",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x11183C0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x111B0F0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x115AD20",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1160900",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x129C250",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x12C1450",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x13394B0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x133E7E0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1384690",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x13E3EB0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x13F36B0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x141AB80",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x1437780",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x15820F0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x15D8E10",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x15F5010",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x15F5610",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16A33E0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16A3FE0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16A45E0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16A4C50",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16A5850",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16A5E60",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16A64D0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16A7140",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16A7760",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16A7D70",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16A8380",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16A8980",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16A8F80",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16A95F0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16A9C40",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16AA280",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16AA8C0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16AAED0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16AB4E0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x16ABB20",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "lian_ctor_fallback_4": {
+      "feature": "TrItemValue constructor fallback",
+      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x3FDE960",
+          "section": ".rsrc"
+        }
+      ]
+    },
+    "lian_ctor_fallback_5": {
+      "feature": "TrItemValue constructor fallback",
+      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 763,
+      "locationsRecorded": 64,
+      "locationsTruncated": true,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x393F50",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x3B0B70",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x3CBEE0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x3D6B30",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x3DBA30",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x400AF0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x40E630",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x41A740",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x435ED0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x438390",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x463780",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x475300",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x47B460",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x47B800",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x4938B0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x4D7BF0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x4D96F0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x4DB620",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x4DB9B0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x4DE450",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x4DEC80",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x50E330",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x519980",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x5201E0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x524CA0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x585560",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x5AE240",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x5B8F50",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x5DE4C0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x5E0E80",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x5EE670",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x600220",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x605540",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x60B2A0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x610840",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x614A40",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x63CEF0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x641890",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x64DE60",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x64EAD0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x678AE0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x67C840",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x6D9740",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x6F5DF0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x6F6B50",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x6FA8E0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x710C90",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x72E2D0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x739E30",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x73ADC0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x73B7D0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x75FBD0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x766260",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x7666D0",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x775D10",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x776140",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x777F80",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x78E660",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x7A5F60",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x7A8820",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x7A9560",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x7C6A70",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x85C890",
+          "section": ".rsrc"
+        },
+        {
+          "rva": "0x89BCA0",
+          "section": ".rsrc"
+        }
+      ]
+    }
+  }
+}

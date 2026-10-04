@@ -722,13 +722,13 @@ namespace trinity::gui
         // weather.h and offsets.h - because the layout was expensive to get
         // and is entirely correct; only the destination is wrong.
 
-        if (ui::IntAction("Advance Time", &s_advHours, 1, 240, 1, 1,
+        if (ui::IntAction("Shift Time", &s_advHours, -240, 240, 1, 1,
                    timeReady
-                       ? "Skips the clock forward by this many hours; time keeps flowing after."
-                       : "Skips the clock forward. Unavailable right now."))
+                       ? "Shifts the clock by signed hours: positive forward, negative backward."
+                       : "Shifts the clock forward or backward. Unavailable right now."))
         {
             if (game::World::AdvanceTimeOfDayHours(s_advHours))
-                ui::Toast("Advanced %d hour%s", s_advHours, s_advHours == 1 ? "" : "s");
+                ui::Toast("Queued time shift: %+d hour%s", s_advHours, s_advHours == 1 ? "" : "s");
         }
 
         if (changed && st.autoSave)

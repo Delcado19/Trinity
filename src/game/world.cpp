@@ -1,6 +1,8 @@
 #include "world.h"
 
 #include <cmath>
+#include <atomic>
+#include <limits>
 #include <cstdint>
 #include <cstring>
 #include <initializer_list>
@@ -109,15 +111,19 @@ namespace trinity::game
         //
         // The delta rides in xmm1 as a single float; the prototype declares it
         // so the register survives the trampoline untouched on pass-through.
-        using FieldTimeTick_t = void(__fastcall*)(void* mgr, float delta, float d2);
+        using FieldTimeTick_t = void(__fastcall*)(void* mgr, float delta);
         FieldTimeTick_t oFieldTimeTick = nullptr;
         void* g_fieldTimeTickTarget = nullptr;
 
-        void __fastcall hkFieldTimeTick(void* mgr, float delta, float d2)
+        std::atomic<int> g_pendingHours{0};
+        void ApplyPendingHours(void* mgr);
+
+        void __fastcall hkFieldTimeTick(void* mgr, float delta)
         {
+            ApplyPendingHours(mgr);
             if (State::Get().timeFrozen)
                 delta = 0.0f; // clock stops accruing; sun + numeric clock hold
-            oFieldTimeTick(mgr, delta, d2);
+            oFieldTimeTick(mgr, delta);
         }
 
 
@@ -171,6 +177,32 @@ namespace trinity::game
             }
         }
 
+        void ApplyPendingHours(void* fieldMgr)
+        {
+            const int hours = g_pendingHours.exchange(0);
+            if (!hours || !fieldMgr) return;
+            int day = 0, hour = 0;
+            float seconds = 0.0f;
+            const uintptr_t mgr = reinterpret_cast<uintptr_t>(fieldMgr);
+            if (!ReadI32(g_timeClient + kOff_FieldTime_Day, &day) ||
+                !ReadI32(g_timeClient + kOff_FieldTime_Hour, &hour) ||
+                !ReadF32(mgr + 0x2C, &seconds) || !std::isfinite(seconds) || seconds < 0 ||
+                day < 0 || hour < 0 || hour > 23) return;
+            int newDay = 0, newHour = 0;
+            if (!detail::ShiftClockHours(day, hour, hours, newDay, newHour)) return;
+            // Lian v1.4.2 updates +0x2C as well as the realm mirrors. Otherwise
+            // the next field tick reconstructs the old hour. Preserve sub-hour time.
+            const float nextSeconds = newHour * 3600.0f + std::fmod(seconds, 3600.0f);
+            if (!Write32(mgr + 0x2C, FloatBits(nextSeconds))) return;
+            WriteClockDayHour(newDay, newHour);
+            const float renderHour = nextSeconds / 3600.0f;
+            if (const uintptr_t tod = ResolveTodManager())
+                Write32(tod + kOff_Tod_CurrentHour, FloatBits(renderHour));
+            if (g_todClampApplied) g_todTargetHour = renderHour;
+            LOG("world: time step %+d requested; day=%d hour=%d (runtime persistence requires verification).",
+                hours, newDay, newHour);
+        }
+
         // --- Master field-clock discovery ------------------------------------
         // One signature over sub_1CA3890's realm-select read yields both realm
         // globals: resolve the RIP operands of the two `vmovups` (server, then
@@ -178,7 +210,7 @@ namespace trinity::game
         bool ResolveFieldTimeGlobals()
         {
             const uintptr_t m = mem::FindPattern(kSig_FieldTimeRealm);
-            if (!m) return false;
+            if (!m || mem::CountMatches(kSig_FieldTimeRealm, 2) != 1) return false;
             g_timeServer = mem::ResolveRipAt(m + kOff_FieldTime_ServerVmovups, kLen_FieldTime_Vmovups);
             g_timeClient = mem::ResolveRipAt(m + kOff_FieldTime_ClientVmovups, kLen_FieldTime_Vmovups);
             if (g_timeClient < kMinPointer || g_timeServer < kMinPointer)
@@ -272,7 +304,7 @@ namespace trinity::game
         // engine-object global here; the manager itself is read live each Tick.
         {
             const uintptr_t g = mem::FindPattern(kSig_TodEngineGlobal);
-            if (!g)
+            if (!g || mem::CountMatches(kSig_TodEngineGlobal, 2) != 1)
             {
                 LOG_WARN("world: TOD engine-global signature NOT FOUND - sun freeze disabled.");
                 ok = false;
@@ -403,6 +435,7 @@ namespace trinity::game
         mem::RemoveHook(&g_fieldTimeTickTarget);
         oFieldTimeTick = nullptr;
         g_timeClient = g_timeServer = 0;
+        g_pendingHours.store(0);
     }
 
     bool World::Ready()
@@ -412,38 +445,14 @@ namespace trinity::game
 
     bool World::TimeOfDayReady()
     {
-        return g_timeClient >= kMinPointer && g_timeServer >= kMinPointer;
+        return g_fieldTimeTickTarget && g_timeClient >= kMinPointer && g_timeServer >= kMinPointer;
     }
 
     bool World::AdvanceTimeOfDayHours(int hours)
     {
-        if (!g_timeClient) return false;
-
-        int day = 0, hour = 0;
-        if (!ReadI32(g_timeClient + kOff_FieldTime_Day,  &day)) return false;
-        if (!ReadI32(g_timeClient + kOff_FieldTime_Hour, &hour)) return false;
-
-        // Carry the hour into the day so day/hour stay consistent (writing the
-        // hour alone and letting it wrap past 24 desyncs the day and the game
-        // corrects it back - the flicker seen in testing).
-        int total = day * 24 + hour + hours;
-        if (total < 0) total = 0;
-        const int newDay  = total / 24;
-        const int newHour = total % 24;
-
-        WriteClockDayHour(newDay, newHour);
-
-        // While frozen the tick's delta is 0, so nothing rewrites the globals -
-        // the advanced numeric time simply sticks until Freeze is turned off.
-        // But the visible SUN is held by the render-manager clamp, so step its
-        // target hour too - otherwise the clamp would pin the sun in place and
-        // Advance would move only the numbers, not the daylight.
-        if (g_todClampApplied)
-        {
-            g_todTargetHour = std::fmod(g_todTargetHour + static_cast<float>(hours), 24.0f);
-            if (g_todTargetHour < 0.0f) g_todTargetHour += 24.0f;
-            // Next Tick re-pins lower==upper==g_todTargetHour.
-        }
-        return true;
+        // Buttons queue one bounded step; the field tick owns all clock writes.
+        if (!TimeOfDayReady() || !hours || hours < -240 || hours > 240) return false;
+        int expected = 0;
+        return g_pendingHours.compare_exchange_strong(expected, hours);
     }
 }

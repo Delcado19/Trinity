@@ -4,6 +4,8 @@
 #include "core/state.h"
 #include "core/gameversion.h"
 #include "mem/hooks.h"
+#include "game/world.h"
+#include "game/parry_output.h"
 
 // Model only MinHook and scanning failures; exercise the production helpers.
 static bool created = false, failEnable = false;
@@ -32,6 +34,27 @@ static void Detour() {}
 int main()
 {
     using namespace trinity;
+    // Low stack output bytes must be accepted without accepting arbitrary
+    // low pointers, null, or the exclusive stack upper bound.
+    assert(game::detail::IsParryOutputAddress(0x20001, 0x20000, 0x30000));
+    assert(!game::detail::IsParryOutputAddress(0x1FFFF, 0x20000, 0x30000));
+    assert(!game::detail::IsParryOutputAddress(0x30000, 0x20000, 0x30000));
+    assert(!game::detail::IsParryOutputAddress(0, 0, 0x30000));
+    assert(game::detail::IsParryOutputAddress(game::kMinPointer, 0x20000, 0x30000));
+    bool verdict = false;
+    uint8_t originalVerdict = 0xFF;
+    assert(game::detail::ReadParryOutput(&verdict, &originalVerdict) && originalVerdict == 0);
+    assert(game::detail::WriteParryOutput(&verdict) && verdict);
+    assert(!game::detail::ReadParryOutput(nullptr, &originalVerdict));
+    assert(!game::detail::WriteParryOutput(nullptr));
+    int day = 0, hour = 0;
+    assert(game::detail::ShiftClockHours(2, 23, 2, day, hour) && day == 3 && hour == 1);
+    assert(game::detail::ShiftClockHours(2, 0, -1, day, hour) && day == 1 && hour == 23);
+    assert(game::detail::ShiftClockHours(0, 0, -240, day, hour) && day == 0 && hour == 0);
+    assert(game::detail::ShiftClockHours(1, 3, 240, day, hour) && day == 11 && hour == 3);
+    assert(!game::detail::ShiftClockHours(INT_MAX, 23, 1, day, hour));
+    assert(!game::detail::ShiftClockHours(-1, 0, 1, day, hour));
+    assert(!game::detail::ShiftClockHours(0, 24, 1, day, hour));
     for (const char* bad : {"nan", "NaN", "inf", "-inf", "1e999", "1e-999", "", " ", "3oops"})
         assert(ParseFloatSetting(bad, 2.0f) == 2.0f);
     assert(ParseFloatSetting(" 3.5\r\n", 2.0f) == 3.5f);
