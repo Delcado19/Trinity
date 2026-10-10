@@ -1,0 +1,37 @@
+
+# Graphify – Witcher 3 Keymapper
+
+# Dependencies und generierte Dateien
+node_modules/
+graphify-out/
+.cache/
+coverage/
+dist/
+build/
+
+# Persönliche Spieldaten und Backups
+input.settings
+input.settings*.bak
+*.log
+
+# Lokaler Arbeitskontext
+AI_JOURNAL.md
+CLAUDE.md
+.claude/
+.codex/
+screenshots/
+
+# Binärdateien und Bilder
+*.exe
+*.dll
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.ico
+
+# Temporäre Dateien
+*.tmp
+*.bak
+.DS_Store

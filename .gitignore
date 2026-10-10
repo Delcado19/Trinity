@@ -19,6 +19,10 @@ src/RC[0-9a-zA-Z]*
 # Local tooling config (machine-specific, may contain tokens)
 .claude/
 .mcp.json
+.codex/
+
+# Generated knowledge graph (grows with every update, machine-local cache/backups)
+graphify-out/
 
 # Reverse-engineering scratch work
 /scripts/Frida/

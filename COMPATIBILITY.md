@@ -1550,6 +1550,53 @@ and re-presses whatever is held (`hooks::PulseButtonRelease` on the pad,
 `SendInput` for keyboard/mouse). The old verdict patch remains as a fallback if
 the evaluator pattern does not match. **Not yet live-tested by us.**
 
+### Alternative Easy Parry technique: widen the window instead of forcing the verdict (2026-10-10)
+
+CrimsonInvEditor/Trainer v8.0 (Nexus #3209) independently hooks the same
+function - its own strings call it the "just-window evaluator" with "two
+calls" (guard + evade), matching vTweak's "just-window-eval hook" name for
+our `kSig_ParryEvaluator` site. Its approach differs from ours: instead of
+force-writing the perfect-flag output, it reads the real timing-window value
+at that site and writes back a *widened* value, gated on the caller being the
+player actor ("your frames %llu, widened parry %llu evade %llu ... Only for
+you: enemies keep their normal timing"). The game's own downstream logic then
+decides pass/fail itself from the widened window, rather than having the
+result overridden after the fact.
+
+This does not by itself explain whether that approach also solves our held-
+block/press-edge problem (no string confirms their input handling) - would
+need a disassembly of the evaluator's internal calls to locate the window
+value, which we don't have tooling for in this pass (no capstone/Ghidra
+available). Our evaluator hook + held-block pulse ([[above]]) already works
+live with multi-input support, so this is a documented alternative, not a
+fix for something broken. `[reference_crimsoninveditor_ct.md](memory) has
+the full string-mining writeup.`
+
+**Follow-up disassembly (2026-10-10, stdlib PE parser + capstone in an
+isolated venv, read-only, against the installed `CrimsonDesert.exe`):**
+`kSig_ParryEvaluator` still matches exactly once, at RVA `0x8738B0`, ending
+at our documented verdict site `0x873A98` (`seta al` / `mov [rsi],al`).
+Immediately before the verdict:
+```
+vsubss xmm0, xmm2, xmm0
+vmulss xmm1, xmm0, dword ptr [rip+0x6441498]   ; -> global float @ RVA 0x6CB4F28
+vsubss xmm2, xmm2, xmm1
+vcomiss xmm3, xmm2
+seta al
+```
+RVA `0x6CB4F28` reads 0.0 in the file (populated at runtime, likely from a
+difficulty/ability table) and sits exactly where a timing-window multiplier
+would act on the perfect-guard comparison - a plausible candidate for what
+the ASI trainer widens. **Hypothesis only, not live-verified** (no process
+attach available in this pass) - a future session could watch that address
+live (Cheat Engine or an in-process log) during a real parry window to
+confirm it moves, before ever patching it. Does not change our current
+approach: the verdict-patch/re-press hook is live-proven and this is a
+sharper lead, not a fix for a confirmed problem.
+<!-- ponytail: documented only, not implemented - revisit if the verdict-patch
+     approach ever regresses on a new build, or if a disassembler becomes
+     available to confirm the window-value location. -->
+
 ### Teleport to Destination needs the player walk (2026-09-30)
 
 Live: marker set on the map (gamepad A), "set a destination on the map first".
