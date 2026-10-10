@@ -1803,3 +1803,68 @@ No off-mode combat sample or teleport action is recorded in this session.
 Outgoing damage modifications are logged at multipliers 1000 and 16; actual
 kill outcomes are not established by the hook logs. Inventory persistence,
 time shifting, terrain landing and dye compatibility remain outstanding.
+
+## 0.18.2 live confirmation: Add Item persistence, time-of-day, Game Speed (2026-10-10)
+
+Reviewed `Trinity.log` from the same 0.18.2 session (started 20:16:00, build Oct 3
+21:45:19). Three items the earlier checklist still called outstanding are now
+user-confirmed in a real play session:
+
+- **Add Item save/reload persistence:** user added a shield via the menu, saved,
+  reloaded; the shield is still present. `CommitAdd()`/`AddIntoHolder()` only
+  `LOG_WARN` on a failure path (partial add, no bucket, realm-flag issue); a
+  successful add is silent by design. The log for this window has zero
+  inventory-add WARN/ERR lines, consistent with - not merely silent about - a
+  clean server+client add. This closes the "adding a usable item ... and
+  save/reload persistence" item from the 2026-10-02 port's pending checklist.
+- **Time of day, both directions:** log shows `time step +1` six times (day 98
+  hour 21 -> day 99 hour 5) immediately followed by `time step -1` eight times
+  back to day 98 hour 16, matching the user's report that both directions work
+  live. Closes "forward/backward time while running" from the same checklist
+  (frozen-state stepping still untested).
+- **Game Speed, apparent log contradiction resolved:** the log has both
+  `"world: master frame update hook installed ... Game Speed ready"` and
+  `"world: game-speed signature NOT FOUND - Game Speed disabled."` for the same
+  session. These are two independent write paths, not one feature logged
+  twice. `hkMasterFrameUpdate` (`world.cpp:45`) writes the forced multiplier
+  directly to the live time-manager object at `ctx+0x60` -> `+0x50`/`+0x54` on
+  every frame hook call; it does not depend on `kSig_GameSpeed` or
+  `g_flagAddr`/`g_valueAddr` at all. Only the second, `World::Tick()`-driven
+  path (`world.cpp:243-282`, gated on `g_flagAddr && g_valueAddr`) is the one
+  disabled by the missing signature. The user set Game Speed to 0.1x and
+  observed Kliff moving in slow motion live, which the hook-based path alone
+  explains; the `Tick()` path's write at `world.cpp:334` never ran this
+  session (`g_flagAddr`/`g_valueAddr` are 0). Game Speed is therefore
+  confirmed working end-to-end via the hook path. The dead `kSig_GameSpeed`
+  resolution is redundant with a working mechanism, not a live bug, and is a
+  cleanup candidate rather than something to re-derive urgently.
+
+Parry: the same session's `evaluator totals` lines are all `easy=off` with
+`forced=0` throughout a real multi-enemy fight with block held most of the
+time - Easy Parry was never toggled on, so held-block effectiveness is still
+not tested. Re-test with Easy Parry explicitly enabled in the menu.
+
+## 0.18.2 live confirmation: Easy Parry held-block effectiveness (2026-10-10)
+
+Same session, same log. `easy=off` baseline just before toggling on: calls=1394,
+eligible=235, originalPerfect=106, forced=0 (~45% natural perfect rate, as
+expected with the feature off). At 20:58:46 the user enabled Easy Parry
+in-menu (`parry: Easy Parry on.`) and fought a multi-enemy group holding block
+most of the time, same as the earlier (invalid) off-mode test.
+
+Final `easy=on` totals at 21:04:32: calls=6950, eligible=985,
+originalPerfect=502, forced=483, unreadable=0, writeFailures=0,
+pulseRequests=91. `originalPerfect + forced = 985 = eligible` holds exactly -
+every single eligible parry window resolved as perfect, either naturally or
+forced, for the whole fight. This is the first live confirmation of held-block
+effectiveness: `PulseHeldKeys()` (the SendInput release+re-press workaround
+for the guard state machine not re-arming on a continuously held block) fired
+91 times with zero write failures and zero unreadable outputs. Closes the
+"does not ... validate held-block effectiveness" gap noted in the 2026-10-04
+runtime verification above.
+
+User report: holding block worked well throughout, and the game's own
+perfect-parry visual feedback (green halo) was seen often during the fight.
+This ties the counters to the actual player-visible effect - the forced
+verdict write is not just a memory patch that satisfies our own logging, it
+produces the same in-game cue a natural perfect parry does.
