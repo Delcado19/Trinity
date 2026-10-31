@@ -13,6 +13,7 @@
 #include "../mem/hooks.h"
 #include "../core/logger.h"
 #include "../core/state.h"
+#include "../core/gameversion.h"
 
 namespace trinity::game
 {
@@ -49,17 +50,21 @@ namespace trinity::game
                 uintptr_t timeMgr = 0;
                 if (mem::ReadPtr(reinterpret_cast<uintptr_t>(ctx) + 0x60, &timeMgr) && timeMgr >= kMinPointer)
                 {
+                    // timeScale moved +8 on build 3446 (2.04.02) - see
+                    // kOff_TimeManager_TimeScale_TU20402 in offsets.h.
+                    const uintptr_t timeScaleOff = CurrentGameVersion().revision >= 3446
+                        ? kOff_TimeManager_TimeScale_TU20402 : kOff_TimeManager_TimeScale;
                     const State& st = State::Get();
                     if (st.gameSpeed)
                     {
                         const float mult = Clamp(st.gameSpeedMult, 0.1f, 5.0f);
                         Write8(timeMgr + 0x50, 1);
-                        Write32(timeMgr + 0x54, FloatBits(mult));
+                        Write32(timeMgr + timeScaleOff, FloatBits(mult));
                     }
                     else
                     {
                         Write8(timeMgr + 0x50, 0);
-                        Write32(timeMgr + 0x54, FloatBits(1.0f));
+                        Write32(timeMgr + timeScaleOff, FloatBits(1.0f));
                     }
                 }
             }
@@ -209,8 +214,18 @@ namespace trinity::game
         // client). See offsets.h kSig_FieldTimeRealm.
         bool ResolveFieldTimeGlobals()
         {
-            const uintptr_t m = mem::FindPattern(kSig_FieldTimeRealm);
-            if (!m || mem::CountMatches(kSig_FieldTimeRealm, 2) != 1) return false;
+            // Falls back to the build 3460 candidate (offsets.h: cross-validated
+            // by a third-party trainer's own runtime capture of these same two
+            // globals) when the verified source pattern does not match.
+            size_t which = 0;
+            const uintptr_t m = mem::FindPatternAny(
+                {kSig_FieldTimeRealm, kSig_FieldTimeRealm_TU3460_Candidate}, &which);
+            if (!m || mem::CountMatches(which == 0 ? kSig_FieldTimeRealm
+                                                    : kSig_FieldTimeRealm_TU3460_Candidate, 2) != 1)
+                return false;
+            if (which > 0)
+                LOG_WARN("world: field-clock matched fallback pattern #%zu - this game "
+                         "build moved the current one, so please report it.", which);
             g_timeServer = mem::ResolveRipAt(m + kOff_FieldTime_ServerVmovups, kLen_FieldTime_Vmovups);
             g_timeClient = mem::ResolveRipAt(m + kOff_FieldTime_ClientVmovups, kLen_FieldTime_Vmovups);
             if (g_timeClient < kMinPointer || g_timeServer < kMinPointer)
@@ -231,7 +246,8 @@ namespace trinity::game
         // does not match - same recompiled-prologue shape as the pathing-
         // helper/dye-upsert fixes from the same session.
         if (mem::InstallHookAny("world: master frame update",
-                                {kSig_MasterFrameUpdate, kSig_MasterFrameUpdate_TU20100_Candidate},
+                                {kSig_MasterFrameUpdate, kSig_MasterFrameUpdate_TU20100_Candidate,
+                                 kSig_MasterFrameUpdate_TU20402_Candidate},
                                 "Game Speed timescale unavailable",
                                 reinterpret_cast<void*>(hkMasterFrameUpdate),
                                 reinterpret_cast<void**>(&oMasterFrameUpdate),

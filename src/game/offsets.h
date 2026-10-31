@@ -174,6 +174,24 @@ namespace trinity::game
         "66 44 89 4C 24 ?? 48 89 54 24 ?? 53 55 56 57 41 56 48 83 EC ?? "
         "4C 8D 71 18 48 89 CF 48 8B 49 20 4C 89 C3 49 03 0E 4C 89 F6 4C 39 C1";
 
+    // Build 3460 candidate. The TU20100 candidate above went from one unique
+    // match (RVA 0xB764900, 2026-10-30 build 3446) to zero on this build - a
+    // targeted recompile of this one function, confirmed by relocating its
+    // shared helper callee (prologue `48 89 5C 24 10 48 89 74 24 18 48 89 7C
+    // 24 20 41 56 48 83 EC 20 48 8B FA 4D 8B F1 0F B7 11 49 8B F0 48 8B D9 E8`)
+    // via Ghidra from VA 0x1418e8860 to 0x1418eb970 and diffing its new
+    // callers' call-site deltas (0x95/0xe2, matching the old 0x95/0xee) back
+    // to this function. Ghidra decompile confirms byte-identical field layout
+    // to the TU20100 candidate (+0x18 base, +0x20 delta, +0x28 cap, +0x30
+    // regen, +0x52 flag, +0x38/+0x50 param-store, +0x48 counter, +8 final
+    // value) - same function, just reshuffled junk-code obfuscation (a fixed
+    // `+0x18` LEA became an xor-computed one). Verified offline: one match,
+    // RVA 0xB5B3350 (tools/TrinitySignatureAudit, live 3460 exe). NOT yet
+    // live-tested.
+    inline constexpr const char* kSig_StatCommit_TU3460_Candidate =
+        "66 44 89 4C 24 20 48 89 54 24 10 53 55 56 57 41 56 48 83 EC 40 "
+        "BE DC F8 4C 89 33 35 ?? ?? ?? ?? 4C 8D 34 31 48 89 CF 48 8B 49 20 4C 89 C3 49 03 0E 4C 89 F6 4C 39 C1";
+
     // --- Damage multipliers: hook the damage-apply dispatcher ---------------
     // One level above pa_StatCommit sits a per-status "apply signed delta"
     // dispatcher (IDB sub_145B2A0):
@@ -697,6 +715,25 @@ namespace trinity::game
     inline constexpr const char* kSig_InvGetHolder =
         "40 53 48 83 EC 20 48 8B 41 ? 48 8B D9 48 8B 48";
 
+    // Build 3460 candidate - cross-validated by a third-party loot mod
+    // (MasterLooter v1.6.53, github.com/shin2344234/master-looter) that
+    // logged its own AOB scanner resolving "inv_holder +0x22EE540" on this
+    // exact build/exe. Ghidra confirms the first 11 bytes (`40 53 48 83 EC 20
+    // 48 8B 41 ? 48 8B D9` - push rbx; sub rsp,20; mov rax,[rcx+NN]; mov
+    // rbx,rcx) are byte-identical to the verified source above, so this is
+    // the same function, not a lookalike - only what follows changed, from a
+    // direct `mov rcx,[rax+NN]` to an extra indirection through a helper
+    // call. Also confirms the +0xA0/+0xD0 "ownership-borrow link" chain (see
+    // reference-masterlooter-repo memory) is still read the same way before
+    // the final `[[holder+0x68]+0xB8]` container pointer. Verified offline:
+    // one match, RVA 0x22EE540 (tools/TrinitySignatureAudit, live 3460 exe) -
+    // the SAME address MasterLooter logged independently. NOT yet
+    // live-tested through our own resolver.
+    inline constexpr const char* kSig_InvGetHolder_TU3460_Candidate =
+        "40 53 48 83 EC 20 48 8B 41 68 48 8B D9 48 8B 50 20 0F B7 52 30 "
+        "E8 ?? ?? ?? ?? 0F B7 90 A6 00 00 00 81 FA FF FF 00 00 75 04 B0 03 EB 09 "
+        "E8 ?? ?? ?? ?? 0F B6 40 21 0F B6 C8 84 C0";
+
     // The engine's OWN slot-expansion setter (IDB sub_1CE8190) - what the game
     // itself runs when your expansion count changes:
     //     void* f(holder, int* outErr, u16 bucketType, u16 count)
@@ -798,6 +835,18 @@ namespace trinity::game
         "48 89 5C 24 ?? 4C 89 44 24 ?? 48 89 54 24 ?? 48 89 4C 24 ?? "
         "55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ?? 48 81 EC ?? "
         "?? ?? ?? 4D 8B F9 4D 8B E0";
+
+    // Build 3446 (2.04.02, the ocean DLC) candidate - mined from a third-party
+    // trainer's own AOB scanner, not derived by us.
+    // Same register-save set as the verified source (RBX/RCX/R14/R15/R12/R13);
+    // the frame-pointer setup was recompiled from `48 8D 6C 24 ??` to the
+    // shorter `48 8B EC`. The trainer's own diagnostic text names this as its
+    // commit site too ("DERIVED from the game's own code: commit exe+%llX,
+    // stride %u, slot index +0x%X"). Verified offline only: one match, RVA
+    // 0x25F69E0 (tools/TrinitySignatureAudit). NOT yet live-tested.
+    inline constexpr const char* kSig_InvCommit_TU20402_Candidate =
+        "48 89 5C 24 ?? 48 89 4C 24 ?? 55 56 57 41 54 41 55 41 56 41 57 "
+        "48 8B EC 48 83 EC ?? ?? 8B ?? ?? 8B ?? 48 C7 01 FF FF FF FF 0F B7 02 66 89 41 08";
 
     // Fallback container resolution (the hook above only captures the
     // container when the game happens to query an item count, which is NOT
@@ -1430,6 +1479,32 @@ namespace trinity::game
         "C5 F8 29 70 ?? C5 F8 29 78 ?? C5 78 29 40 ?? C5 78 29 50 ?? C5 78 29 58 ?? "
         "C5 78 29 A0 ?? ?? ?? ?? C5 78 29 A8 ?? ?? ?? ?? 48 8B F9 48 8B 51 60 8B 42 64 89 42 60";
 
+    // Build 3446 (2.04.02, the ocean DLC) candidate. Prologue/register-save is
+    // byte-identical to the TU20100 candidate above; the trailing body offsets
+    // (which pointer field the function reads as "TimeManager", and which
+    // field inside it it copies) are each +8 from that candidate's own
+    // internal numbering - consistent with the game inserting one 8-byte
+    // field somewhere in both chains on this build. This fingerprints the
+    // FUNCTION only; it is not the runtime write offset hkMasterFrameUpdate
+    // uses (see kOff_TimeManager_TimeScale_TU20402 below for that - a
+    // separately confirmed, independent fact). Verified offline: one match,
+    // exactly RVA 0xBDC370 (tools/TrinitySignatureAudit) - the SAME address a
+    // working third-party build live-logged as
+    // its own frame-timer hook on this build. NOT yet live-tested through our
+    // own hook plumbing.
+    inline constexpr const char* kSig_MasterFrameUpdate_TU20402_Candidate =
+        "48 8B C4 48 89 58 10 48 89 68 18 56 57 41 54 41 56 41 57 48 81 EC ?? ?? ?? ?? "
+        "C5 F8 29 70 ?? C5 F8 29 78 ?? C5 78 29 40 ?? C5 78 29 50 ?? C5 78 29 58 ?? "
+        "C5 78 29 A0 ?? ?? ?? ?? C5 78 29 A8 ?? ?? ?? ?? 48 8B F9 48 8B 51 68 8B 42 6C 89 42 68";
+
+    // TimeManager.timeScale moved from +0x54 to +0x5C on build 3446 (2.04.02) -
+    // a third-party trainer's own ini documents the exact drift as its
+    // configurable "SpeedOffset" default ("0x54, or 0x5C on 2.04"). hkMaster-
+    // FrameUpdate (world.cpp) selects between these by CurrentGameVersion().
+    // TimeManager.mode (+0x50) is not reported as moved; left as-is for now.
+    inline constexpr uintptr_t kOff_TimeManager_TimeScale         = 0x54;
+    inline constexpr uintptr_t kOff_TimeManager_TimeScale_TU20402 = 0x5C;
+
     // --- World: Game Speed (fixed-timestep override) ------------------------
     // The engine's per-frame timing update (IDB sub_8FBD80) measures the real
     // frame delta, applies UI/pause/native-timescale factors, and stores the
@@ -1489,6 +1564,22 @@ namespace trinity::game
     inline constexpr const char* kSig_FieldTimeRealm =
         "BA EC 01 00 00 48 8B 08 0F B6 04 0A 84 C0 74 0A C5 FC 10 05 "
         "?? ?? ?? ?? EB 08 C5 FC 10 05 ?? ?? ?? ??";
+
+    // Build 3460 (2.04.03) candidate: a third-party trainer (live report
+    // 2026-11-01) captured the realm clock globals directly
+    // at runtime as exe+6EA3998 (client) / exe+6EA39B8 (server) - still a
+    // 0x20-byte stride apart, matching the documented struct. Ghidra (3460
+    // import) xref'd both addresses to a single read site, FUN_1422a63d0,
+    // whose realm-select block is byte-identical to the shape above except
+    // the TLS selector immediate drifted by one (0x1EC -> 0x1EB; the TLS
+    // slot index this build assigns the realm flag to). Verified unique:
+    // Ghidra (one match, FUN_1422a63d0) and the live 1.0.0.3460 exe
+    // (tools/TrinitySignatureAudit, RVA 0x22A6430, matches the Ghidra VA
+    // exactly). The two vmovups offsets below are unchanged.
+    inline constexpr const char* kSig_FieldTimeRealm_TU3460_Candidate =
+        "BA EB 01 00 00 48 8B 08 0F B6 04 0A 84 C0 74 0A C5 FC 10 05 "
+        "?? ?? ?? ?? EB 08 C5 FC 10 05 ?? ?? ?? ??";
+
     // Within the match: server `vmovups` at +0x10, client `vmovups` at +0x1A;
     // each is 8 bytes (4-byte opcode C5 FC 10 05 + 4-byte disp at its tail).
     inline constexpr uintptr_t kOff_FieldTime_ServerVmovups = 0x10;

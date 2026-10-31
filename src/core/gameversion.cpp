@@ -18,6 +18,37 @@ namespace trinity
         // say so rather than imply a guarantee that was never made.
         struct KnownBuild { uint16_t revision; const char* tu; bool verified; };
         constexpr KnownBuild kKnown[] = {
+            { 3460, "unconfirmed",      true  },  // follow-up patch (2026-10-31), file version only one bump past
+                                                  // 3446; TU label not yet confirmed by any third-party source. Full
+                                                  // audit.py sweep against the live exe: DamageApply, MoveUpdate,
+                                                  // InvCoreGlobal/InvGetItemQty (TU20100 candidate), PathingHelper,
+                                                  // LocoStepper, AirMoverStep, TodEngineGlobal, EquipEffectRefresh
+                                                  // and CharMgrSlot A/B all still resolve unique - unchanged from
+                                                  // 3446. kSig_StatCommit (primary) and the TU20100 candidate both
+                                                  // regressed to zero matches - a targeted recompile of just this
+                                                  // one function - but a full Ghidra re-import of this build let us
+                                                  // relocate it via its shared helper callee and re-derive a new
+                                                  // kSig_StatCommit_TU3460_Candidate (offsets.h), one match, byte-
+                                                  // identical field layout to the TU20100 candidate it replaces.
+                                                  // God Mode/Infinite Stamina/Infinite Spirit (player.cpp's shared
+                                                  // ResolvePlayerHooks hook) should work again on this build; not
+                                                  // yet live-tested. Everything else from the 3446 sweep that was
+                                                  // already dead (teleport, inventory commit path, Game Speed
+                                                  // legacy, ToD, dye, Friendly trust) stays dead, same per-feature
+                                                  // gating. Same risk-accepted precedent as 3446/2976 below -
+                                                  // flipping this only lets Install() actually attempt each hook
+                                                  // instead of blocking all of them wholesale (COMPATIBILITY.md
+                                                  // "Build 3460"). Our own live pass is pending.
+            { 3446, "2.04.02",          true  },  // the ocean DLC build (2026-10-30). Full audit.py sweep of every
+                                                  // kSig_* (primary + TU candidates, 57+ patterns): core player/
+                                                  // damage/char-manager pipeline (StatCommit, DamageApply, MoveUpdate,
+                                                  // CharMgrSlot A/B, InvCoreGlobal) resolves unique; ~20 others
+                                                  // (teleport, most of inventory holder/commit, Game Speed legacy
+                                                  // path, time-of-day, dye, Friendly trust, crime) are confirmed
+                                                  // dead - each gated independently per-feature, so flipping this
+                                                  // true just lets the live log show which (COMPATIBILITY.md
+                                                  // "Build 3446"), same risk-accepted precedent as 2976 below. Our
+                                                  // own live pass is pending.
             { 2976, "2.03.02",          true  },  // gugi97 verified all 42 signatures resolve on 2976 and ran the
                                                   // damage/parry/flight features in-game (upstream d64e72c). Our
                                                   // build was stuck in diagnostics-only mode here (no damage

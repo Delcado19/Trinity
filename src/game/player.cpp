@@ -636,7 +636,10 @@ namespace trinity::game
             // Falls back to the TU 2.01.00 candidate (COMPATIBILITY.md: "Stat
             // commit static analysis" - LIKELY/HIGH RISK, calling convention not
             // Ghidra-recovered, but the same four-argument shape as the verified
-            // source) when the primary (TU 2.00.00) pattern does not match. Safe
+            // source) when the primary (TU 2.00.00) pattern does not match, then
+            // to the build 3460 candidate (offsets.h: same field layout as the
+            // TU20100 candidate, re-derived via Ghidra after that one dropped to
+            // zero matches on a targeted recompile of just this function). Safe
             // to attempt: this hook only ever writes through PinEntry, and
             // PinEntry only ever touches an entry already present in the
             // WalkSelfChain-validated player sets above - so a wrong calling-
@@ -644,7 +647,7 @@ namespace trinity::game
             // worst do nothing (the entry pointer just never matches).
             if (!oStatCommit)
                 mem::InstallHookAny("player: stat-commit",
-                                    {kSig_StatCommit, kSig_StatCommit_TU20100_Candidate},
+                                    {kSig_StatCommit, kSig_StatCommit_TU20100_Candidate, kSig_StatCommit_TU3460_Candidate},
                                     "God Mode / Infinite Stamina / Infinite Spirit disabled",
                                     &hkStatCommit, &oStatCommit, &g_commitTarget);
 

@@ -1262,12 +1262,20 @@ namespace trinity::game
                                  &hkGetItemQty, &oGetItemQty, &g_qtyTarget))
             return false;
 
-        const uintptr_t holderAddr = mem::FindPattern(kSig_InvGetHolder);
+        // Falls back to the build 3460 candidate (offsets.h: cross-validated
+        // by MasterLooter's own independent AOB scan on this build) when the
+        // verified source pattern does not match.
+        size_t holderWhich = 0;
+        const uintptr_t holderAddr = mem::FindPatternAny(
+            {kSig_InvGetHolder, kSig_InvGetHolder_TU3460_Candidate}, &holderWhich);
         if (!holderAddr)
         {
             LOG_ERR("inventory: holder resolver signature NOT FOUND - inventory disabled.");
             return false;
         }
+        if (holderWhich > 0)
+            LOG_WARN("inventory: holder resolver matched fallback pattern #%zu - this game "
+                     "build moved the current one, so please report it.", holderWhich);
         oGetHolder = reinterpret_cast<GetHolder_t>(holderAddr);
 
 
@@ -1370,9 +1378,10 @@ namespace trinity::game
         // before the save loads, which an ASI at process start always is.
         // Optional: without it, edits still apply to the client mirror but the
         // reconcile reverts them (the menu still lists/reads fine).
-        mem::InstallHook("inventory: transaction commit", kSig_InvCommit,
-                         "quantity edits will not persist (revert on reconcile)",
-                         &hkCommit, &oCommit, &g_commitTarget, 4);
+        mem::InstallHookAny("inventory: transaction commit",
+                            {kSig_InvCommit, kSig_InvCommit_TU20402_Candidate},
+                            "quantity edits will not persist (revert on reconcile)",
+                            &hkCommit, &oCommit, &g_commitTarget);
 
         // Secondary capture path: fires on a real add/drop/buy, not at load.
         // Catches containers that only appear later (e.g. character swap).

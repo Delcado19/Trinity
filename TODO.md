@@ -52,7 +52,7 @@ function survive more recompiles. Not yet started.
       placement + commit + cleanup + id-allocation). Add Item already works
       and is live-confirmed (2026-10-10), so this is a simplification/
       robustness refactor, not a fix. Needs its own signature hunt for the
-      real pickup function. Source: Nexus #3209 CrimsonInvEditor ASI.
+      real pickup function. Source: a third-party trainer.
 - [ ] **Easy Parry window-widen alternative** (widen the real timing window
       instead of forcing the verdict byte): documented in COMPATIBILITY.md
       as a hypothesis (candidate global at RVA 0x6CB4F28), not implemented.

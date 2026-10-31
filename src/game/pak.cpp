@@ -123,6 +123,21 @@ namespace trinity::game::pak
             return out;
         }
 
+        // DLC build 3446+ flattened chunk-directory names: the manifest no
+        // longer chains fragments through a 4-byte parent offset, it just
+        // writes one bare [len:1][data:len] record per directory, sitting
+        // one byte past DirEntry.nameOff. Old builds (<=2976) still use the
+        // parent-chain NameFromBlob() above; this is the fallback tried in
+        // ReadFile() when that lookup finds nothing (see there).
+        std::string FlatNameFromBlob(const std::vector<uint8_t>& blob, uint32_t off)
+        {
+            const uint32_t p = off + 1;
+            if (p >= blob.size()) return {};
+            const uint8_t len = blob[p];
+            if (static_cast<size_t>(p) + 1 + len > blob.size()) return {};
+            return std::string(reinterpret_cast<const char*>(&blob[p + 1]), len);
+        }
+
         // --- Game-root resolution + manifest cache --------------------------
         std::wstring g_root;   // "<root>\" (contains the NNNN chunk folders)
         bool         g_rootResolved = false;
@@ -270,6 +285,21 @@ namespace trinity::game::pak
             for (const auto& e : m->dirs)
             {
                 if (NameFromBlob(m->dirBlob, e.nameOff) == dirPath) { dir = &e; break; }
+            }
+            if (!dir)
+            {
+                // Fallback for the DLC 3446+ flat naming scheme: match the
+                // final path segment against the bare per-dir fragment
+                // (e.g. "ui/texture" -> "texture"). Multiple dirs can share
+                // a leaf name on the flat scheme (seen on 3446: "texture"
+                // appears twice in chunk 12) - first match wins, same as
+                // the parent-chain loop above.
+                const char* slash = strrchr(dirPath, '/');
+                const char* leaf = slash ? slash + 1 : dirPath;
+                for (const auto& e : m->dirs)
+                {
+                    if (FlatNameFromBlob(m->dirBlob, e.nameOff) == leaf) { dir = &e; break; }
+                }
             }
             if (!dir) { LOG_ERR("pak: dir '%s' not found in chunk %d.", dirPath, chunk); return false; }
 

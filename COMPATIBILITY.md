@@ -1552,7 +1552,7 @@ the evaluator pattern does not match. **Not yet live-tested by us.**
 
 ### Alternative Easy Parry technique: widen the window instead of forcing the verdict (2026-10-10)
 
-CrimsonInvEditor/Trainer v8.0 (Nexus #3209) independently hooks the same
+A third-party trainer independently hooks the same
 function - its own strings call it the "just-window evaluator" with "two
 calls" (guard + evade), matching vTweak's "just-window-eval hook" name for
 our `kSig_ParryEvaluator` site. Its approach differs from ours: instead of
@@ -1868,3 +1868,217 @@ perfect-parry visual feedback (green halo) was seen often during the fight.
 This ties the counters to the actual player-visible effect - the forced
 verdict write is not just a memory patch that satisfies our own logging, it
 produces the same in-game cue a natural perfect parry does.
+
+## Build 3446 (DLC day, 2026-10-30): pak chunk-12 directory names flattened
+
+DLC release bumped the game from 2976 to file version 1.0.0.3446 (not yet in
+`kKnown`, so the build runs diagnostics-only). Full `audit.py` sweep against
+every `kSig_*` in `offsets.h` (primary + every TU candidate, 57 patterns)
+shows the core player/damage/char-manager pipeline unchanged (StatCommit,
+DamageApply, MoveUpdate, CharMgrSlot A/B, base inventory accessors all still
+resolve), but teleport (`TravelToNode`), full inventory commit path
+(`InvGetHolder`/`InvCommit`/`InvCommitPlacement`/...), Game Speed
+(`MasterFrameUpdate` + candidate), time-of-day, dye, and Friendly
+trust (`SetNpc`/`SetPet`) all went to zero matches - a real RE backlog, not
+yet started.
+
+Separately, our own live log on 3446 (own build, diagnostics-only, so this
+runs ungated) showed `pak: dir 'ui/texture' not found in chunk 12` three
+times, breaking icon loading (`cd_icon_common_00.dds`,
+`cd_icon_keyguide_00/01.dds`). Byte-level analysis of `0012\0.pamt`'s
+`dirBlob` found the cause: the DLC patch flattened chunk-12's directory
+naming. Every directory used to be stored as a parent-linked fragment chain
+(`NameFromBlob()`'s `[parent:4][len:1][data]` records); on 3446 it is one bare
+`[len:1][data:len]` record per directory, sitting one byte past
+`DirEntry.nameOff`, with no parent link at all - confirmed empirically byte-by-
+byte against all 47 directory entries in chunk 12 (every fragment resolves
+cleanly to a single flat name like `"texture"`, `"cursor"`, `"fonts"`; none
+chain into a multi-segment path anymore).
+
+`icons.cpp` is the only caller passing multi-segment paths
+(`"ui/texture"`/`"ui/texture/icon"`) into `pak::ReadFile()`; fixed generically
+in `pak.cpp` instead of per-caller: when the parent-chain lookup finds no
+match, `ReadFile()` now also tries the new flat per-dir fragment against the
+final `/`-separated path segment (`FlatNameFromBlob()`). Old builds (<=2976)
+are unaffected - the parent-chain path still runs first and still matches
+them. Chunk 12 has two unrelated directories both named `"texture"` on 3446
+(a UI-icon one and what looks like a debug-widget one further down the file);
+first match wins, same tie-break the parent-chain loop already used, and the
+icon one happens to sort first. Built (`build\Release\Trinity.asi`), **not
+yet live-tested in-game.**
+
+### Build 3446 candidates mined from a third-party trainer
+
+User supplied a separately-downloaded mod (SHA-256
+`30219b8f1e9d613d4f54203b4eafc037d3aca8747caa35aa9dcc4c80ce90f2e3`) and its
+predecessor's Cheat Table. Safety check (stdlib-only PE triage, not
+executed): no network/injection APIs, only kernel32/user32/gdi32/gdiplus/
+uxtheme imports, unsigned (`Get-AuthenticodeSignature` -> NotSigned), one
+benign `IsDebuggerPresent` string - consistent with the 2026-10-10 clearance
+of an earlier build of the same tool ([[reference-crimsoninveditor-ct]]).
+Its own changelog: *"v9.0 - GAME 2.04.02 - Updated for game 2.04.02 (build
+1.0.0.3446) with the ocean DLC"* - independently confirms our 2.04.02 =
+1.0.0.3446 mapping.
+
+Mined all 86 literal AOB-pattern strings embedded in the .asi (its own
+internal signature scanner) and ran them through `audit.py` against our
+3446 exe. Two gave strong evidence (explicit diagnostic-string context next
+to the pattern, not just a unique match) and are now wired in as
+`_TU20402_Candidate` fallbacks, both reconfirmed offline after the edit:
+
+- **GameSpeed / MasterFrameUpdate** (`world.cpp`): new candidate at RVA
+  `0xBDC370` - the SAME address the vTweak v1.4.2 fork independently
+  live-logged as its own frame-timer hook earlier this session. Byte-
+  identical prologue to our existing TU20100 candidate, body offsets shifted
+  +8 throughout. Separately, the trainer's own ini comment names the exact
+  runtime-write drift: TimeManager.timeScale moved from +0x54 to +0x5C on
+  2.04 - wired as a build-conditional offset in `hkMasterFrameUpdate`
+  (`CurrentGameVersion().revision >= 3446`), not inferred from the AOB body
+  bytes (those only fingerprint the function; `TimeManager.mode` is left at
+  +0x50, unconfirmed either way).
+- **Inventory commit** (`kSig_InvCommit`): new candidate at RVA `0x25F69E0`,
+  same register-save set as the verified source with the frame-pointer setup
+  recompiled (`48 8D 6C 24 ??` -> `48 8B EC`). The trainer's own diagnostic
+  text ("DERIVED from the game's own code: commit exe+%llX, stride %u, slot
+  index +0x%X") independently names this as its commit site too.
+
+Three more leads (Friendly SetNpc/SetPet via an "AddFriendlyExp" hook, rain/
+snow/dust weather control, a "just-window evaluator" for Easy Parry) had
+address hits but no reliable byte-shape match against our existing
+signatures' known tails - deliberately NOT wired in; would need real
+disassembly to place correctly, not just AOB mining. Ghidra/REA full-binary
+analysis of this 332 MB exe keeps timing out (`provider_timeout` at 330s)
+regardless of target, so that verification is still blocked.
+
+### Gate flipped: 3446 marked verified in `kKnown` (2026-10-31)
+
+Live log after the pak/candidate fixes above still showed `Diagnostics-only
+mode: gameplay features are unavailable for this game build` - `kKnown` did
+not list 3446 at all, so `isVerified()` returned false regardless of any
+signature fix, gating God Mode/Stamina/etc. off before they were ever
+attempted. Added `{ 3446, "2.04.02", true }`, same risk-accepted precedent
+as 2976: NOT every signature is confirmed (the ~20 dead ones from the full
+audit sweep above are unaffected by this and will still fail their own
+per-feature gate individually, logging why). This only lets the per-feature
+hooks in `Install()` actually run instead of being blocked wholesale before
+they get a chance to resolve or fail on their own merits. Built, **not yet
+live-tested.**
+
+## Build 3460 (2026-10-31): StatCommit regression, gate flipped again
+
+Game updated from 1.0.0.3446 to 1.0.0.3460 one day after the DLC build above,
+mid-session, while a Ghidra headless import of 3446 was still running (that
+import's own exe copy was confirmed via MD5 to predate the Steam update, so
+it stays valid as a 3446 reference). Live log showed `Diagnostics-only mode`
+again - 3460 was not in `kKnown` - and the user reported God Mode and all
+damage output non-functional, which is just that gate (every gameplay hook
+blocked wholesale, not a new bug on top).
+
+Full `audit.py` sweep against the live 3460 exe (default baseline +
+`candidates-2.01.00/2.03.00/2.03.01/2.03.02.json`): DamageApply, MoveUpdate,
+InvCoreGlobal/InvGetItemQty (TU20100 candidate), PathingHelper, LocoStepper,
+AirMoverStep, TodEngineGlobal, EquipEffectRefresh and CharMgrSlot A/B all
+still resolve unique - unchanged from 3446, so this was not a global
+recompile. `kSig_StatCommit` (primary) and `kSig_StatCommit_TU20100_Candidate`
+both newly return zero matches, a real regression from 3446 where the sweep
+had StatCommit resolving. God Mode/Infinite Stamina/Infinite Spirit share
+that one hook (player.cpp `ResolvePlayerHooks`) and were confirmed dead on
+this build - `InstallHookAny` fails closed (logs "disabled", `oStatCommit`
+stays null), does not crash. Re-derivation needed real disassembly (the
+TU2.00.00 -> TU2.01.00 StatCommit break was the same story); a second Ghidra
+headless import targeting the 3460 exe was started for that, alongside the
+already-running 3446 import (both finished cleanly, confirmed via a sanity
+byte-search for the still-alive `kSig_DamageApply` pattern in each project).
+
+### StatCommit re-derived (2026-10-31)
+
+Relocated the regressed function via its shared helper callee instead of
+guessing bytes blind: the helper's own stable prologue (`48 89 5C 24 10 48 89
+74 24 18 48 89 7C 24 20 41 56 48 83 EC 20 48 8B FA 4D 8B F1 0F B7 11 49 8B F0
+48 8B D9 E8 ?? ?? ?? ??`, call target wildcarded) found it at VA `0x1418e8860`
+in the 3446 project and `0x1418eb970` in the 3460 project. Diffing the 3460
+project's new callers of that relocated helper against the 3446 callers'
+in-function call-site deltas (`0x95`/`0xee` from the old StatCommit's entry)
+singled out `FUN_14b5b3350` (deltas `0x95`/`0xe2` - close enough to be the
+same recompiled function, the few-byte drift being normal instruction-length
+noise from the junk-code obfuscator). Ghidra's decompile confirms byte-
+identical field layout to the TU20100 candidate it replaces (`+0x18` base,
+`+0x20` delta, `+0x28` cap, `+0x30` regen, `+0x52` flag, `+0x38`/`+0x50`
+param-store, `+0x48` counter, `+8` final value) - same function, just
+reshuffled obfuscation (a fixed `[rcx+0x18]` LEA became an xor-computed one).
+
+Added `kSig_StatCommit_TU3460_Candidate` (offsets.h) and wired it as a third
+fallback in player.cpp's `ResolvePlayerHooks` (`kSig_StatCommit` ->
+`kSig_StatCommit_TU20100_Candidate` -> `kSig_StatCommit_TU3460_Candidate`).
+Verified offline: one match, RVA `0xB5B3350`, against both the Ghidra project
+and the real live 3460 exe directly via `tools/TrinitySignatureAudit/audit.py`
+(same RVA both ways, confirming the Ghidra loader didn't rewrite any bytes
+this pattern depends on). God Mode/Infinite Stamina/Infinite Spirit should
+work again on this build. Live log (2026-10-31, two separate launches)
+confirms the hook installs cleanly - `player: stat-commit matched fallback
+pattern #2` (index 2 = this candidate), no crash - but the in-game effect of
+God Mode/Infinite Stamina/Infinite Spirit itself is **not yet confirmed.**
+
+### Inventory holder resolver re-derived (2026-10-31)
+
+Same build also broke `kSig_InvGetHolder` (inventory disabled wholesale -
+this one is `mem::FindPattern`, not `InstallHookAny`, so it had no fallback
+list at all before this fix). A third-party loot mod running on the same
+3460 exe handed us the answer directly: MasterLooter v1.6.53's own log
+(`MasterLooter.log`) prints `[sig] inv_holder +0x22EE540` - its AOB scanner
+found the live address on this exact build/exe. Ghidra at that VA confirms
+the first 11 bytes (`40 53 48 83 EC 20 48 8B 41 ? 48 8B D9` - push rbx; sub
+rsp,20; mov rax,[rcx+NN]; mov rbx,rcx) are byte-identical to the verified
+`kSig_InvGetHolder` pattern, so this is the same function body, not a
+lookalike MasterLooter happened to also need - only what follows changed
+(a direct `mov rcx,[rax+NN]` became an extra helper-call indirection). The
+decompile also reconfirms the +0xA0/+0xD0 "ownership-borrow link" chain
+noted in [[reference-masterlooter-repo]] is read the same way before the
+final `[[holder+0x68]+0xB8]` container pointer.
+
+Added `kSig_InvGetHolder_TU3460_Candidate` (offsets.h) and switched
+`Inventory::Install()` from a bare `mem::FindPattern` to `FindPatternAny`
+with this as a fallback, logging which pattern matched (same convention as
+every other `InstallHookAny` site). Verified offline: one match, RVA
+`0x22EE540`, against both the Ghidra project and the real live 3460 exe -
+the SAME address MasterLooter logged independently, on the same session,
+making this cross-mod-verified rather than merely internally consistent.
+**Not yet live-tested** through our own resolver.
+
+Added `{ 3460, "unconfirmed", true }` to `kKnown` - same risk-accepted
+precedent as 3446/2976: every other sweep result from the 3446 entry (dead
+teleport/inventory-commit/Game Speed legacy/ToD/dye/Friendly trust) is
+unaffected and keeps failing its own per-feature gate. This only unblocks
+`Install()` from attempting each hook instead of refusing all of them
+wholesale. TU label is a placeholder (`"unconfirmed"`) - no third-party
+source has named 3460's title-update number yet. Built, **not yet
+live-tested.**
+
+### Field-clock realm signature re-derived (2026-11-01)
+
+`kSig_FieldTimeRealm` (the master day/night clock globals - "Advance Time"
+disabled without it) was also dead on 3460: `world: field-clock signature
+NOT FOUND`. A third-party trainer (build 2.04.03/3460) captured the real
+client/server global addresses at runtime once its Time page was opened
+in-game: its bug-report dump printed `set time of day:
+clock copies exe+6EA3998 / exe+6EA39B8` - a 0x20-byte stride apart, matching
+the documented 32-byte realm struct exactly.
+
+Ghidra (3460 import) cross-referenced both addresses to a single read site
+(`FUN_1422a63d0`). Its realm-select block is byte-identical to the verified
+pattern except the TLS selector immediate drifted by exactly one (`0x1EC` ->
+`0x1EB` - a different TLS slot index this build assigns the realm flag to);
+everything else, including both `vmovups` operand offsets (`+0x10` server,
+`+0x1A` client), is unchanged. Added
+`kSig_FieldTimeRealm_TU3460_Candidate` (offsets.h) and switched
+`ResolveFieldTimeGlobals()` (world.cpp) from a bare `mem::FindPattern` to
+`FindPatternAny`, same fallback-logging convention as every other
+`InstallHookAny`/`FindPatternAny` site. Verified unique: one match against
+both the Ghidra project (`FUN_1422a63d0`) and the live 1.0.0.3460 exe
+(`tools/TrinitySignatureAudit`, RVA `0x22A6430`, matches the Ghidra VA
+exactly). Built, **not yet live-tested** through our own resolver.
+
+`kSig_FieldTimeTick` (needed for Freeze Time of Day) is still dead on 3460
+and was NOT re-derived this pass - the per-frame tick function was not
+isolated among the realm globals' five write-site callers in the time
+available; Advance Time should now work, Freeze Time of Day stays disabled.
