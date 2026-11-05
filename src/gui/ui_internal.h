@@ -9,7 +9,7 @@
 
 namespace trinity::ui
 {
-    // --- Theme (this fork: azure on blue-slate, distinct from the red vTweak build) ---
+    // --- Theme (this fork: azure on blue-slate, distinct from a foreign fork's red build) ---
     // The four accent colours are mutable so a theme can be chosen at runtime.
     // Deliberately NOT constexpr any more, and deliberately still named the
     // same: every reader across the menu keeps working unchanged, which is

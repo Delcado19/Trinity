@@ -245,7 +245,7 @@ namespace trinity::ui
         constexpr Theme kThemes[] = {
             // Index 0 replaces the old Crimson default on purpose: this fork's
             // own azure look (with the slate surface colours in ui_internal.h)
-            // so it cannot be mistaken for the third-party vTweak build, which
+            // so it cannot be mistaken for a foreign fork of this project, which
             // keeps the original red. Saved themeIndex 0 maps to this entry.
             { "Azure",   IM_COL32( 14, 70,110, 255), IM_COL32(  6, 30, 50, 255),
                          IM_COL32( 46,170,235, 255), IM_COL32( 18, 84,128, 255) },

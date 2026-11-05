@@ -92,8 +92,8 @@ if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
 New-Item -ItemType Directory -Path $stage | Out-Null
 Copy-Item $binOut $stage
 # DMM lists a mod from info.json/modinfo.ini. Without them our build only shows up
-# as a bare .asi, indistinguishable from the third-party vTweak entry. The name is
-# deliberately different from it (see the Azure theme in framework.cpp).
+# as a bare .asi, indistinguishable from other mods' entries. The name is
+# deliberately distinct (see the Azure theme in framework.cpp).
 $modName = "Trinity - Azure fork (TU 2.03.02)"
 $modDesc = "DirectX 12 mod menu for Crimson Desert, Delcado19 fork of Trinity (gugi97 line)"
 $info = [ordered]@{ name = $modName; version = $Version; author = "Delcado19"; description = $modDesc; category = "Utilities" }

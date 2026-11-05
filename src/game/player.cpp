@@ -452,7 +452,7 @@ namespace trinity::game
                     LOG("player: stat scan over %d entries - %d stamina, %d spirit gauge(s).",
                         kStatArray_ScanEntries, nStam - stamBefore, nSpir - spirBefore);
 
-                    // One-shot cross-check: CrimsonInvEditor v11.2's debug strings claim
+                    // One-shot cross-check: a third-party trainer's debug strings claim
                     // fixed inline offsets root+0x6C8/+0x6D8 (stamina cur/max) and
                     // root+0x758/+0x768 (spirit cur/max), independent of our own
                     // kSig_StatCommit hook (dead since 3462, see gameversion.cpp) - if

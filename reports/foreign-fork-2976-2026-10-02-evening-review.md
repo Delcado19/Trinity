@@ -3,7 +3,10 @@
 - Source: `F:\Steam\steamapps\common\Crimson Desert\bin64\Trinity.log`
 - Snapshot: `foreign-fork-2976-2026-10-02-evening.log.txt`
 - Bytes: 28387; lines: 228; distinct lines: 161.
-- SHA256: `264478c3a05d9184628af52ca5d4ca641c5cc0e0212dd553245ded2180d3941c`
+- SHA256 (original capture): `264478c3a05d9184628af52ca5d4ca641c5cc0e0212dd553245ded2180d3941c`
+  - Redacted 2026-11-05 to drop the foreign fork's own product/author name
+    from its self-identification lines (content otherwise byte-identical);
+    new SHA256: `7c8f490b283f920ab43551c16ae62840a9447aa9f02a8f9b05679ec8e1dd54b7`
 - Last line: `19:43:14.329 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AEC895A500 root=000004AEC8952F80 array=000004AE8545CC00 count=20`
 - Severity counts (raw, including duplicates): {'INFO': 132, 'OK': 96}.
 

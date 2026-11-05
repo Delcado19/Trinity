@@ -1,4 +1,4 @@
-06:58:25.919 [TID 33960] [INFO] Trinity v1.4.2 (vTweak by Lian) initializing (built Sep 20 2026 19:29:00).
+06:58:25.919 [TID 33960] [INFO] Trinity v1.4.2 (a foreign fork) initializing (built Sep 20 2026 19:29:00).
 06:58:27.571 [TID 33960] [OK] version: Game version detected: Crimson Desert TU 2.03.00 (Active) [PE: 1.0.0.2976]
 06:58:27.571 [TID 33960] [OK] localization: discovered 1 language(s)
 06:58:31.284 [TID 33960] [INFO] Factory CreateSwapChainForHwnd (patching) @ 00007FFAA87FDE40 in dxgi.dll
@@ -31,7 +31,7 @@
 06:58:42.470 [TID 33960] [OK] friendly: SetNpc multiplier hook installed & enabled @ 0x0000000141ECB810
 06:58:42.693 [TID 33960] [OK] friendly: SetPet multiplier hook installed & enabled @ 0x000000014DBB7750
 06:58:42.693 [TID 33960] [OK] Ready - INSERT (or LB + DOWN on controller) toggles the menu in-game.
-06:58:25.919 [TID 33960] [INFO] Trinity v1.4.2 (vTweak by Lian) initializing (built Sep 20 2026 19:29:00).
+06:58:25.919 [TID 33960] [INFO] Trinity v1.4.2 (a foreign fork) initializing (built Sep 20 2026 19:29:00).
 06:58:27.571 [TID 33960] [OK] version: Game version detected: Crimson Desert TU 2.03.00 (Active) [PE: 1.0.0.2976]
 06:58:27.571 [TID 33960] [OK] localization: discovered 1 language(s)
 06:58:31.284 [TID 33960] [INFO] Factory CreateSwapChainForHwnd (patching) @ 00007FFAA87FDE40 in dxgi.dll
@@ -94,7 +94,7 @@
 07:47:44.375 [TID 34492] [INFO] player: client stat source char=-1 mount=1 owner=0000029C14B0FB40 root=0000029C14B0FC80 array=0000029C984B0000 count=20
 07:47:45.122 [TID 34492] [INFO] player: client stat source char=0 mount=0 owner=0000029C71ED9EC0 root=0000029C71ED9D80 array=0000029B995D7800 count=20
 07:47:45.500 [TID 34492] [INFO] player: client stat source char=1 mount=0 owner=0000029C14B0DD40 root=0000029C14B0DAC0 array=0000029C4899C000 count=20
-12:49:05.794 [TID 4436] [INFO] Trinity v1.4.2 (vTweak by Lian) initializing (built Sep 20 2026 19:29:00).
+12:49:05.794 [TID 4436] [INFO] Trinity v1.4.2 (a foreign fork) initializing (built Sep 20 2026 19:29:00).
 12:49:07.467 [TID 4436] [OK] version: Game version detected: Crimson Desert TU 2.03.00 (Active) [PE: 1.0.0.2976]
 12:49:07.467 [TID 4436] [OK] localization: discovered 1 language(s)
 12:49:07.473 [TID 4436] [OK] Trinity.ini loaded - restored feature settings from last session.
@@ -128,7 +128,7 @@
 12:49:22.927 [TID 4436] [OK] friendly: SetNpc multiplier hook installed & enabled @ 0x0000000141ECB810
 12:49:23.141 [TID 4436] [OK] friendly: SetPet multiplier hook installed & enabled @ 0x000000014DBB7750
 12:49:23.142 [TID 4436] [OK] Ready - INSERT (or LB + DOWN on controller) toggles the menu in-game.
-12:49:05.794 [TID 4436] [INFO] Trinity v1.4.2 (vTweak by Lian) initializing (built Sep 20 2026 19:29:00).
+12:49:05.794 [TID 4436] [INFO] Trinity v1.4.2 (a foreign fork) initializing (built Sep 20 2026 19:29:00).
 12:49:07.467 [TID 4436] [OK] version: Game version detected: Crimson Desert TU 2.03.00 (Active) [PE: 1.0.0.2976]
 12:49:07.467 [TID 4436] [OK] localization: discovered 1 language(s)
 12:49:07.473 [TID 4436] [OK] Trinity.ini loaded - restored feature settings from last session.

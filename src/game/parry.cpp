@@ -48,8 +48,8 @@ namespace trinity::game
         // registers however the verdict is forced (measured by gugi97's fork,
         // upstream e0d287e, and the reason "Easy Parry on" did nothing for a
         // held LB/LT on 2976, live 2026-09-30). The fix is to hook the whole
-        // evaluator (RVA 0x8738B0 on 2976, the same function the vTweak build
-        // hooks) and, when the parry window opens, release and re-press
+        // evaluator (RVA 0x8738B0 on 2976, the same function a foreign fork of
+        // this project hooks) and, when the parry window opens, release and re-press
         // whatever is held so the game sees a fresh press edge. Pattern and
         // approach from gugi97's fork. The verdict patch stays as a fallback
         // for builds where the evaluator pattern no longer matches.

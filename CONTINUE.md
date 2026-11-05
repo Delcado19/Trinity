@@ -1,9 +1,137 @@
-# Continuation notes (2026-11-05)
+# Continuation notes (2026-11-05, updated)
+
+**Note on commit history**: the commit that introduced the holder-pin fix
+also bundled ~3000 lines of unrelated, already-in-progress work from earlier
+sessions that had never been committed (dye/equipment/friendly/parry/player/
+teleport/world/gui changes) - the commit message only describes the holder
+fix and the trainer-name scrub, not that larger pre-existing diff. If you're
+trying to understand "what changed for feature X," check `COMPATIBILITY.md`'s
+dated entries rather than assuming one commit maps to one feature.
+
+**IMPORTANT - none of this session's fixes are live-tested.** Every fix
+below was verified offline (static re-derivation against the installed exe,
+cross-checked against the function's own internal layout) and the project
+builds clean, but the user deploys via DMM and the deployed `Trinity.asi` has
+not been updated with any of these fixes as of this note. Treat every "FIXED"
+below as "implemented and offline-verified," not "confirmed working in game."
 
 Handoff for whichever agent picks this up next (Codex CLI or otherwise).
 Read this, then `AGENTS.md` and `COMPATIBILITY.md` (the long-running,
 dated project journal - search it for the matching date before assuming
 something is undocumented).
+
+## Update, later the same session
+
+- **Holder-pin fix corrected.** The first version of `ResolveHolderPinned()`'s
+  "foreign hook stub" detection (committed earlier) had three bugs: wrong byte
+  offsets for the MinHook-style absolute-jump stub shape, a bare `E9` opcode
+  treated as proof of a foreign hook when the game's own code can plant one
+  too (see the `kSig_DamageApply` investigation in `COMPATIBILITY.md`), and no
+  build-gating (it could try build 3479's pinned RVA against a 3549 process).
+  Replaced entirely: `ResolveHolderPinned()` now reads the candidate RVA's
+  bytes from the **exe file on disk** (`ReadExeFileBytesAtRva()`, a small PE
+  section-table walk, same technique as `audit.py`'s `parse_pe`), which no
+  live hook can affect, and only tries the ONE pin matching the current
+  build's revision (`trinity::CurrentGameVersion().revision`). Simpler and
+  more correct than the stub-detection heuristic it replaced.
+- **Item-table resolver fixed.** Offline re-derivation (see the dated entry
+  this produced in `COMPATIBILITY.md` if one was added, or re-derive the same
+  way: a Python script importing `tools/TrinitySignatureAudit/audit.py`'s
+  helpers against the installed exe, string-anchoring `"iteminfo"` /
+  `"ItemGroupInfo"` / `"stringinfo"`, finding the `lea r8,[rip+str]` sites,
+  and scanning backward for a prologue) found the whole `kItemPrologue[]`
+  clone family was recompiled on 3549 - same skeleton (same total length to
+  the `mov rbx, cs:<global>` at +0x15), different register allocation
+  (`mov r11,rsp` + 3 pushes instead of spilling to `[rsp+N]` + 2 pushes; a
+  plain `mov edi,edx` where the old shape had a `movzx` word load). Added as
+  `kItemPrologue_TU3549[]`, tried after the original shape in
+  `FindItemPrologueAbove()`. Verified three independent ways: (1) the
+  resolved `iteminfo` global's own table body does `cmp edx,[rbx+8]` then
+  `mov rax,[rbx+0x58]`, matching this project's own documented count/row-array
+  offsets exactly; (2) the SAME new prologue, applied to `ItemGroupInfo`'s own
+  string anchor, resolves to ITS OWN distinct global - note this build's
+  table globals are NOT at the old `+0x18/+0x20/+0x30` fixed offsets from
+  each other (that was a property of the previous build's data layout, not a
+  structural guarantee) - fixing the prologue alone is what fixes every
+  table, not the offset fallback; (3) same again for `stringinfo`. This
+  should restore the Catalog, item names/categories/icons, and (very likely,
+  not independently re-verified - it shares the same prologue-scan code path
+  but uses a different indirect string-load form that's harder to check
+  offline) the `InventoryInfo` table (storage names). It should also likely
+  help the fast-travel scene-registry and area-name resolvers, since
+  `Trinity.log`'s "NOT FOUND" lines for those are the exact same string-
+  anchored-clone-family symptom - **not verified, worth checking live.**
+- **`Inventory::Status()` now accounts for the item-info table.** Previously
+  it only looked at the item-count accessor, holder resolver and transaction-
+  commit, so it rendered green even when `BuildCatalog()`/`CatalogCategoryCount()`
+  had nothing to show - exactly the mismatch the user reported ("grüne LED,
+  aber Catalog unavailable"). Now `Worse()`s in a `table` status
+  (`g_itemTableGlobal ? Ok : Fallback`). Also added a one-shot success log
+  line (`"inventory: item-info table resolved @ %p..."`) where previously
+  only the failure path logged anything - a small step toward the
+  diagnostic-logging extension the user asked for.
+- **LED-redesign scope decision - did NOT do the full 8-file/~20-function
+  rewrite.** Audited every `Status()`/`HookStatus()` function across
+  `dye.cpp`, `equipment.cpp`, `friendly.cpp`, `inventory.cpp`, `parry.cpp`,
+  `player.cpp`, `teleport.cpp`, `world.cpp` against the current
+  `Trinity.log`. Most already correctly avoid false-green on a close read
+  (e.g. `World::Status()` for Game Speed already returns `Fallback`, not
+  `Ok`, when `kSig_GameSpeed` fails even though the master-frame hook
+  succeeded - the "ready" then "disabled" log pair the user might assume is
+  a bug is actually already rendering yellow, not green). Only
+  `Inventory::Status()` had a concretely demonstrated, reproduced false-green
+  case (above), so only that one was changed. A genuine "green = live-
+  confirmed, not just hook-installed" semantic (per-feature plausibility
+  checks, two-poll confirmation, read-back-after-write - see the Claude
+  memory store's inventory-editor-trainer-v115 notes for the design
+  material) is still not implemented anywhere - if the user wants this done
+  exhaustively rather than case-by-case, that is still open, substantial work,
+  not a quick follow-up.
+- **Crash at `Trinity.asi+0xA2CC` - investigated, likely benign, NOT
+  conclusively resolved.** The exact binary that faulted (built 07:46:38)
+  has since been overwritten by later builds+deploys, so it cannot be
+  directly re-examined. Checking the SAME offset in the current build found
+  a tiny (0x19-byte) function matching the shape of this project's own
+  guarded-pointer-read helpers (`cmp reg, 0x10000000; jae skip; <read>; ...`)
+  - i.e. a bounds-checked memory probe of exactly the kind used constantly
+  throughout this codebase (`Read8`/`Read16`/`Read32`/`Read64`), which is
+  DESIGNED to encounter unmapped memory sometimes and handle it via SEH
+  `__try`/`__except`. A first-chance access violation in code like this is
+  very plausibly benign (the exception gets caught one frame later), but
+  this is inference from a different build at the same offset, not proof
+  against the actual faulting binary - treat as "probably fine, not fully
+  closed" rather than resolved.
+- **No-trainer-names policy - actually completed this pass.** The first
+  attempt (same day) only grepped a few known names inside `src/`. A full
+  `git grep` across every tracked file found and fixed many more: comments in
+  `offsets.h`/`inventory.cpp`/`player.cpp`/`world.cpp`/`parry.cpp`/
+  `framework.cpp`/`ui_internal.h`, `COMPATIBILITY.md` (several more spots),
+  `TODO.md`, `tools/TrinitySignatureAudit/candidates-2.01.00.json`, two large
+  `reports/trinity-2976-inventory-world-comparison*` data files (mechanical
+  find-replace, many repeated mentions), `.gitignore`, and - the highest-risk
+  item - the literal foreign-fork self-identification string baked into two
+  committed RAW LOG CAPTURES (`reports/foreign-fork-2976-2026-10-02*.log.txt`),
+  which were redacted with their SHA256 hashes updated in the matching
+  review file. Also formalized as a proper memory entry
+  (`feedback_no_trainer_names`) so this doesn't need re-explaining next time.
+  Exemptions kept: `gugi97`/`upstream-gugi` (this project's own upstream fork
+  lineage), MIT/BSD attribution for actual dependencies (Dear ImGui, MinHook),
+  and the original Trinity project's own copyright notice (`XeTrinityz` in
+  `LICENSE`/`Trinity.rc`) - these are legal requirements, not association
+  risks, and must never be stripped.
+- **Flight/Fishing/Bounty-carry-teleport - still NOT implemented, same as
+  before.** A background RE pass (see the three feature sections below)
+  produced concrete algorithms and old-build offsets for all three, but
+  turning any of them into a real Trinity feature needs its own build-3549
+  signature derivation (none of the offsets found are for this build) plus a
+  live test cycle this session did not reach. Treat as queued, not started.
+
+**Suggested in-game test pass for the next person who can deploy+play**:
+open the Inventory menu and Catalog tab (does it populate now, not "Catalog
+unavailable"?), take a hit in combat (damage-apply still fine?), toggle
+Free Flight, open the Fast Travel menu (scene registry - may ALSO be fixed by
+the item-table-resolver fix, since it's the same string-anchored-clone-family
+symptom), then read `Trinity.log` for any remaining `[ERR]` lines.
 
 ## Branch / build
 
@@ -79,8 +207,9 @@ name/URL stays as normal project history.
      scan itself now succeeds (`holder resolver matched fallback pattern
      #1`) once the collision is removed - i.e. the underlying byte pattern
      was never actually dead, it was always a collision artifact.
-4. **Item-table resolver (`iteminfo`/`ItemGroupInfo`/`stringinfo`/
-   `InventoryInfo`) - STILL DEAD, root cause narrowed, fix NOT started.**
+4. **Item-table resolver (`iteminfo`/`ItemGroupInfo`/`stringinfo`) - FIXED,
+   offline-verified, NOT live-tested.** (Originally logged as "fix not
+   started" earlier the same day; completed later in the same session.)
    This is what drives the "Catalog unavailable" / generic item labels /
    no categories / no icons / no storage names symptoms, independent of the
    holder-collision issue above (confirmed via the same solo-mount log:

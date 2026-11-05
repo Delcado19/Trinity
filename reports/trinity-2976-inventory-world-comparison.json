@@ -426,9 +426,9 @@
         }
       ]
     },
-    "lian_kSig_InvGetItemQty": {
+    "foreignfork_kSig_InvGetItemQty": {
       "feature": "kSig_InvGetItemQty",
-      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "source": "a foreign fork's public source; binary correspondence unverified",
       "policy": "observe",
       "expectedMatches": null,
       "matches": 1,
@@ -444,9 +444,9 @@
         }
       ]
     },
-    "lian_kSig_InvGetHolder": {
+    "foreignfork_kSig_InvGetHolder": {
       "feature": "kSig_InvGetHolder",
-      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "source": "a foreign fork's public source; binary correspondence unverified",
       "policy": "observe",
       "expectedMatches": null,
       "matches": 1,
@@ -462,9 +462,9 @@
         }
       ]
     },
-    "lian_kSig_InvSetExpandSlots": {
+    "foreignfork_kSig_InvSetExpandSlots": {
       "feature": "kSig_InvSetExpandSlots",
-      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "source": "a foreign fork's public source; binary correspondence unverified",
       "policy": "observe",
       "expectedMatches": null,
       "matches": 1,
@@ -480,9 +480,9 @@
         }
       ]
     },
-    "lian_kSig_InvHolderInsert": {
+    "foreignfork_kSig_InvHolderInsert": {
       "feature": "kSig_InvHolderInsert",
-      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "source": "a foreign fork's public source; binary correspondence unverified",
       "policy": "observe",
       "expectedMatches": null,
       "matches": 1,
@@ -498,9 +498,9 @@
         }
       ]
     },
-    "lian_kSig_InvCommit": {
+    "foreignfork_kSig_InvCommit": {
       "feature": "kSig_InvCommit",
-      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "source": "a foreign fork's public source; binary correspondence unverified",
       "policy": "observe",
       "expectedMatches": null,
       "matches": 1,
@@ -516,9 +516,9 @@
         }
       ]
     },
-    "lian_kSig_TrItemValueCtor": {
+    "foreignfork_kSig_TrItemValueCtor": {
       "feature": "kSig_TrItemValueCtor",
-      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "source": "a foreign fork's public source; binary correspondence unverified",
       "policy": "observe",
       "expectedMatches": null,
       "matches": 1,
@@ -534,9 +534,9 @@
         }
       ]
     },
-    "lian_kSig_InvCommitPlacement": {
+    "foreignfork_kSig_InvCommitPlacement": {
       "feature": "kSig_InvCommitPlacement",
-      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "source": "a foreign fork's public source; binary correspondence unverified",
       "policy": "observe",
       "expectedMatches": null,
       "matches": 1,
@@ -552,9 +552,9 @@
         }
       ]
     },
-    "lian_kSig_InvFreePlacements": {
+    "foreignfork_kSig_InvFreePlacements": {
       "feature": "kSig_InvFreePlacements",
-      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "source": "a foreign fork's public source; binary correspondence unverified",
       "policy": "observe",
       "expectedMatches": null,
       "matches": 1,
@@ -570,9 +570,9 @@
         }
       ]
     },
-    "lian_kSig_FrameTimerBody": {
+    "foreignfork_kSig_FrameTimerBody": {
       "feature": "kSig_FrameTimerBody",
-      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "source": "a foreign fork's public source; binary correspondence unverified",
       "policy": "observe",
       "expectedMatches": null,
       "matches": 1,
@@ -588,9 +588,9 @@
         }
       ]
     },
-    "lian_kSig_FieldTimeRealm": {
+    "foreignfork_kSig_FieldTimeRealm": {
       "feature": "kSig_FieldTimeRealm",
-      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "source": "a foreign fork's public source; binary correspondence unverified",
       "policy": "observe",
       "expectedMatches": null,
       "matches": 1,
@@ -606,9 +606,9 @@
         }
       ]
     },
-    "lian_kSig_FieldTimeTick": {
+    "foreignfork_kSig_FieldTimeTick": {
       "feature": "kSig_FieldTimeTick",
-      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "source": "a foreign fork's public source; binary correspondence unverified",
       "policy": "observe",
       "expectedMatches": null,
       "matches": 1,
@@ -624,9 +624,9 @@
         }
       ]
     },
-    "lian_kSig_TodEngineGlobal": {
+    "foreignfork_kSig_TodEngineGlobal": {
       "feature": "kSig_TodEngineGlobal",
-      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "source": "a foreign fork's public source; binary correspondence unverified",
       "policy": "observe",
       "expectedMatches": null,
       "matches": 1,
@@ -642,9 +642,9 @@
         }
       ]
     },
-    "lian_ctor_fallback_1": {
+    "foreignfork_ctor_fallback_1": {
       "feature": "TrItemValue constructor fallback",
-      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "source": "a foreign fork's public source; binary correspondence unverified",
       "policy": "observe",
       "expectedMatches": null,
       "matches": 46,
@@ -840,9 +840,9 @@
         }
       ]
     },
-    "lian_ctor_fallback_2": {
+    "foreignfork_ctor_fallback_2": {
       "feature": "TrItemValue constructor fallback",
-      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "source": "a foreign fork's public source; binary correspondence unverified",
       "policy": "observe",
       "expectedMatches": null,
       "matches": 117,
@@ -1110,9 +1110,9 @@
         }
       ]
     },
-    "lian_ctor_fallback_3": {
+    "foreignfork_ctor_fallback_3": {
       "feature": "TrItemValue constructor fallback",
-      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "source": "a foreign fork's public source; binary correspondence unverified",
       "policy": "observe",
       "expectedMatches": null,
       "matches": 1241,
@@ -1380,9 +1380,9 @@
         }
       ]
     },
-    "lian_ctor_fallback_4": {
+    "foreignfork_ctor_fallback_4": {
       "feature": "TrItemValue constructor fallback",
-      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "source": "a foreign fork's public source; binary correspondence unverified",
       "policy": "observe",
       "expectedMatches": null,
       "matches": 1,
@@ -1398,9 +1398,9 @@
         }
       ]
     },
-    "lian_ctor_fallback_5": {
+    "foreignfork_ctor_fallback_5": {
       "feature": "TrItemValue constructor fallback",
-      "source": "ReXooGen/Trinity at 0c7c3454f9f722ea2de95e84ef81caf465637068; public source, binary correspondence unverified",
+      "source": "a foreign fork's public source; binary correspondence unverified",
       "policy": "observe",
       "expectedMatches": null,
       "matches": 763,

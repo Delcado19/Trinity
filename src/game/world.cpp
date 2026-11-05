@@ -197,7 +197,7 @@ namespace trinity::game
                 day < 0 || hour < 0 || hour > 23) return;
             int newDay = 0, newHour = 0;
             if (!detail::ShiftClockHours(day, hour, hours, newDay, newHour)) return;
-            // Lian v1.4.2 updates +0x2C as well as the realm mirrors. Otherwise
+            // A foreign fork of this project updates +0x2C as well as the realm mirrors. Otherwise
             // the next field tick reconstructs the old hour. Preserve sub-hour time.
             const float nextSeconds = newHour * 3600.0f + std::fmod(seconds, 3600.0f);
             if (!Write32(mgr + 0x2C, FloatBits(nextSeconds))) return;

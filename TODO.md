@@ -10,8 +10,9 @@ pattern #1/#2` in Trinity.log), not the primary one - they work, but are one
 recompile away from breaking again.
 
 - [ ] **Char-manager anchors**: only 2/6 anchors resolve on 2976; the other 4
-      need re-deriving. Lead: CrimsonDesertTelemetry's RTTI-anchored
-      player-object chain, World Builder's RTTI/unwind anchoring - both find
+      need re-deriving. Lead: a third-party telemetry mod's RTTI-anchored
+      player-object chain, a third-party world-editor mod's RTTI/unwind
+      anchoring - both find
       objects via compiler metadata (type names, vtables, exception
       directory) instead of literal bytes, so they survive more recompiles.
       Related unfinished thread: COMPATIBILITY.md "Vtable histogram live
@@ -24,9 +25,10 @@ recompile away from breaking again.
 - [ ] **Dye**: `apply-batch` signature NOT FOUND, feature fully disabled. No
       external repo lead currently covers this - needs its own signature hunt.
 - [ ] **Destination-teleport landing bug**: player falls through terrain after
-      warping until the game resets; no ground-probe exists yet. Lead:
-      CD_Companion's map-marker-store hook as a third technique; Orcax's
-      pointer-chain methodology (sourceCtx->actor->marker->target) is a
+      warping until the game resets; no ground-probe exists yet. Lead: a
+      third-party companion mod's map-marker-store hook as a third technique;
+      a third-party player-status mod's pointer-chain methodology
+      (sourceCtx->actor->marker->target) is a
       transferable pattern for building a ground-height validation pass.
 - [ ] **Friendly (NPC/pet trust setters)**: fallback #2 / #1 respectively. No
       external lead yet; needs its own re-derivation.
@@ -45,7 +47,7 @@ function survive more recompiles. Not yet started.
 
 ## B. New features (not fixes - genuinely missing capability)
 
-- [ ] **Auto-loot**: master-looter repo uses the game's own event queue to
+- [ ] **Auto-loot**: a third-party loot mod uses the game's own event queue to
       auto-collect nearby items. Trinity has nothing like this today.
 - [ ] **EngineAdd-style real-pickup-path for Add Item**: call the game's own
       item-pickup code instead of our manual transaction replication (ctor +

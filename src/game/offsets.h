@@ -223,13 +223,13 @@ namespace trinity::game
         "8B 3D ?? ?? ?? ?? 81 F7 ?? ?? ?? ?? 4C 8D 34 39 48 89 CF 48 8B 49 20 4C 89 C3 49 03 0E 4C 89 F6 4C 39 C1";
 
     // Build 3527: both candidates above stay at 0 matches. Re-derived THIS
-    // session (2026-11-04) from CrimsonInvEditor v11.3's own "Hook
+    // session (2026-11-04) from a third-party trainer's own "Hook
     // diagnostics" report, which names its own regen/drain hook directly:
     // "status adder (breath, stamina, spirit over time): hooked at
     // exe+18E7190" with "refusal armed: god 1 stamina 1 spirit 1 breath 0" -
     // functionally the same write-funnel God Mode/Infinite Stamina/Infinite
     // Spirit need. Bytes read from the exe FILE on disk (not live memory,
-    // which was already hooked by CrimsonInvEditor itself at that address -
+    // which was already hooked by that trainer itself at that address -
     // reading live would have captured their jmp trampoline, not the
     // original prologue). Offline-verified unique via audit.py against the
     // live 1.0.0.3527 exe: one match, exactly RVA 0x18E7190. The register
@@ -348,11 +348,11 @@ namespace trinity::game
 
     // Build 3527: ALL FOUR anchors above are BROKEN (0/4 matches, confirmed by
     // a live ReadProcessMemory scan of the running game 2026-11-04, not just
-    // an offline audit). CrimsonInvEditor v11.2's own "Hook diagnostics"
+    // an offline audit). A third-party trainer's own "Hook diagnostics"
     // report shows the same decay (only 1 of their own 5 anchors still
     // matched) but names the raw global slot directly: exe+0x71BE418.
     // Live-verified end-to-end THIS session: that slot's pointer chases to
-    // the exact same manager CrimsonInvEditor's report printed
+    // the exact same manager that trainer's report printed
     // (0x35B7B616500, byte-identical), and walking a player-class entry
     // through our OWN UNCHANGED kOff_Owner_Actor/kOff_Actor_StatusMarker/
     // kOff_Marker_TargetOwner/kOff_Root_StatArray chain lands on a stat
@@ -769,8 +769,8 @@ namespace trinity::game
         "48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC 20 49 8B E8 0F B7 DA";
 
     // TU 2.01.00: the old signature has 0 matches. Found via a Cheat Engine
-    // table built specifically against this exact build (1.0.0.2760,
-    // "Crimson Desert Ultimate Table.CT" v5.0) that the user supplied - its
+    // table built specifically against this exact build (1.0.0.2760) that
+    // the user supplied - its
     // own AOB for the bucket-capacity check (`CMP [rax+0x10],0; JLE; CMP
     // byte[rax+0xA0],0`) matched offline at RVA 0x20819AD, inside a small
     // function whose prologue register-saves match this signature's
@@ -887,8 +887,8 @@ namespace trinity::game
         "48 89 5C 24 ? 4C 89 44 24 ? 48 89 54 24 ? 48 89 4C 24 ? 55 56 57 41 54 "
         "41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC 10 03 00 00";
 
-    // Build 3527: primary above is 0 matches. Re-derived from CrimsonInvEditor
-    // v11.3's own report ("planner exe+25FBFE0" - their report calls this
+    // Build 3527: primary above is 0 matches. Re-derived from a third-party
+    // trainer's own report ("planner exe+25FBFE0" - their report calls this
     // the insert "planner", same function our hook comment above names). The
     // generic push-heavy prologue alone (wildcarded LEA/SUB disp32) matched
     // 26 unrelated functions in this ~332MB image, so the pattern extends
@@ -971,8 +971,7 @@ namespace trinity::game
 
     // TU 2.01.00: the old signature has 0 matches - "the head of this
     // sequence was recompiled" (same finding independently reached by the
-    // user-supplied Cheat Engine table, "Crimson Desert Ultimate Table.CT"
-    // v5.0, built specifically against this build's file version
+    // user-supplied Cheat Engine table, built specifically against this build's file version
     // 1.0.0.2760 - its own writeup calls this exact problem out: "2.01.00
     // RECOMPILED THE HEAD OF THIS SEQUENCE, and that is the whole of 'the
     // container editor was not found in this build'"). The chain TAIL is
@@ -1165,8 +1164,8 @@ namespace trinity::game
         "48 89 5C 24 ?? 48 89 4C 24 ?? 55 56 57 41 54 41 55 41 56 41 "
         "57 48 8B EC 48 83 EC 70 4C 8B F2 4C 8B E1";
 
-    // Build 3527: primary above is 0 matches. Re-derived from CrimsonInvEditor
-    // v11.3's own report ("ready: ctor exe+25FDFA0 ... core global ok"),
+    // Build 3527: primary above is 0 matches. Re-derived from a third-party
+    // trainer's own report ("ready: ctor exe+25FDFA0 ... core global ok"),
     // read from the exe FILE on disk 2026-11-04 (unhooked - this function is
     // CALLED, not intercepted, so live memory was safe to read too, but the
     // file was used for consistency with the StatCommit candidate above).
@@ -1194,8 +1193,8 @@ namespace trinity::game
         "48 89 5C 24 ?? 48 89 6C 24 ?? 56 57 41 56 48 83 EC 30 41 0F "
         "B7 58 08 48 8B F1";
 
-    // Build 3527: primary above is 0 matches. Re-derived from CrimsonInvEditor
-    // v11.3's own report ("commit exe+22F5930, stride 224, slot index at
+    // Build 3527: primary above is 0 matches. Re-derived from a third-party
+    // trainer's own report ("commit exe+22F5930, stride 224, slot index at
     // +0xD8 ... DERIVED from the game's own code"), read from the exe FILE
     // on disk 2026-11-04 (this function is CALLED, not hooked, by both their
     // tool and ours, but the file was used for consistency with the
@@ -2124,11 +2123,11 @@ namespace trinity::game
 
     // TU 2.03.00+ (2976): both setters were recompiled (a 6-push prologue, frame
     // 0x68) and neither older pattern above matches any more. Re-derived from
-    // the addresses the third-party vTweak v1.4.2 build logged as working on
+    // the addresses a foreign fork of this project logged as working on
     // 2976 (RVA 0x1ECB810 "SetNpc", 0xDBB7750 "SetPet"); read from the exe with
     // tools/TrinitySignatureAudit, each pattern is unique. The record layout
     // is unchanged (movzx eax,[rdx+4] = group, same as before). Which of the two
-    // is NPC vs pet follows vTweak's labels and only decides the cache-key group
+    // is NPC vs pet follows that fork's labels and only decides the cache-key group
     // id in friendly.cpp, not behaviour. Not yet live-tested by us.
     inline constexpr const char* kSig_FriendlySetNpc_TU2030 =
         "4C 8B DC 53 55 56 57 41 56 41 57 48 83 EC ?? 48 8B FA 48 8B F1 "

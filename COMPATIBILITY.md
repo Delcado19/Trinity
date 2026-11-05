@@ -67,8 +67,7 @@ Full mechanical results are in
 ## Pre-test local evidence
 
 The 2026-09-04 installation state contains Ultimate ASI Loader 9.7.1 as
-`winmm.dll` and three other ASIs: `CharacterCreatorHead.asi`,
-`FreedomFlyer.asi`, and `LETMESLEEP.asi`.
+`winmm.dll` and three other third-party ASI mods.
 
 Historical Trinity v1.3.3 logs show that the loader injected it into both
 `CrimsonDesert.exe` and `crashpad_handler.exe`. The old build mislabeled PE
@@ -481,7 +480,7 @@ character-manager histogram work.
 ### BREAKTHROUGH (2026-09-06 22:xx): character-manager slot found, WalkSelfChain confirmed unchanged - live-verified against a working third-party build
 
 The upstream maintainer (`gugi97`) published a compiled TU 2.01.00-verified
-build (Trinity v0.19.0) on Nexus Mods (crimsondesert/mods/3252) without
+build (Trinity v0.19.0) as a public release without
 publishing the corresponding source (the public `upstream-gugi` remote still
 tops out at v0.17.0/TU 2.00.00). The user installed it via DMM to test, and
 its `Trinity.log` showed every gameplay feature (Teleport, Inventory, World,
@@ -1114,8 +1113,7 @@ unrelated-looking utility functions.
 
 **Solved instead from a source outside this project's usual toolkit: the
 user supplied four Cheat Engine table files from their own collection.**
-One of them, `Crimson Desert Ultimate Table.CT` (`by JenAri Dev and
-economicalwhale`, v5.0), states in its own header that it targets
+One of them states in its own header that it targets
 **"GAME 2.01.00 (build 1.0.0.2760)"** - the exact file version this whole
 port targets - and its Lua source contains detailed, dated commentary from
 its own authors independently re-deriving signatures for the exact same
@@ -1179,12 +1177,12 @@ refused, and Slot Size does not apply. Build 2026-09-10 compiles clean.
 **NOT yet live-tested.**
 
 Two more leads surfaced in these CT files, not yet acted on:
-- `CrimsonDesert.CT`'s own changelog-equivalent notes (different file, not
-  the Ultimate Table) document a "Bag Space" fix ("its signature was pinned
+- A different CT file's own changelog-equivalent notes document a "Bag Space"
+  fix ("its signature was pinned
   to register choices the recompile changed") that likely corresponds to
   `kSig_InvSetExpandSlots` - not yet located precisely enough to build a
   pattern from.
-- The Ultimate Table's changelog also documents, unprompted, a fix for the
+- The other CT file's changelog also documents, unprompted, a fix for the
   **long-standing, unrelated `damage-apply` mystery** this project has
   never resolved (see "Bug found and fixed: damage-apply consistently
   failed to resolve" above): *"No Fall Damage works again... Its old site
@@ -1338,7 +1336,7 @@ both** (`kSig_InvGetItemQty_Gugi`, `kSig_InvCoreGlobal_TU20100_Candidate`,
 `kSig_ParryVerdict_TU20100_Candidate`, `kSig_LocoStepper_TU20100_Candidate`,
 `kSig_AirMoverStep`). Several moved by 0x10 on 2949 (PathingHelper, LocoStepper,
 InvGetItemQty) and shifted again on 2976; nothing needed a new pattern. This
-agrees with the third-party Ultimate Table/trainer changelogs (only their give
+agrees with the third-party trainer's changelogs (only their give
 planner/commit/durability sites moved).
 
 **Second silent bug found by this audit:** `teleport.cpp` carried the airborne
@@ -1565,8 +1563,8 @@ need a disassembly of the evaluator's internal calls to locate the window
 value, which we don't have tooling for in this pass (no capstone/Ghidra
 available). Our evaluator hook + held-block pulse ([[above]]) already works
 live with multi-input support, so this is a documented alternative, not a
-fix for something broken. `[reference_crimsoninveditor_ct.md](memory) has
-the full string-mining writeup.`
+fix for something broken. The Claude memory store's inventory-editor-trainer
+notes have the full string-mining writeup.
 
 **Follow-up disassembly (2026-10-10, stdlib PE parser + capstone in an
 isolated venv, read-only, against the installed `CrimsonDesert.exe`):**
@@ -1911,7 +1909,7 @@ predecessor's Cheat Table. Safety check (stdlib-only PE triage, not
 executed): no network/injection APIs, only kernel32/user32/gdi32/gdiplus/
 uxtheme imports, unsigned (`Get-AuthenticodeSignature` -> NotSigned), one
 benign `IsDebuggerPresent` string - consistent with the 2026-10-10 clearance
-of an earlier build of the same tool ([[reference-crimsoninveditor-ct]]).
+of an earlier build of the same tool.
 Its own changelog: *"v9.0 - GAME 2.04.02 - Updated for game 2.04.02 (build
 1.0.0.3446) with the ocean DLC"* - independently confirms our 2.04.02 =
 1.0.0.3446 mapping.

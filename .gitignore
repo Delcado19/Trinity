@@ -37,7 +37,7 @@ venv/
 # published: they are addresses, dead ends and half-proven leads, not something
 # anyone downloading the mod needs. tools/shaders/ stays - it is real source.
 docs/
-tools/vtweak/
+tools/foreign-fork/
 tools/analyze_item_ctor.py
 tools/disasm_pe.py
 

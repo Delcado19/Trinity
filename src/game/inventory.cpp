@@ -23,6 +23,7 @@
 #include "../core/text.h"
 #include "../core/state.h"
 #include "../core/version.h"   // TRINITY_MARKER_RESEARCH
+#include "../core/gameversion.h"
 
 namespace trinity::game
 {
@@ -1198,20 +1199,63 @@ namespace trinity::game
             0x56, 0x57, 0x41, 0x56, 0x48, 0x83, 0xEC,   -1, 0x0F, 0xB7, 0x39,
             0x48, 0x8B, 0x1D,
         };
+        // Build 3549 (2.04.07): the whole clone family's prologue was
+        // recompiled - re-derived offline this session (string-anchor +
+        // backward byte scan against the installed exe, same technique
+        // FindItemPrologueAbove runs live, just done ahead of time in Python
+        // reusing tools/TrinitySignatureAudit/audit.py's own helpers). Same
+        // skeleton, different register allocation: a frame built via `mov
+        // r11,rsp` instead of spilling to [rsp+N] directly, 3 pushes instead
+        // of 2, and the u16 key load (`0F B7 39`) is gone from this window -
+        // replaced by a plain 32-bit `mov edi,edx` register copy (the
+        // narrowing conversion likely moved past this point in the body, or
+        // the key now arrives pre-narrowed). Verified three independent
+        // times against the live 3549 exe: resolving "iteminfo" via this
+        // prologue lands on a function whose body does `cmp edx,[rbx+8]`
+        // (count check, matches kOff_ItemTable_Count) then
+        // `mov rax,[rbx+0x58]` (row array, matches the current row-array
+        // offset) on the SAME global this prologue's mov-rbx just loaded -
+        // i.e. the resolved global is confirmed correct by the table's own
+        // internal layout, not just by matching a byte pattern. The same
+        // prologue, applied to "ItemGroupInfo" and "stringinfo", resolves
+        // each to ITS OWN distinct global (0x71BEE68/0x71BEE48 on this
+        // build) rather than a fixed offset from the item global
+        // (0x71BEE70) - the "+0x20"/"+0x30" fallback comments below
+        // described the PREVIOUS build's layout, not a structural
+        // guarantee, and do not hold here; this build's tables are each
+        // independently resolved by this same prologue + their own string,
+        // which is why no change to the +0x18/+0x20/+0x30 fallback itself
+        // was needed - fixing the prologue fixes every table that reaches
+        // it via its own string anchor. Mov-global still sits at the same
+        // +0x15 offset, unchanged. Tried AFTER kItemPrologue above (older
+        // builds first) so a build where the old shape still matches never
+        // reaches this one.
+        const int16_t kItemPrologue_TU3549[] = {
+            0x4C, 0x8B, 0xDC, 0x49, 0x89, 0x5B, 0x08, 0x49, 0x89, 0x6B, 0x18,
+            0x56, 0x57, 0x41, 0x56, 0x48, 0x83, 0xEC,   -1, 0x8B, 0xFA,
+            0x48, 0x8B, 0x1D,
+        };
+        bool MatchPrologueAt(uintptr_t cand, const int16_t* pat, size_t n)
+        {
+            bool hit = true;
+            __try
+            {
+                for (size_t i = 0; i < n; ++i)
+                    if (pat[i] >= 0 &&
+                        *reinterpret_cast<const uint8_t*>(cand + i) != pat[i]) { hit = false; break; }
+            }
+            __except (EXCEPTION_EXECUTE_HANDLER) { hit = false; }
+            return hit;
+        }
         uintptr_t FindItemPrologueAbove(uintptr_t lea)
         {
             for (size_t back = 0x20; back <= 0x80; ++back)
             {
                 const uintptr_t cand = lea - back;
-                bool hit = true;
-                __try
-                {
-                    for (size_t i = 0; i < sizeof(kItemPrologue) / sizeof(kItemPrologue[0]); ++i)
-                        if (kItemPrologue[i] >= 0 &&
-                            *reinterpret_cast<const uint8_t*>(cand + i) != kItemPrologue[i]) { hit = false; break; }
-                }
-                __except (EXCEPTION_EXECUTE_HANDLER) { hit = false; }
-                if (hit) return cand;
+                if (MatchPrologueAt(cand, kItemPrologue, sizeof(kItemPrologue) / sizeof(kItemPrologue[0])))
+                    return cand;
+                if (MatchPrologueAt(cand, kItemPrologue_TU3549, sizeof(kItemPrologue_TU3549) / sizeof(kItemPrologue_TU3549[0])))
+                    return cand;
             }
             return 0;
         }
@@ -1250,53 +1294,95 @@ namespace trinity::game
             return hunt.fn ? mem::ResolveRipAt(hunt.fn + kOff_ItemResolver_MovGlobal, 7) : 0;
         }
 
-        // Returns true if the bytes at addr look like a detour stub another
-        // already-loaded mod planted over a function entry (near JMP rel32,
-        // indirect JMP [rip+disp32], or a MinHook/Detours-style absolute
-        // "mov rax,imm64; jmp rax" stub) rather than garbage. Root-caused
-        // 2026-11-05 via two unrelated third-party mods' own logs, both
-        // independently reporting "<this exact RVA>, under a jump an
-        // unknown module put over its entry; hooking on top of it" on the
-        // SAME build/session where our own live AOB scan for this function
-        // found nothing - i.e. whichever mod loads first wins the race and
-        // overwrites the prologue our pattern/pin both expect. A pure
-        // accessor like GetInventoryHolder has no side effects to desync,
-        // so calling straight into someone else's stub is safe: a
-        // well-behaved hook (confirmed by the same third-party logs) reads
-        // through to the real function and returns its result unchanged.
-        bool LooksLikeForeignHookStub(uintptr_t addr)
+        // Maps `rva` to a file offset via the running exe's own PE section
+        // table and reads `count` bytes from there - i.e. from the file on
+        // disk, never from the loaded image in memory. This is immune to
+        // any hook: a detour patches the IN-MEMORY image only, so a byte
+        // identity check against the file is unaffected by whichever mod
+        // loaded first and does not require the live bytes to be pristine.
+        // Same technique tools/TrinitySignatureAudit/audit.py's parse_pe
+        // uses offline; this is the same thing done once at runtime.
+        bool ReadExeFileBytesAtRva(uintptr_t rva, uint8_t* out, size_t count)
         {
-            uint8_t b[10] = {};
-            for (size_t i = 0; i < sizeof(b); ++i)
-                if (!Read8(addr + i, &b[i])) return false;
-            if (b[0] == 0xE9) return true;                      // near JMP rel32
-            if (b[0] == 0xFF && b[1] == 0x25) return true;       // JMP [rip+disp32]
-            if (b[0] == 0x48 && b[1] == 0xB8 &&                  // mov rax,imm64
-                b[9] == 0xE0 && b[8] == 0xFF)                    // ; jmp rax
-                return true;
-            return false;
+            wchar_t exePath[MAX_PATH]{};
+            if (!GetModuleFileNameW(nullptr, exePath, MAX_PATH)) return false;
+
+            HANDLE h = CreateFileW(exePath, GENERIC_READ, FILE_SHARE_READ, nullptr,
+                                    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+            if (h == INVALID_HANDLE_VALUE) return false;
+
+            auto readAt = [&](DWORD offset, void* buf, DWORD n) -> bool
+            {
+                LARGE_INTEGER li{}; li.QuadPart = offset;
+                if (!SetFilePointerEx(h, li, nullptr, FILE_BEGIN)) return false;
+                DWORD got = 0;
+                return ReadFile(h, buf, n, &got, nullptr) && got == n;
+            };
+
+            bool ok = false;
+            uint8_t dosHdr[64]{};
+            if (readAt(0, dosHdr, sizeof(dosHdr)))
+            {
+                const uint32_t e_lfanew = *reinterpret_cast<const uint32_t*>(dosHdr + 0x3C);
+                uint8_t ntHdr[24]{};
+                if (readAt(e_lfanew, ntHdr, sizeof(ntHdr)))
+                {
+                    // Signature(4) + FileHeader(20): NumberOfSections @+6,
+                    // SizeOfOptionalHeader @+16 (offsets within FileHeader,
+                    // +4 to skip the 4-byte PE signature before it).
+                    const uint16_t numSections = *reinterpret_cast<const uint16_t*>(ntHdr + 4 + 2);
+                    const uint16_t optHdrSize  = *reinterpret_cast<const uint16_t*>(ntHdr + 4 + 16);
+                    const DWORD sectionTableOff = e_lfanew + 4 + 20 + optHdrSize;
+                    for (uint16_t i = 0; i < numSections && !ok; ++i)
+                    {
+                        uint8_t sec[40]{};
+                        if (!readAt(sectionTableOff + i * 40u, sec, sizeof(sec))) break;
+                        const uint32_t virtSize  = *reinterpret_cast<const uint32_t*>(sec + 8);
+                        const uint32_t virtAddr  = *reinterpret_cast<const uint32_t*>(sec + 12);
+                        const uint32_t rawSize   = *reinterpret_cast<const uint32_t*>(sec + 16);
+                        const uint32_t rawOffset = *reinterpret_cast<const uint32_t*>(sec + 20);
+                        const uint32_t span = virtSize ? virtSize : rawSize;
+                        if (rva >= virtAddr && rva < virtAddr + span)
+                        {
+                            const DWORD fileOffset = rawOffset + static_cast<DWORD>(rva - virtAddr);
+                            ok = readAt(fileOffset, out, static_cast<DWORD>(count));
+                        }
+                    }
+                }
+            }
+            CloseHandle(h);
+            return ok;
         }
 
         // Last-resort pin, one entry per build where FindPatternAny inexplicably
         // reports zero live matches although an offline byte scan of the same
         // on-disk exe finds this function's fixed head at this exact RVA.
-        // Root cause (confirmed 2026-11-05): another, earlier-loading mod
-        // hooks this exact function first, so our live scan for the pristine
-        // prologue finds nothing even though the function and address are
-        // both correct - see LooksLikeForeignHookStub() above. 0x22EE4F0 is
-        // build 3479: two independent third-party mods (one literally names
-        // it "GetInventoryHolder") resolve the same address with no search
-        // logic logged, i.e. their own offline RE, not a live scan.
-        // 0x22F1110 is build 3549 (2.04.07): re-derived this session via
-        // audit.py's own pattern-scan helpers against the live exe, one
-        // unique match, and independently cross-confirmed by two third-party
-        // mods' own live logs the same session. Each candidate is accepted
-        // if its live bytes either match the function's own fixed prologue
-        // (untouched - as safe as a pattern match) OR look like a foreign
-        // hook stub (another mod got there first - still safe to call
-        // through, see above). A build not listed here, or one where the
-        // listed RVA matches neither shape, correctly falls through to
-        // NOT_FOUND rather than hooking the wrong thing.
+        // Root cause (confirmed 2026-11-05 via a controlled solo-mount test):
+        // another, earlier-loading mod hooks this exact function first, so our
+        // live scan for the pristine prologue finds nothing even though the
+        // function and address are both correct - two third-party mods' own
+        // logs independently named this exact RVA the same session, describing
+        // exactly this collision. The fix is NOT to pattern-match the foreign
+        // mod's hook shape (tried and reverted - a bare JMP opcode proves
+        // nothing: the game's own code plants one at kSig_DamageApply's RVA
+        // even with every third-party mod disabled, see COMPATIBILITY.md's
+        // damage-apply investigation). Instead verify identity against the
+        // FILE ON DISK (ReadExeFileBytesAtRva above), which no live hook can
+        // affect, then trust the pinned address regardless of what currently
+        // sits there live - calling through a foreign mod's hook is safe for
+        // this pure accessor (no side effects to desync), and calling the
+        // untouched original is obviously safe too.
+        //
+        // One pin per build, matched by exact build revision - never try a
+        // different build's RVA. 0x22EE4F0 is build 3479: two independent
+        // third-party mods (one literally names it "GetInventoryHolder")
+        // resolve the same address with no search logic logged, i.e. their
+        // own offline RE, not a live scan. 0x22F1110 is build 3549 (2.04.07):
+        // re-derived this session via audit.py's own pattern-scan helpers
+        // against the live exe, one unique match, and independently
+        // cross-confirmed by two third-party mods' own live logs the same
+        // session. A build not listed here, or one whose pinned RVA does not
+        // match the file, correctly falls through to NOT_FOUND.
         uintptr_t ResolveHolderPinned()
         {
             const mem::ModuleRegion& mod = mem::GameModule();
@@ -1308,26 +1394,21 @@ namespace trinity::game
                 0x40, 0x53, 0x48, 0x83, 0xEC, 0x20, 0x48, 0x8B, 0x41, 0x68,
                 0x48, 0x8B, 0xD9, 0x48, 0x8B, 0x50, 0x20, 0x0F, 0xB7, 0x52, 0x30
             };
-            static const uintptr_t kPinnedRvas[] = { 0x22EE4F0, 0x22F1110 };
-            for (uintptr_t rva : kPinnedRvas)
+            struct Pin { uint16_t build; uintptr_t rva; };
+            static const Pin kPins[] = {
+                { 3479, 0x22EE4F0 },
+                { 3549, 0x22F1110 },
+            };
+            const uint16_t build = trinity::CurrentGameVersion().revision;
+            for (const Pin& pin : kPins)
             {
-                const uintptr_t candidate = mod.base + rva;
-                bool match = true;
-                for (size_t i = 0; i < sizeof(kExpected) && match; ++i)
-                {
-                    uint8_t b = 0;
-                    if (!Read8(candidate + i, &b) || b != kExpected[i])
-                        match = false;
-                }
-                if (match) return candidate;
-                if (LooksLikeForeignHookStub(candidate))
-                {
-                    LOG_WARN("inventory: holder resolver pin @ 0x%llX is under "
-                             "another mod's hook (foreign stub detected) - "
-                             "calling through it.",
-                             static_cast<unsigned long long>(rva));
-                    return candidate;
-                }
+                if (pin.build != build) continue;
+                uint8_t fileBytes[sizeof(kExpected)];
+                if (!ReadExeFileBytesAtRva(pin.rva, fileBytes, sizeof(fileBytes)))
+                    return 0;
+                if (std::memcmp(fileBytes, kExpected, sizeof(kExpected)) != 0)
+                    return 0;
+                return mod.base + pin.rva;
             }
             return 0;
         }
@@ -1395,7 +1476,7 @@ namespace trinity::game
         // These are CALLED, not hooked. The insert planner is oHolderInsert,
         // resolved by the hook above - same function.
         // Each is tried primary-first, then its TU3527 candidate (offsets.h,
-        // re-derived 2026-11-04 from CrimsonInvEditor v11.3's own report) -
+        // re-derived 2026-11-04 from a third-party trainer's own report) -
         // still gated to exactly one match per pattern, same safety net as
         // the single-pattern form this replaces. kSig_InvFreePlacements has
         // no TU3527 candidate yet, so it stays primary-only.
@@ -1538,6 +1619,9 @@ namespace trinity::game
         g_itemTableGlobal = FindTableGlobal(kStr_ItemInfoTable);
         if (!g_itemTableGlobal)
             LOG_WARN("inventory: item-info table not found - items show generic labels and no categories.");
+        else
+            LOG("inventory: item-info table resolved @ %p - catalog/names/categories available.",
+                reinterpret_cast<void*>(g_itemTableGlobal));
 
         // The category tree (ItemGroupInfo is at +0x20 in the contiguous global table array)
         g_grpTableGlobal = FindTableGlobal(kStr_ItemGroupInfoTable);
@@ -1620,7 +1704,15 @@ namespace trinity::game
         const mem::SigStatus qty    = mem::StatusOf(true, g_qtyWhich);
         const mem::SigStatus holder = mem::StatusOf(true, g_holderWhich);
         const mem::SigStatus commit = mem::StatusOf(oCommit != nullptr, g_commitWhich);
-        return mem::Worse(mem::Worse(qty, holder), commit);
+        // The item-info table drives names, categories, icons and the
+        // catalog (CatalogCategoryCount()) - without it the menu shows
+        // "Catalog unavailable" and every slot shows a generic label, which
+        // is not something an "Ok" status should sit in front of. This was
+        // previously not checked here at all, so Inventory could render
+        // green while the catalog was empty - see CONTINUE.md/the user's
+        // own report (2026-11-05) of exactly this mismatch.
+        const mem::SigStatus table = g_itemTableGlobal ? mem::SigStatus::Ok : mem::SigStatus::Fallback;
+        return mem::Worse(mem::Worse(mem::Worse(qty, holder), commit), table);
     }
 
     mem::SigStatus Inventory::SlotSizeStatus()
