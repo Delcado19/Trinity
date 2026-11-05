@@ -2268,6 +2268,49 @@ namespace trinity::game
         }
         if (value < 1) value = 1;
 
+        // Safety pre-pass, read-only: `kOff_ItemDef_MaxStackCount`/
+        // `kOff_ItemDef_ApplyMaxStackCap` have never been independently
+        // re-verified against build 3549's ItemDef layout specifically (no
+        // per-build history for them in offsets.h, unlike most other
+        // offsets this session). Confirmed 2026-11-05: a user crash in
+        // CrimsonDesert.exe (not Trinity.asi) happened immediately after
+        // toggling this exact feature, the first time it ever ran at all
+        // (it was a dead no-op before this session's item-table-resolver
+        // fix, since g_itemTableGlobal was always 0). Writing 8+1 bytes into
+        // up to ~6800 item definitions at an unverified offset is a
+        // plausible corruption vector for whatever the game crashed
+        // touching afterward. Before writing ANYTHING, check every row's
+        // CURRENT (unmodified) values look like a stack count/bool - if
+        // more than a handful don't, refuse the whole operation rather than
+        // risk writing on top of fields that are not what we think they
+        // are. This is read-only and cheap compared to the write pass below.
+        if (enable)
+        {
+            uint32_t implausible = 0, checked = 0;
+            for (uint32_t row = 0; row < count; ++row)
+            {
+                uintptr_t def = 0;
+                if (!DefForRow(g_itemTableGlobal, static_cast<uint16_t>(row), &def)) continue;
+                int64_t curVal = 0;
+                uint8_t curCap = 0;
+                if (!Read64(def + kOff_ItemDef_MaxStackCount, &curVal) ||
+                    !Read8(def + kOff_ItemDef_ApplyMaxStackCap, &curCap))
+                    continue;
+                ++checked;
+                if (curVal < 0 || curVal > 999999999 || curCap > 1)
+                    ++implausible;
+            }
+            // A handful of oddball rows (unused/internal item defs) is
+            // normal; a wrong offset shows up as most/all rows failing.
+            if (checked == 0 || implausible * 20 > checked) // >5% implausible
+            {
+                LOG_ERR("inventory: max-stack-size offsets look wrong on this "
+                         "build (%u/%u rows implausible) - refusing to write, "
+                         "Max Stack Size disabled.", implausible, checked);
+                return false;
+            }
+        }
+
         bool any = false;
         for (uint32_t row = 0; row < count; ++row)
         {
@@ -3148,16 +3191,39 @@ namespace trinity::game
         void BuildCatalog()
         {
             if (g_catalogBuilt) return;
-            // Set first, unconditionally: if the table is not resolvable we must
-            // not retry a walk of thousands of rows on every frame the menu is
-            // open.
-            g_catalogBuilt = true;
+            // Do NOT latch here: Install() resolves the item-info table as one
+            // step in a multi-second sequence of hook installs (each one logs
+            // and can take real wall-clock time), while the overlay's Present
+            // hook wraps and starts rendering frames well before that step
+            // runs. If the Inventory/Catalog window was already open (ImGui
+            // persists window state), a render call could reach this function
+            // before g_itemTableGlobal is set - and the old code latched
+            // g_catalogBuilt=true unconditionally right here, permanently
+            // freezing an empty catalog for the rest of the process even
+            // after the table resolved moments later. Found 2026-11-05: the
+            // table resolver itself was fixed and confirmed resolving in
+            // Trinity.log, yet the Catalog still showed empty in the same
+            // session - this latch-before-ready bug is why. Only the checks
+            // below that can never succeed later (a resolved-but-unreadable
+            // table, or a nonsensical row count) are genuine dead ends worth
+            // latching; "not resolved YET" is not one of them, so it falls
+            // through and retries on the next call instead - cheap, since
+            // only the full row-walk below is expensive, not these checks.
             if (!g_itemTableGlobal) return;
 
             uintptr_t table = 0;
-            if (!ReadPtr(g_itemTableGlobal, &table)) return;
+            if (!ReadPtr(g_itemTableGlobal, &table)) { g_catalogBuilt = true; return; }
             uint32_t count = 0;
-            if (!Read32(table + kOff_ItemTable_Count, &count) || !count || count > 65536) return;
+            if (!Read32(table + kOff_ItemTable_Count, &count) || !count || count > 65536)
+            {
+                g_catalogBuilt = true;
+                return;
+            }
+            // Past this point the table is confirmed readable and sane, so a
+            // completed walk - success or not - is final; latch now rather
+            // than at the end, matching the original "never re-walk" intent
+            // for the one case that actually earns it.
+            g_catalogBuilt = true;
 
             uint32_t named = 0;
             for (uint32_t row = 0; row < count; ++row)
