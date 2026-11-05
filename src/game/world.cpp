@@ -42,6 +42,7 @@ namespace trinity::game
         using MasterFrameUpdate_t = void(__fastcall*)(void* ctx);
         MasterFrameUpdate_t oMasterFrameUpdate = nullptr;
         void*               g_masterFrameTarget = nullptr;
+        size_t              g_masterFrameWhich  = 0; // matched pattern index - see World::Status()
 
         void __fastcall hkMasterFrameUpdate(void* ctx)
         {
@@ -118,7 +119,8 @@ namespace trinity::game
         // so the register survives the trampoline untouched on pass-through.
         using FieldTimeTick_t = void(__fastcall*)(void* mgr, float delta);
         FieldTimeTick_t oFieldTimeTick = nullptr;
-        void* g_fieldTimeTickTarget = nullptr;
+        void*  g_fieldTimeTickTarget = nullptr;
+        size_t g_fieldTimeTickWhich  = 0; // matched pattern index - see World::TimeOfDayStatus()
 
         std::atomic<int> g_pendingHours{0};
         void ApplyPendingHours(void* mgr);
@@ -237,108 +239,123 @@ namespace trinity::game
         }
     }
 
-    bool World::Install()
+    namespace
     {
-        bool ok = true;
-
-        // Falls back to the TU 2.01.00 candidate (COMPATIBILITY.md:
-        // "BREAKTHROUGH 2026-09-08") when the primary (TU 2.00.00) pattern
-        // does not match - same recompiled-prologue shape as the pathing-
-        // helper/dye-upsert fixes from the same session.
-        if (mem::InstallHookAny("world: master frame update",
-                                {kSig_MasterFrameUpdate, kSig_MasterFrameUpdate_TU20100_Candidate,
-                                 kSig_MasterFrameUpdate_TU20402_Candidate},
-                                "Game Speed timescale unavailable",
-                                reinterpret_cast<void*>(hkMasterFrameUpdate),
-                                reinterpret_cast<void**>(&oMasterFrameUpdate),
-                                &g_masterFrameTarget))
+        // Idempotent (guarded by "if resolved, skip") even though nothing
+        // currently calls this twice - see the shortcut note below Install().
+        void ResolveWorldHooks()
         {
-            LOG("world: master frame update hook installed @ %p - Game Speed ready.", g_masterFrameTarget);
-        }
-
-        const uintptr_t m = mem::FindPattern(kSig_GameSpeed);
-        const size_t gameSpeedMatches = mem::CountMatches(kSig_GameSpeed, 2);
-        if (!m || gameSpeedMatches != 1)
-        {
-            LOG_ERR("world: game-speed signature %s - Game Speed disabled.",
-                    m ? "ambiguous" : "NOT FOUND");
-            ok = false;
-        }
-        else
-        {
-            // Flag: disp32 of `cmp cs:byte_606B9CE, 1` (an imm follows the disp,
-            // so resolve from the explicit disp/next-instr rather than ResolveRipAt).
-            g_flagAddr = mem::ResolveRip(m + kOff_GameSpeed_FlagDisp, m + kOff_GameSpeed_FlagEnd);
-            // Value: `vmovss xmm0, cs:dword_615A4F0` - a standard RIP instr (disp
-            // at its tail), so ResolveRipAt handles it.
-            g_valueAddr = mem::ResolveRipAt(m + kOff_GameSpeed_ValueVmovss, kLen_GameSpeed_Vmovss);
-
-            if (g_flagAddr < kMinPointer || g_valueAddr < kMinPointer)
+            // Falls back to the TU 2.01.00 candidate (COMPATIBILITY.md:
+            // "BREAKTHROUGH 2026-09-08") when the primary (TU 2.00.00) pattern
+            // does not match - same recompiled-prologue shape as the pathing-
+            // helper/dye-upsert fixes from the same session.
+            if (!oMasterFrameUpdate &&
+                mem::InstallHookAny("world: master frame update",
+                                    {kSig_MasterFrameUpdate, kSig_MasterFrameUpdate_TU20100_Candidate,
+                                     kSig_MasterFrameUpdate_TU20402_Candidate},
+                                    "Game Speed timescale unavailable",
+                                    reinterpret_cast<void*>(hkMasterFrameUpdate),
+                                    reinterpret_cast<void**>(&oMasterFrameUpdate),
+                                    &g_masterFrameTarget, &g_masterFrameWhich))
             {
-                LOG_ERR("world: game-speed globals resolved out of range - Game Speed disabled.");
-                g_flagAddr = g_valueAddr = 0;
-                ok = false;
+                LOG("world: master frame update hook installed @ %p - Game Speed ready.", g_masterFrameTarget);
             }
-            else
+
+            if (!g_flagAddr || !g_valueAddr)
             {
-                // Patch the one-shot conditional check in the override block (offset +28)
-                // so forced delta applies continuously on every sub-tick.
-                g_speedPatchAddr = m + 28;
-                memcpy(g_speedOrigBytes, reinterpret_cast<const void*>(g_speedPatchAddr), sizeof(g_speedOrigBytes));
-                DWORD oldProt = 0;
-                if (VirtualProtect(reinterpret_cast<void*>(g_speedPatchAddr), sizeof(g_speedOrigBytes), PAGE_EXECUTE_READWRITE, &oldProt))
+                const uintptr_t m = mem::FindPattern(kSig_GameSpeed);
+                const size_t gameSpeedMatches = mem::CountMatches(kSig_GameSpeed, 2);
+                if (!m || gameSpeedMatches != 1)
                 {
-                    memset(reinterpret_cast<void*>(g_speedPatchAddr), 0x90, sizeof(g_speedOrigBytes));
-                    VirtualProtect(reinterpret_cast<void*>(g_speedPatchAddr), sizeof(g_speedOrigBytes), oldProt, &oldProt);
-                    FlushInstructionCache(GetCurrentProcess(), reinterpret_cast<void*>(g_speedPatchAddr), sizeof(g_speedOrigBytes));
+                    LOG_ERR("world: game-speed signature %s - Game Speed disabled.",
+                            m ? "ambiguous" : "NOT FOUND");
                 }
                 else
-                    g_speedPatchAddr = 0;
-            }
-        }
-
-        // Time of Day resolves independently - Game Speed still works if this
-        // signature drifts, and vice versa. Advance needs the clock globals...
-        if (!ResolveFieldTimeGlobals())
-        {
-            LOG_WARN("world: field-clock signature NOT FOUND - Advance Time disabled.");
-            g_timeClient = g_timeServer = 0;
-            ok = false;
-        }
-
-        // ...Freeze needs the field-time tick hook (zeroes the clock's delta,
-        // which holds the numeric clock)...
-        // Independent of both the globals above and Game Speed - each can drift
-        // without disabling the others.
-        if (!mem::InstallHook("world: field-time tick", kSig_FieldTimeTick,
-                              "Freeze Time of Day disabled", hkFieldTimeTick,
-                              &oFieldTimeTick, &g_fieldTimeTickTarget))
-            ok = false;
-
-        // ...and the render-manager clamp holds the visible SUN (the field-time
-        // tick alone does not - the sun rides its own accumulator). Resolve the
-        // engine-object global here; the manager itself is read live each Tick.
-        {
-            const uintptr_t g = mem::FindPattern(kSig_TodEngineGlobal);
-            if (!g || mem::CountMatches(kSig_TodEngineGlobal, 2) != 1)
-            {
-                LOG_WARN("world: TOD engine-global signature NOT FOUND - sun freeze disabled.");
-                ok = false;
-            }
-            else
-            {
-                g_todEngineGlobal = mem::ResolveRipAt(g + kOff_TodEngineGlobal_Mov,
-                                                      kLen_TodEngineGlobal_Mov);
-                if (g_todEngineGlobal < kMinPointer)
                 {
-                    LOG_ERR("world: TOD engine-global resolved out of range - sun freeze disabled.");
-                    g_todEngineGlobal = 0;
-                    ok = false;
+                    // Flag: disp32 of `cmp cs:byte_606B9CE, 1` (an imm follows the disp,
+                    // so resolve from the explicit disp/next-instr rather than ResolveRipAt).
+                    g_flagAddr = mem::ResolveRip(m + kOff_GameSpeed_FlagDisp, m + kOff_GameSpeed_FlagEnd);
+                    // Value: `vmovss xmm0, cs:dword_615A4F0` - a standard RIP instr (disp
+                    // at its tail), so ResolveRipAt handles it.
+                    g_valueAddr = mem::ResolveRipAt(m + kOff_GameSpeed_ValueVmovss, kLen_GameSpeed_Vmovss);
+
+                    if (g_flagAddr < kMinPointer || g_valueAddr < kMinPointer)
+                    {
+                        LOG_ERR("world: game-speed globals resolved out of range - Game Speed disabled.");
+                        g_flagAddr = g_valueAddr = 0;
+                    }
+                    else
+                    {
+                        // Patch the one-shot conditional check in the override block (offset +28)
+                        // so forced delta applies continuously on every sub-tick.
+                        g_speedPatchAddr = m + 28;
+                        memcpy(g_speedOrigBytes, reinterpret_cast<const void*>(g_speedPatchAddr), sizeof(g_speedOrigBytes));
+                        DWORD oldProt = 0;
+                        if (VirtualProtect(reinterpret_cast<void*>(g_speedPatchAddr), sizeof(g_speedOrigBytes), PAGE_EXECUTE_READWRITE, &oldProt))
+                        {
+                            memset(reinterpret_cast<void*>(g_speedPatchAddr), 0x90, sizeof(g_speedOrigBytes));
+                            VirtualProtect(reinterpret_cast<void*>(g_speedPatchAddr), sizeof(g_speedOrigBytes), oldProt, &oldProt);
+                            FlushInstructionCache(GetCurrentProcess(), reinterpret_cast<void*>(g_speedPatchAddr), sizeof(g_speedOrigBytes));
+                        }
+                        else
+                            g_speedPatchAddr = 0;
+                        LOG_OK("world: game-speed globals resolved - Game Speed ready.");
+                    }
+                }
+            }
+
+            // Time of Day resolves independently - Game Speed still works if this
+            // signature drifts, and vice versa. Advance needs the clock globals...
+            if (!g_timeClient && !ResolveFieldTimeGlobals())
+                LOG_WARN("world: field-clock signature NOT FOUND - Advance Time disabled.");
+
+            // ...Freeze needs the field-time tick hook (zeroes the clock's delta,
+            // which holds the numeric clock)...
+            // Independent of both the globals above and Game Speed - each can drift
+            // without disabling the others.
+            if (!oFieldTimeTick)
+                mem::InstallHookAny("world: field-time tick",
+                                    {kSig_FieldTimeTick, kSig_FieldTimeTick_TU3479_Candidate},
+                                    "Freeze Time of Day and Shift Time disabled",
+                                    reinterpret_cast<void*>(hkFieldTimeTick),
+                                    reinterpret_cast<void**>(&oFieldTimeTick),
+                                    &g_fieldTimeTickTarget, &g_fieldTimeTickWhich);
+
+            // ...and the render-manager clamp holds the visible SUN (the field-time
+            // tick alone does not - the sun rides its own accumulator). Resolve the
+            // engine-object global here; the manager itself is read live each Tick.
+            if (!g_todEngineGlobal)
+            {
+                const uintptr_t g = mem::FindPattern(kSig_TodEngineGlobal);
+                if (!g || mem::CountMatches(kSig_TodEngineGlobal, 2) != 1)
+                    LOG_WARN("world: TOD engine-global signature NOT FOUND - sun freeze disabled.");
+                else
+                {
+                    g_todEngineGlobal = mem::ResolveRipAt(g + kOff_TodEngineGlobal_Mov,
+                                                          kLen_TodEngineGlobal_Mov);
+                    if (g_todEngineGlobal < kMinPointer)
+                    {
+                        LOG_ERR("world: TOD engine-global resolved out of range - sun freeze disabled.");
+                        g_todEngineGlobal = 0;
+                    }
                 }
             }
         }
 
-        return ok;
+        // shortcut: no Tick()-driven retry here (removed 2026-11-02) - a
+        // live run proved these never actually resolve on retry on this
+        // build (3+ minutes, zero successes), so re-scanning every ~2-15s
+        // only burned game-thread time re-running several multi-candidate
+        // AOB scans back to back, which is what froze the game. Re-add a
+        // retry only once a specific signature is confirmed to be a
+        // transient packing-timing miss (like player.cpp's damage-apply),
+        // not a permanently moved one.
+    }
+
+    bool World::Install()
+    {
+        ResolveWorldHooks();
+        return oMasterFrameUpdate || (g_flagAddr && g_valueAddr) || oFieldTimeTick;
     }
 
     void World::Tick()
@@ -462,6 +479,32 @@ namespace trinity::game
     bool World::TimeOfDayReady()
     {
         return g_fieldTimeTickTarget && g_timeClient >= kMinPointer && g_timeServer >= kMinPointer;
+    }
+
+    mem::SigStatus World::Status()
+    {
+        // Two independent mechanisms both drive Game Speed (see Install()) -
+        // Ready() is their OR, so Dead here means both failed; Ok needs the
+        // hook path clean on its current-build pattern AND the globals found.
+        if (!Ready()) return mem::SigStatus::Dead;
+        const mem::SigStatus hook    = oMasterFrameUpdate ? mem::StatusOf(true, g_masterFrameWhich)
+                                                           : mem::SigStatus::Dead;
+        const mem::SigStatus globals = (g_flagAddr >= kMinPointer && g_valueAddr >= kMinPointer)
+                                            ? mem::SigStatus::Ok : mem::SigStatus::Dead;
+        return (hook == mem::SigStatus::Ok && globals == mem::SigStatus::Ok) ? mem::SigStatus::Ok
+                                                                              : mem::SigStatus::Fallback;
+    }
+
+    mem::SigStatus World::TimeOfDayStatus()
+    {
+        // The numeric clock (tick hook + globals) is required outright; the
+        // separate sun-clamp lever (g_todEngineGlobal) only holds the VISIBLE
+        // sun - missing it freezes the clock but lets the sun keep moving, so
+        // that is a Fallback, not a Dead.
+        if (!TimeOfDayReady()) return mem::SigStatus::Dead;
+        const mem::SigStatus hook = mem::StatusOf(true, g_fieldTimeTickWhich);
+        const mem::SigStatus sun  = g_todEngineGlobal >= kMinPointer ? mem::SigStatus::Ok : mem::SigStatus::Fallback;
+        return mem::Worse(hook, sun);
     }
 
     bool World::AdvanceTimeOfDayHours(int hours)

@@ -47,7 +47,8 @@ namespace trinity::ui
     static void FitLabel(char* out, size_t cap, const char* label, float availW);
 
     static RowResult RowBase(const char* label, const char* desc, RowKind kind,
-                             const char* itemIcon = nullptr)
+                             const char* itemIcon = nullptr,
+                             mem::SigStatus status = mem::SigStatus::Ok)
     {
         // Every row in the menu passes through here, so translating at this one
         // point covers the whole UI - no call site has to know localisation
@@ -96,7 +97,8 @@ namespace trinity::ui
         if (r.selected)
         {
             snprintf(g_selectedDesc, sizeof(g_selectedDesc), "%s", desc ? desc : "");
-            g_hintKind   = kind;
+            g_hintKind      = kind;
+            g_selectedStatus = status;
             r.activated |= g_nav.select;
             r.left       = g_nav.left;
             r.right      = g_nav.right;
@@ -127,6 +129,29 @@ namespace trinity::ui
             }
 
             float textX = r.mn.x + 14.0f * s;
+
+            // Signature-health dot, before everything else on the row - see
+            // mem::SigStatus. Drawn on every row of a kind that actually
+            // carries a `status` argument (Action/Toggle/Value/ToggleValue/
+            // ValueAction/Submenu - see widgets.h), not only the selected
+            // one, so a whole page reads at a glance without having to step
+            // through each entry to see the hint panel's dot. Other kinds
+            // (Choice - Combo/SwatchRow -, Search, Item, ItemAdd, Bind, None)
+            // have no single feature-signature to show and skip it, so the
+            // dot never collides with SwatchRow's own left-aligned swatches.
+            const bool wantsStatusDot =
+                kind == RowKind::Action || kind == RowKind::Toggle || kind == RowKind::Value ||
+                kind == RowKind::ToggleValue || kind == RowKind::ValueAction || kind == RowKind::Submenu;
+            if (wantsStatusDot)
+            {
+                const float  dotR = 3.5f * s;
+                const ImU32  dotCol = status == mem::SigStatus::Dead     ? theme::LedDead
+                                    : status == mem::SigStatus::Fallback ? theme::LedFallback
+                                                                         : theme::LedOk;
+                dl->AddCircleFilled(ImVec2(textX + dotR, (r.mn.y + r.mx.y) * 0.5f), dotR, dotCol);
+                textX += dotR * 2.0f + 8.0f * s;
+            }
+
             if (itemIcon)
             {
                 const float  inset = 4.0f * s;
@@ -315,9 +340,9 @@ namespace trinity::ui
     }
 
     // --- Widgets --------------------------------------------------------------------
-    bool Option(const char* label, const char* desc)
+    bool Option(const char* label, const char* desc, mem::SigStatus status)
     {
-        return RowBase(label, desc, RowKind::Action).activated;
+        return RowBase(label, desc, RowKind::Action, nullptr, status).activated;
     }
 
     bool OptionRemovable(const char* label, const char* desc, bool* outRemove)
@@ -378,9 +403,9 @@ namespace trinity::ui
     }
 
     template <typename T>
-    bool Toggle(const char* label, T* value, const char* desc)
+    bool Toggle(const char* label, T* value, const char* desc, mem::SigStatus status)
     {
-        RowResult  r       = RowBase(label, desc, RowKind::Toggle);
+        RowResult  r       = RowBase(label, desc, RowKind::Toggle, nullptr, status);
         const bool changed = r.activated || r.left || r.right;
         if (changed)
             *value = !*value;
@@ -399,9 +424,10 @@ namespace trinity::ui
 
     template <typename T>
     bool FloatOption(const char* label, T* value, float minV, float maxV,
-                     float step, float defV, const char* fmt, const char* desc)
+                     float step, float defV, const char* fmt, const char* desc,
+                     mem::SigStatus status)
     {
-        RowResult r       = RowBase(label, desc, RowKind::Value);
+        RowResult r       = RowBase(label, desc, RowKind::Value, nullptr, status);
         bool      changed = false;
         bool      editing = (s_editPtr == value);
 
@@ -466,9 +492,9 @@ namespace trinity::ui
     template <typename B, typename T>
     bool ToggleFloat(const char* label, B* enabled, T* value,
                      float minV, float maxV, float step, float defV,
-                     const char* fmt, const char* desc)
+                     const char* fmt, const char* desc, mem::SigStatus status)
     {
-        RowResult r       = RowBase(label, desc, RowKind::ToggleValue);
+        RowResult r       = RowBase(label, desc, RowKind::ToggleValue, nullptr, status);
         bool      changed = false;
 
         // Enter / A / click flips the switch; Left/Right drive the value.
@@ -527,9 +553,9 @@ namespace trinity::ui
     template <typename B, typename T>
     bool ToggleInt(const char* label, B* enabled, T* value,
                    int minV, int maxV, int step, int defV,
-                   const char* desc)
+                   const char* desc, mem::SigStatus status)
     {
-        RowResult r       = RowBase(label, desc, RowKind::ToggleValue);
+        RowResult r       = RowBase(label, desc, RowKind::ToggleValue, nullptr, status);
         bool      changed = false;
 
         // Enter / A / click flips the switch; Left/Right drive the value.
@@ -584,9 +610,9 @@ namespace trinity::ui
     }
 
     bool IntOption(const char* label, int* value, int minV, int maxV,
-                   int step, int defV, const char* desc)
+                   int step, int defV, const char* desc, mem::SigStatus status)
     {
-        RowResult r       = RowBase(label, desc, RowKind::Value);
+        RowResult r       = RowBase(label, desc, RowKind::Value, nullptr, status);
         bool      changed = false;
         bool      editing = (s_editPtr == value);
 
@@ -651,9 +677,9 @@ namespace trinity::ui
     // IntOption's sibling that fires on commit rather than reporting every
     // change - see widgets.h for why Enter can be both the edit and the action.
     bool IntAction(const char* label, int* value, int minV, int maxV,
-                   int step, int defV, const char* desc)
+                   int step, int defV, const char* desc, mem::SigStatus status)
     {
-        RowResult r       = RowBase(label, desc, RowKind::ValueAction);
+        RowResult r       = RowBase(label, desc, RowKind::ValueAction, nullptr, status);
         bool      fired   = false;
         bool      editing = (s_editPtr == value);
 
@@ -750,14 +776,15 @@ namespace trinity::ui
         return changed;
     }
 
-    bool Submenu(const char* label, const char* id, const char* desc)
+    bool Submenu(const char* label, const char* id, const char* desc, mem::SigStatus status)
     {
-        return SubmenuItem(label, nullptr, id, desc);
+        return SubmenuItem(label, nullptr, id, desc, status);
     }
 
-    bool SubmenuItem(const char* label, const char* icon, const char* id, const char* desc)
+    bool SubmenuItem(const char* label, const char* icon, const char* id, const char* desc,
+                     mem::SigStatus status)
     {
-        RowResult r = RowBase(label, desc, RowKind::Submenu, icon);
+        RowResult r = RowBase(label, desc, RowKind::Submenu, icon, status);
         if (r.drawn)
         {
             ImDrawList* dl = DL();
@@ -1378,13 +1405,13 @@ namespace trinity::ui
     }
 
     // Both local UI values and shared atomic settings use the same widgets.
-    template bool Toggle<bool>(const char*, bool*, const char*);
-    template bool FloatOption<float>(const char*, float*, float, float, float, float, const char*, const char*);
-    template bool ToggleFloat<bool, float>(const char*, bool*, float*, float, float, float, float, const char*, const char*);
-    template bool ToggleInt<bool, int>(const char*, bool*, int*, int, int, int, int, const char*);
-    template bool Toggle<std::atomic<bool>>(const char*, std::atomic<bool>*, const char*);
-    template bool FloatOption<std::atomic<float>>(const char*, std::atomic<float>*, float, float, float, float, const char*, const char*);
-    template bool ToggleFloat<std::atomic<bool>, std::atomic<float>>(const char*, std::atomic<bool>*, std::atomic<float>*, float, float, float, float, const char*, const char*);
-    template bool ToggleInt<std::atomic<bool>, std::atomic<int>>(const char*, std::atomic<bool>*, std::atomic<int>*, int, int, int, int, const char*);
+    template bool Toggle<bool>(const char*, bool*, const char*, mem::SigStatus);
+    template bool FloatOption<float>(const char*, float*, float, float, float, float, const char*, const char*, mem::SigStatus);
+    template bool ToggleFloat<bool, float>(const char*, bool*, float*, float, float, float, float, const char*, const char*, mem::SigStatus);
+    template bool ToggleInt<bool, int>(const char*, bool*, int*, int, int, int, int, const char*, mem::SigStatus);
+    template bool Toggle<std::atomic<bool>>(const char*, std::atomic<bool>*, const char*, mem::SigStatus);
+    template bool FloatOption<std::atomic<float>>(const char*, std::atomic<float>*, float, float, float, float, const char*, const char*, mem::SigStatus);
+    template bool ToggleFloat<std::atomic<bool>, std::atomic<float>>(const char*, std::atomic<bool>*, std::atomic<float>*, float, float, float, float, const char*, const char*, mem::SigStatus);
+    template bool ToggleInt<std::atomic<bool>, std::atomic<int>>(const char*, std::atomic<bool>*, std::atomic<int>*, int, int, int, int, const char*, mem::SigStatus);
 }
 

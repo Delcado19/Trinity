@@ -2,6 +2,8 @@
 
 #include <cstdint>
 
+#include "../mem/hooks.h"
+
 namespace trinity::game
 {
     // Player stat features (God Mode, Infinite Stamina, Infinite Spirit) and
@@ -51,6 +53,13 @@ namespace trinity::game
 
         // True once at least one protagonist's health entry has been observed.
         static bool Ready();
+
+        // Health of the backing signatures, for the menu's status dot - see
+        // mem::SigStatus. Independent of Ready(): these answer "did this
+        // build's hook resolve, and on which pattern", not "is a player
+        // currently loaded to act on".
+        static mem::SigStatus StatCommitStatus();  // God Mode / Infinite Stamina / Infinite Spirit
+        static mem::SigStatus DamageApplyStatus();  // One-Hit Kill / damage multipliers / No Fall Damage
 
         // Actor objects of the tracked protagonists (0 when the slot is empty).
         static int ActorCount();

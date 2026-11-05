@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "../mem/hooks.h"
+
 namespace trinity::game
 {
     // Inventory browser / editor. See offsets.h (kSig_InvCoreGlobal,
@@ -46,6 +48,14 @@ namespace trinity::game
         // True once a live inventory holder resolves (usually immediately
         // after load via the global walk).
         static bool Ready();
+
+        // Health of the backing signatures, for the menu's status dot - see
+        // mem::SigStatus. Independent of Ready(): these answer "did this
+        // build's hooks resolve", not "is a holder currently loaded".
+        static mem::SigStatus Status();          // core browse/edit path
+        static mem::SigStatus SlotSizeStatus();   // slot-expansion setter
+        static mem::SigStatus AddItemStatus();    // the five add-item primitives
+        static mem::SigStatus NoBountyStatus();   // WantedInfo table
 
         // Rebuild the grouped snapshot from live memory. Throttled internally,
         // so it is safe to call every frame while the inventory menu is open.

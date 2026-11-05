@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "../mem/hooks.h"
+
 namespace trinity::game
 {
     // Armor dye / material / repair-condition editor - the dyehouse, from the
@@ -33,6 +35,11 @@ namespace trinity::game
         // reads back sane. False until the player has loaded into the world
         // (or, worst case, until they change any equipment piece once).
         static bool Ready();
+
+        // Health of the backing signatures, for the menu's status dot - see
+        // mem::SigStatus. Named HookStatus (not Status) because OpState's own
+        // getter below is already called Status().
+        static mem::SigStatus HookStatus();
 
         // --- Equipped-slot snapshot (menu side; guarded reads only) ---------
         // Rebuilt on every call cheap enough for a menu frame: the table is

@@ -1,3 +1,10 @@
+## Start here
+
+Read `CONTINUE.md` first for current branch status, in-progress fixes, and
+what's explicitly requested but not yet done. It also documents a repo
+policy (no third-party trainer names/URLs in code comments or docs) that
+applies to any further RE work in this project.
+
 ## graphify
 
 This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.

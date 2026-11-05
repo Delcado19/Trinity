@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../mem/hooks.h"
+
 namespace trinity::game
 {
     // Easy Parry.
@@ -33,5 +35,10 @@ namespace trinity::game
         static bool Available(); // was the site found?
         static bool Enabled();
         static void SetEnabled(bool on);
+
+        // Health of the backing signature, for the menu's status dot - see
+        // mem::SigStatus. Ok = preferred evaluator hook; Fallback = degraded
+        // verdict-patch mode; Dead = neither site found.
+        static mem::SigStatus Status();
     };
 }

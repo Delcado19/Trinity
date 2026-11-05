@@ -46,6 +46,11 @@ namespace trinity::game
         // stat feature below is inert (RefreshSelf no-ops).
         uintptr_t g_charMgrGlobal = 0;
 
+        // Defined after WalkSelfChain below (needs IsPlayerClass/WalkSelfChain);
+        // forward-declared here so ResolveCharMgrGlobal can use it as a
+        // last-resort fallback when every byte-pattern anchor is dead.
+        bool StructurallyValidCharMgrGlobal(uintptr_t candidate);
+
         // Resolve the char-manager global by consensus across kCharMgrAnchors.
         // Each anchor is an independent call site that RIP-resolves the same
         // global, so they act as each other's check: we take the value the most
@@ -74,7 +79,25 @@ namespace trinity::game
                 if (i == distinct) { vals[distinct] = g; votes[distinct] = 1; ++distinct; }
             }
 
-            if (!distinct) return 0;
+            if (!distinct)
+            {
+                // Every anchor dead (first seen on build 3527) - try the raw
+                // RVA fallback, gated to the exact revision it was observed
+                // on and structurally re-validated before trusting it.
+                if (CurrentGameVersion().revision == kCharMgrGlobal_RVA_Revision)
+                {
+                    const mem::ModuleRegion& mod = mem::GameModule();
+                    const uintptr_t candidate = mod.base + kCharMgrGlobal_RVA_3527;
+                    if (StructurallyValidCharMgrGlobal(candidate))
+                    {
+                        LOG_WARN("player: char-manager anchors all dead (0/%d) - using raw "
+                                 "RVA fallback for build %u, structurally validated.",
+                                 kN, CurrentGameVersion().revision);
+                        return candidate;
+                    }
+                }
+                return 0;
+            }
 
             int best = 0;
             for (int i = 1; i < distinct; ++i)
@@ -129,6 +152,7 @@ namespace trinity::game
         using StatCommit_t = int64_t(__fastcall*)(void* entry, int64_t time, int64_t target, uint16_t flag);
         StatCommit_t oStatCommit = nullptr;
         void* g_commitTarget = nullptr;
+        size_t g_statCommitWhich = 0; // matched pattern index - see StatCommitStatus()
 
         // Damage-apply dispatcher (pa_StatApplyDelta / IDB sub_145B2A0) - one
         // level above the commit funnel, the only site where a battle hit
@@ -237,6 +261,36 @@ namespace trinity::game
             out->targetOwner = static_cast<uintptr_t>(root);
             out->statArray   = static_cast<uintptr_t>(arr);
             return true;
+        }
+
+        // See the forward declaration above ResolveCharMgrGlobal. Accepts a
+        // candidate char-manager global slot only if it actually leads to a
+        // player-class character whose vital chain resolves - the same
+        // acceptance test TickResolveSelf uses for a live character, applied
+        // here to the manager pointer itself before any feature trusts it.
+        bool StructurallyValidCharMgrGlobal(uintptr_t candidate)
+        {
+            uint64_t p = 0, mgr = 0, data = 0;
+            if (!Read64(candidate, &p) || p < kMinPointer) return false;
+            if (!Read64(static_cast<uintptr_t>(p), &mgr) || mgr < kMinPointer) return false;
+            if (!Read64(static_cast<uintptr_t>(mgr) + kOff_CharMgr_ListData, &data) ||
+                data < kMinPointer)
+                return false;
+            uint32_t count = 0;
+            if (!Read32(static_cast<uintptr_t>(mgr) + kOff_CharMgr_ListCount, &count) ||
+                count == 0 || count > kCharList_MaxCount)
+                return false;
+
+            for (uint32_t i = 0; i < count && i < 64; ++i)
+            {
+                uint64_t ch = 0;
+                if (!Read64(static_cast<uintptr_t>(data) + 8ull * i, &ch) || ch < kMinPointer)
+                    continue;
+                if (!IsPlayerClass(static_cast<uintptr_t>(ch))) continue;
+                SelfChain c;
+                if (WalkSelfChain(static_cast<uintptr_t>(ch), &c)) return true;
+            }
+            return false;
         }
 
         // Recompute the player set's identities and stat entries from a fresh
@@ -397,6 +451,30 @@ namespace trinity::game
                     s_reported = true;
                     LOG("player: stat scan over %d entries - %d stamina, %d spirit gauge(s).",
                         kStatArray_ScanEntries, nStam - stamBefore, nSpir - spirBefore);
+
+                    // One-shot cross-check: CrimsonInvEditor v11.2's debug strings claim
+                    // fixed inline offsets root+0x6C8/+0x6D8 (stamina cur/max) and
+                    // root+0x758/+0x768 (spirit cur/max), independent of our own
+                    // kSig_StatCommit hook (dead since 3462, see gameversion.cpp) - if
+                    // those line up with our own type-scanned entries' Current/Cap here,
+                    // it is a hook-free fallback path for God Mode's stamina/spirit legs
+                    // on builds where StatCommit stays dead. Remove once checked.
+                    for (int j = stamBefore; j < nStam; ++j)
+                    {
+                        const uintptr_t e = g_stamEntries[j].load(std::memory_order_relaxed);
+                        LOG("player: stamina gauge[%d] entry root+0x%llX, current root+0x%llX, cap root+0x%llX",
+                            j, static_cast<unsigned long long>(e - c.targetOwner),
+                            static_cast<unsigned long long>(e + kOff_StatEntry_Current - c.targetOwner),
+                            static_cast<unsigned long long>(e + kOff_StatEntry_Cap - c.targetOwner));
+                    }
+                    for (int j = spirBefore; j < nSpir; ++j)
+                    {
+                        const uintptr_t e = g_spiritEntries[j].load(std::memory_order_relaxed);
+                        LOG("player: spirit gauge[%d] entry root+0x%llX, current root+0x%llX, cap root+0x%llX",
+                            j, static_cast<unsigned long long>(e - c.targetOwner),
+                            static_cast<unsigned long long>(e + kOff_StatEntry_Current - c.targetOwner),
+                            static_cast<unsigned long long>(e + kOff_StatEntry_Cap - c.targetOwner));
+                    }
                 }
             }
 
@@ -639,17 +717,22 @@ namespace trinity::game
             // source) when the primary (TU 2.00.00) pattern does not match, then
             // to the build 3460 candidate (offsets.h: same field layout as the
             // TU20100 candidate, re-derived via Ghidra after that one dropped to
-            // zero matches on a targeted recompile of just this function). Safe
-            // to attempt: this hook only ever writes through PinEntry, and
-            // PinEntry only ever touches an entry already present in the
-            // WalkSelfChain-validated player sets above - so a wrong calling-
-            // convention guess here cannot touch unrelated memory, it can at
-            // worst do nothing (the entry pointer just never matches).
+            // zero matches on a targeted recompile of just this function), then
+            // to the build 3479 candidate (offsets.h: same head/tail bytes again,
+            // re-derived via helper-callee relocation diffing after the 3460
+            // candidate regressed to zero on 3462). Safe to attempt: this hook
+            // only ever writes through PinEntry, and PinEntry only ever touches
+            // an entry already present in the WalkSelfChain-validated player
+            // sets above - so a wrong calling-convention guess here cannot touch
+            // unrelated memory, it can at worst do nothing (the entry pointer
+            // just never matches).
             if (!oStatCommit)
                 mem::InstallHookAny("player: stat-commit",
-                                    {kSig_StatCommit, kSig_StatCommit_TU20100_Candidate, kSig_StatCommit_TU3460_Candidate},
+                                    {kSig_StatCommit, kSig_StatCommit_TU20100_Candidate,
+                                     kSig_StatCommit_TU3460_Candidate, kSig_StatCommit_TU3479_Candidate,
+                                     kSig_StatCommit_TU3527_Candidate},
                                     "God Mode / Infinite Stamina / Infinite Spirit disabled",
-                                    &hkStatCommit, &oStatCommit, &g_commitTarget);
+                                    &hkStatCommit, &oStatCommit, &g_commitTarget, &g_statCommitWhich);
 
             // Hook the damage-apply dispatcher for the damage multipliers.
             // Non-fatal if it fails - only the multipliers are lost.
@@ -836,6 +919,18 @@ namespace trinity::game
     bool Player::Ready()
     {
         return g_hpEntries[0].load(std::memory_order_relaxed) >= kMinPointer;
+    }
+
+    mem::SigStatus Player::StatCommitStatus()
+    {
+        return mem::StatusOf(oStatCommit != nullptr, g_statCommitWhich);
+    }
+
+    mem::SigStatus Player::DamageApplyStatus()
+    {
+        // Single-pattern hook (InstallHook, not InstallHookAny) - no fallback
+        // concept, so only Dead or Ok ever apply.
+        return oDamageApply ? mem::SigStatus::Ok : mem::SigStatus::Dead;
     }
 
 }

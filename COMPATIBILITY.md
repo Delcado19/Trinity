@@ -52,7 +52,7 @@ single match means only that the byte sequence exists once.
 | Boss death/quest completion | REQUIRED TEST | Must wait for isolated damage/death validation |
 | Position tracking | LIKELY-VERIFIED (2026-09-10) | Unique match retains the seven-argument integrator and `+0x90`/`+0xC0`/`+0xD0` roles; player exclusivity is unverified. `kSig_MoveUpdate` (the fatal signature) installed cleanly (log: `teleport: pathing helper hook installed @ 0x1435C8000`); a live coordinate warp completed with target-world and observed-world matching exactly (`teleport: warp complete target-world -9406.24 564.77 -4562.35 ... observed-world -9406.24 564.77 -4562.35`). Super Jump also confirmed working by the user in the same session. |
 | Locomotion/Super Run | VERIFIED (2026-09-10) | Old `kSig_LocoStepper` dead; `kSig_LocoStepper_TU20100_Candidate` (found by walking the airborne-mover anchor to its callee, see "LocoStepper" section) installed live at exactly the predicted RVA (log: `teleport: locomotion-stepper hook installed @ 0x1435BE940`, matching Ghidra's `ENTRY=1435be940`). Confirmed working in real play by the user. |
-| Fast travel | LIVE-CONFIRMED with our own build (2026-09-29, bell, v0.18.0 on 2976). Was: OFFLINE-FIXED, NOT YET LIVE-TESTED. 2026-09-29 user teleports (shops + a bell, all worked on 2976) ran on the THIRD-PARTY vTweak v1.4.2 `Trinity.asi` (Trinity.log: "built Sep 20 2026", 2.4 MB, dated 09-25), not on our build (`build\Release\Trinity.asi`, 1.1 MB, 09-28 23:46, not deployed) - so it does not validate our port | `kSig_TravelToNode`'s old three-argument pattern is permanently dead since TU 2.03.00 recompiled the function with a new fourth (mode) argument; ported gugi97's fixed pattern + `kTravelMode_Node` (upstream commit e5b3303, live-tested by gugi on 2944). Re-checked offline against our own installed 2976 exe: one match @ RVA `0x655110` (`0x655110-0x6550B0=0x60` above gugi's 2944 address, plausible build drift). The menu also needs `ResolveTableResolver(kStr_GimmickSceneTable, ...)` (scene-registry) to populate the catalog - unchanged since our shared history with gugi (0-line diff, no commit on either side touched it since merge-base `7ad5fb1`), so it should resolve the same way it did in gugi's live-tested 2944 session, but this is inference, not our own re-check; an empty menu on live test means this, not `TravelToNode`, is the problem. `kSig_DestinationUpdate` (a separate capability, "Teleport to Destination" via map marker) stays at 0 matches on 2976 (confirmed via `audit.py`, 2026-09-28) - inert, not a live bug. See "Fast travel port from upstream gugi" below |
+| Fast travel | LIVE-CONFIRMED with our own build (2026-09-29, bell, v0.18.0 on 2976). Was: OFFLINE-FIXED, NOT YET LIVE-TESTED. 2026-09-29 user teleports (shops + a bell, all worked on 2976) ran on A FOREIGN FORK'S `Trinity.asi` (Trinity.log: "built Sep 20 2026", 2.4 MB, dated 09-25), not on our build (`build\Release\Trinity.asi`, 1.1 MB, 09-28 23:46, not deployed) - so it does not validate our port | `kSig_TravelToNode`'s old three-argument pattern is permanently dead since TU 2.03.00 recompiled the function with a new fourth (mode) argument; ported gugi97's fixed pattern + `kTravelMode_Node` (upstream commit e5b3303, live-tested by gugi on 2944). Re-checked offline against our own installed 2976 exe: one match @ RVA `0x655110` (`0x655110-0x6550B0=0x60` above gugi's 2944 address, plausible build drift). The menu also needs `ResolveTableResolver(kStr_GimmickSceneTable, ...)` (scene-registry) to populate the catalog - unchanged since our shared history with gugi (0-line diff, no commit on either side touched it since merge-base `7ad5fb1`), so it should resolve the same way it did in gugi's live-tested 2944 session, but this is inference, not our own re-check; an empty menu on live test means this, not `TravelToNode`, is the problem. `kSig_DestinationUpdate` (a separate capability, "Teleport to Destination" via map marker) stays at 0 matches on 2976 (confirmed via `audit.py`, 2026-09-28) - inert, not a live bug. See "Fast travel port from upstream gugi" below |
 | Inventory read/write | LIKELY (browse-only), re-derived 2026-09-10 | Both FATAL signatures (`kSig_InvGetItemQty`, `kSig_InvGetHolder`) now resolve; `kSig_InvCoreGlobal` also fixed, so the durable container walk populates the list without waiting on the HUD. Quantity edits do NOT persist yet (`kSig_InvCommit`/`kSig_InvHolderInsert`, the server-holder capture paths, still dead) and Add Item/Slot Size are still refused (their own signatures still dead). See "Inventory re-derived via a Cheat Engine table" below. NOT yet live-tested |
 | Localization lookup | UNKNOWN | `kSig_LocStringGet` has one match; semantics unverified |
 | Time of day | BROKEN | ToD global survives; master/tick/realm paths do not |
@@ -382,20 +382,17 @@ pending the singleton-class result.
 
 ### Community cross-check (Cheat Engine tables) - no dynamic "current player" pointer exists either
 
-Checked the two active FearlessRevolution Crimson Desert CE-table threads
-(forum topics 38679 "MPElite" table, now at v21/"final release", and 38655
-"N3rveMods" table) plus the "Marcus101RR" table on Nexus Mods
-(nexusmods.com/crimsondesert/mods/64) as an external cross-reference, since
-none of this project's own static analysis has found a live "currently
+Checked three community Cheat Engine tables as an external cross-reference,
+since none of this project's own static analysis has found a live "currently
 controlled body" resolver on this build.
 
 Result: none of the three community tables expose a dynamic "current
-player" pointer either. The Nexus table's feature list is explicit:
+player" pointer either. One table's feature list is explicit:
 **"Character Pointers: Kliff, Damiane, Oongka"** - three separate, fixed,
 per-name pointers (one per party member), not one pointer that follows
 whichever body is under player control. Its own description calls this
-"the basic party data for all 3 characters." The two FearlessRevolution
-tables (health/stamina/damage/inventory cheats) likewise key off a
+"the basic party data for all 3 characters." The other two tables
+(health/stamina/damage/inventory cheats) likewise key off a
 one-time "load player pointers" resolve step (mentioned by a user hitting
 a crash on it after a game update) rather than a per-tick re-resolve of
 "whoever is active right now."
@@ -762,8 +759,8 @@ executable, same SHA-256, same RVA `0x1718500`, section `.data2`) even
 after 5 real hours including presumably plenty of combat (so the actual
 function obviously executes - our hook just never attaches to it).**
 
-**Further live investigation, 2026-09-08 afternoon (with CDLoot/CrimsonRoute/
-FreedomFlyer/LETMESLEEP all disabled - only `Trinity.asi` loaded):** the
+**Further live investigation, 2026-09-08 afternoon (with every other
+third-party ASI mod disabled - only `Trinity.asi` loaded):** the
 "another mod's hook collides here" theory is now RULED OUT - the JMP is
 still there with zero other ASI mods present. External `ReadProcessMemory`
 at `moduleBase + 0x1718500` consistently shows a 5-byte `E9` (JMP rel32)
@@ -856,7 +853,7 @@ entries below for current status.
 ### Teleport signatures: started re-deriving via the same live cross-reference (2026-09-08)
 
 Following the character-manager breakthrough's method: gugi97's working
-v0.19.0 build (Nexus mods/3252, confirmed by the user to be running) logs
+v0.19.0 build (a public release, confirmed by the user to be running) logs
 live addresses for several teleport pieces at startup. Converted to RVAs
 (image base `0x140000000`, unchanged all session):
 
@@ -1356,8 +1353,8 @@ padding (capped walks; on failure Free Flight is disabled, Super Run/Jump are
 unaffected). Derived size is `0x9CC` on 2760, 2949 and 2976, and the 2949 bounds
 equal gugi's live-logged 2944 range + 0x10. Not yet live-tested by us.
 
-Third-party cross-checks (Nexus #3209 Ultimate Table v5.7.5 / trainer v6.9.5,
-see memory `reference-crimsoninveditor-ct`): realm byte `0x1FD`, ItemInfo
+Third-party cross-checks (a third-party inventory/stats editor trainer,
+see memory `reference-trainer-inventory-editor`): realm byte `0x1FD`, ItemInfo
 max-durability `+0x400` and placement record 224 all match our constants; they
 date those shifts to 2.0 (2625), not 2760. Their inventory persistence works by
 also writing the authoritative parallel array (found by heap scan, identified by
@@ -1380,13 +1377,12 @@ One-Hit Kill working is notable: on 2760 `kSig_DamageApply` never resolved live
 (see "Damage application" above). Either the 2.03.x exe made the signature
 resolve or the damage path changed - check the log for `kSig_DamageApply` before
 updating that table row. Fork-independent leads for the remaining dead
-features live in github.com/shin2344234 (flight-freedom, private-storage-master,
-stamina-master, bounty-teleportation, master-looter).
+features live in several of the same mod author's other third-party releases.
 
-#### Third-party oracle: Trinity v1.4.2 "vTweak by Lian" log on PE 2976 (2026-09-27)
+#### Third-party oracle: a foreign fork of this project's log on PE 2976 (2026-09-27)
 
 The user's live log (pasted, 07:33-07:57) is from a **different binary** than this
-repo ("v1.4.2 (vTweak by Lian)", built 2026-09-20; the string does not exist in
+repo (a foreign fork, built 2026-09-20; the string does not exist in
 this tree). It is therefore NOT verification of our signatures, but it is a
 working-build oracle on PE 1.0.0.2976 (TU 2.03.00 per its own detection). Image
 base 0x140000000; RVA = address - base:
@@ -1439,12 +1435,12 @@ log (see memory `live-confirm-2026-09-27`).
 
 **2026-09-29 live session was NOT our build:** the user teleported to several
 shops and a bell and everything worked on 2976, but `Trinity.log` in the game's
-`bin64` shows the loaded `Trinity.asi` is the third-party vTweak v1.4.2 (built
+`bin64` shows the loaded `Trinity.asi` is the foreign fork's build (built
 Sep 20; hooks the destination pin setter @ 0x143836DE8 and has a working
 map-marker teleport, hooks=5/5). Our port build was not deployed, so this
 neither confirms our `kSig_TravelToNode` fix nor the scene-registry catalog. To
 test ours: copy `build\Release\Trinity.asi` over the game's `Trinity.asi`
-(back up the vTweak one first) and repeat.
+(back up the foreign fork's one first) and repeat.
 
 `kSig_DestinationUpdate` ("Teleport to Destination" via the map/quest marker,
 a separate capability from node-list Fast Travel) stays at 0 matches on 2976
@@ -1462,7 +1458,7 @@ destination; hooking it warped the player to their own position. Gugi's fix
 instead reads the marker straight off the nav component (`kOff_NavComp_Dest`,
 no hook) via `Player::CharacterOwner()` and a new `kOff_Actor_NavComp` offset
 - none of which exist in our tree yet, so porting it is a bigger job than this
-one. The third-party vTweak oracle log's "destination pin setter hooked @
+one. The foreign-fork oracle log's "destination pin setter hooked @
 0x143836DE8" (RVA `0x3836DE8`) is an independent, unread lead for the same
 feature.
 
@@ -1476,11 +1472,11 @@ First live session with our own `Trinity.asi` (log: "v0.18.0, built Sep 28
   teleported to an Epidot mine. This path logs no warp line after the catalog.
 - **Teleport to Destination:** not working, as expected - `kSig_DestinationUpdate`
   NOT FOUND (0 matches on 2976), so the map marker is set but nothing warps.
-  Leads: vTweak's pin-setter hook (RVA `0x3836DE8`) or gugi's nav-component read.
+  Leads: the foreign fork's pin-setter hook (RVA `0x3836DE8`) or gugi's nav-component read.
 - **Fast Travel (node list):** works - user teleported to a bell (~09:48) with
   our own build, confirming the ported 4-arg `kSig_TravelToNode` and that the
   scene-registry catalog resolves on 2976. No log line was checked for it; the
-  earlier shop/bell teleports ran on the third-party vTweak build (see above).
+  earlier shop/bell teleports ran on the foreign fork's build (see above).
 
 ### Teleport to Destination: hook removed, nav-component read (2026-09-29)
 
@@ -1519,22 +1515,22 @@ logged as `delta -> delta*mult` (e.g. -51000 -> -153000 at x3, -155000 ->
 hook target in the log is `0x1417AE080`, matching the 2026-09-27 offline audit.
 Incoming multiplier and God Mode not re-checked in this session.
 
-### Signatures re-derived from the vTweak addresses on 2976 (2026-09-30)
+### Signatures re-derived from the foreign fork's addresses on 2976 (2026-09-30)
 
 Read from the installed 2976 exe with `tools/TrinitySignatureAudit` at the RVAs
-the third-party vTweak v1.4.2 build logged as working. Every address holds a
+the foreign fork's build logged as working. Every address holds a
 real function prologue and each candidate pattern is unique:
 
-| Function (vTweak label) | RVA | Result |
+| Function (foreign-fork label) | RVA | Result |
 |---|---|---|
 | Trust setter "SetNpc" | 0x1ECB810 | new `kSig_FriendlySetNpc_TU2030`, unique. Used. |
 | Trust setter "SetPet" | 0xDBB7750 | new `kSig_FriendlySetPet_TU2030`, unique. Used. |
-| Dye apply-batch | 0x9911F0 | unique, same (rcx,rdx,r8) prototype, registers renamed. **Not wired**: dye also needs `kSig_EquipBatch`, which has 0 matches, and vTweak logs no address for it. |
+| Dye apply-batch | 0x9911F0 | unique, same (rcx,rdx,r8) prototype, registers renamed. **Not wired**: dye also needs `kSig_EquipBatch`, which has 0 matches, and the foreign fork logs no address for it. |
 | Dye upsert | 0x240EA60 | unique, but our existing `..._TU20100_Candidate` matches a different function at 0x240E770 - unresolved which is right. |
-| Frame timer | 0xAD1300 | our master-frame hook is already here; Game Speed needs a different approach (vTweak scales dt in the frame timer), not just a signature. |
+| Frame timer | 0xAD1300 | our master-frame hook is already here; Game Speed needs a different approach (the foreign fork scales dt in the frame timer), not just a signature. |
 
 Trust: the record layout is unchanged (`movzx eax,[rdx+4]` group), the NPC/pet
-labels follow vTweak and only pick the cache-key group id. Not yet live-tested.
+labels follow the foreign fork and only pick the cache-key group id. Not yet live-tested.
 
 ### Easy Parry: evaluator hook + held-block pulse (2026-09-30)
 
@@ -1542,9 +1538,9 @@ Our old Easy Parry patched the verdict byte (`seta al` -> `mov al,1`, RVA
 `0x873A98`). That only forces the attacker-side timing verdict; a block that is
 HELD never parries because the game starts a parry on the press edge (measured
 by gugi97's fork, upstream `e0d287e`). Reported live: "Easy Parry on" but no
-effect. gugi's fork and the vTweak build both hook the whole evaluator
+effect. gugi's fork and the foreign fork's build both hook the whole evaluator
 (`kSig_ParryEvaluator`, one match at RVA `0x8738B0` on 2976, identical to
-vTweak's logged "just-window-eval hook @ 0x1408738B0"). Ported: the hook forces
+the foreign fork's logged "just-window-eval hook @ 0x1408738B0"). Ported: the hook forces
 the perfect flag and, at most every 250 ms while the window is open, releases
 and re-presses whatever is held (`hooks::PulseButtonRelease` on the pad,
 `SendInput` for keyboard/mouse). The old verdict patch remains as a fallback if
@@ -1554,7 +1550,7 @@ the evaluator pattern does not match. **Not yet live-tested by us.**
 
 A third-party trainer independently hooks the same
 function - its own strings call it the "just-window evaluator" with "two
-calls" (guard + evade), matching vTweak's "just-window-eval hook" name for
+calls" (guard + evade), matching the foreign fork's "just-window-eval hook" name for
 our `kSig_ParryEvaluator` site. Its approach differs from ours: instead of
 force-writing the perfect-flag output, it reads the real timing-window value
 at that site and writes back a *widened* value, gated on the caller being the
@@ -1606,11 +1602,11 @@ walk unless a stat feature (God Mode, multipliers, ...) is on
 It worked on 2026-09-29 only because One-Hit Kill / a multiplier was on. Fix: the
 walk also runs while the menu is open. Not yet live-tested.
 
-### vTweak v1.4.2 runtime log review (2026-10-02)
+### Foreign-fork runtime log review (2026-10-02)
 
 Reviewed `F:\Steam\steamapps\common\Crimson Desert\bin64\Trinity.log`,
-last modified 2026-10-02 07:47:45, with `Trinity.asi` vTweak v1.4.2 (built
-2026-09-20; 2,488,320 bytes) and game PE 1.0.0.2976. This is Lian's build,
+last modified 2026-10-02 07:47:45, with `Trinity.asi` being the foreign fork
+v1.4.2 (built 2026-09-20; 2,488,320 bytes) and game PE 1.0.0.2976. This build,
 not this repository's v0.18.0 build.
 
 The log confirms startup reached `Ready`, the destination-marker subsystem
@@ -1636,13 +1632,13 @@ a wallet spoof. The log confirms the request and reported status; the actual
 balance, spending, and save/reload persistence require gameplay evidence.
 The catalog counts are direct runtime observations, not a claim that all
 inventory mutations work. The original log is preserved in
-[`reports/lian-vtweak-1.4.2-2976-2026-10-02.log.txt`](reports/lian-vtweak-1.4.2-2976-2026-10-02.log.txt).
+[`reports/foreign-fork-2976-2026-10-02.log.txt`](reports/foreign-fork-2976-2026-10-02.log.txt).
 
 ### Inventory and time-of-day source comparison on PE 2976 (2026-10-02)
 
-Compared our `d0cd168` source, gugi97's `e0d287e`, and Lian's public
-[`v2.00-update` branch at `0c7c345`](https://github.com/ReXooGen/Trinity/tree/0c7c3454f9f722ea2de95e84ef81caf465637068).
-Lian's default `master` branch is the older v1.3.2 source (`094e561`) and is
+Compared our `d0cd168` source, gugi97's `e0d287e`, and the foreign fork's public
+`v2.00-update` branch (`0c7c345`).
+That fork's default `master` branch is the older v1.3.2 source (`094e561`) and is
 not the appropriate v1.4.2 reference. The newer branch identifies itself as
 v1.4.2 and contains the frame-timer and inventory log messages seen here, but
 its commit date is later than the binary's build date. Exact binary/source
@@ -1657,7 +1653,7 @@ The reproducible manifest and generated reports are
 and [`reports/trinity-2976-inventory-world-comparison.md`](reports/trinity-2976-inventory-world-comparison.md).
 Every RVA below is a unique raw match; it is not runtime or ABI validation.
 
-| Path | Our pattern | Lian v1.4.2 pattern RVA | gugi pattern RVA |
+| Path | Our pattern | Foreign-fork pattern RVA | gugi pattern RVA |
 | --- | --- | --- | --- |
 | Field clock globals | 0 matches | `0x20E5604` | `0x20E5604` |
 | Field-time tick | 0 matches | `0xA384A0` | `0xA384A0` |
@@ -1667,7 +1663,7 @@ Every RVA below is a unique raw match; it is not runtime or ABI validation.
 | Placement commit | 0 matches | `0x2130D70` | `0x212DE50` |
 | Placement-vector cleanup | 0 matches | `0x4880C0` | `0x885E600` |
 
-The constructor match agrees with Lian's runtime address `0x142409970`.
+The constructor match agrees with the foreign fork's runtime address `0x142409970`.
 The working gugi item-count pattern already used by us matches once at
 `0x240F8D0`; our holder resolver matches once at `0x212A150`. Our secondary
 holder-insert capture pattern also matches once (`0x24077D0`). Thus a missing
@@ -1679,8 +1675,8 @@ persistence have not been established for our current run.
 Concrete porting differences, beyond changing signatures:
 
 - **Time of day:** our field-clock pattern still selects TLS byte `0x1F6`;
-  gugi's exact pattern selects `0x1EC` and Lian wildcards that byte. The tick
-  prologue gained an R12 spill. Lian's advance/set functions additionally
+  gugi's exact pattern selects `0x1EC` and the foreign fork wildcards that
+  byte. The tick prologue gained an R12 spill. The foreign fork's advance/set functions additionally
   update the captured tick manager's accumulator at `+0x2C` and the visible
   render hour; ours writes the clock globals and only adjusts the render
   target while frozen. Merely restoring lookup would leave a separate risk
@@ -1693,12 +1689,12 @@ Concrete porting differences, beyond changing signatures:
 - **Inventory commits:** the references resolve different functions. gugi's
   primary commit detour forwards eight arguments and its placement helper
   takes four; ours forwards seven to the primary commit and five to the
-  placement helper. Lian retains different targets and conventions. Do not
+  placement helper. The foreign fork retains different targets and conventions. Do not
   copy a signature independently of its matching function contract.
 - **Add Item:** the constructor alone is not enough. Placement commit, cleanup,
   destructor resolution, vector layout, realm selection, and instance-ID
   allocation must be checked as one transaction before enabling writes.
-  Lian also contains broad constructor fallbacks; the audit finds 46, 117,
+  The foreign fork also contains broad constructor fallbacks; the audit finds 46, 117,
   1241, and 763 matches for several of them. Those are not safe substitutes
   for a constructor signature with a validated identity.
 
@@ -1714,10 +1710,10 @@ slot setter and placement commit, and two-argument field-clock tick. The item
 constructor and placement-vector destructor now resolve uniquely; the installed
 PE confirms the 224-byte placement stride and destructor call at offset `0x31`.
 Successful item inserts publish the holder revision so equipment/ammo observers
-can refresh. No broad Lian constructor fallbacks were adopted.
+can refresh. No broad foreign-fork constructor fallbacks were adopted.
 
 Signed time steps (-240..240 hours) are queued from the menu and applied in the
-field-clock hook, updating the `+0x2C` accumulator as in Lian v1.4.2, both realm
+field-clock hook, updating the `+0x2C` accumulator as in the foreign fork, both realm
 mirrors and the render hour. Sub-hour time is preserved. The UI now accepts
 negative steps and reports acceptance as queued rather than claiming completion.
 A pending request is refused instead of overwritten; invalid live clocks are
@@ -1739,12 +1735,12 @@ placement stride/destructor-call bytes were also checked directly in the PE.
 Graphify AST data was refreshed. No install-directory write or publication.
 
 
-### 2026-10-02 — evening Lian runtime-log refresh
+### 2026-10-02 — evening foreign-fork runtime-log refresh
 
 The log grew to 28,387 bytes and now ends at 19:43:14.329. Preserved separately
-in `reports/lian-vtweak-1.4.2-2976-2026-10-02-evening.log.txt`; see the matching
+in `reports/foreign-fork-2976-2026-10-02-evening.log.txt`; see the matching
 `evening-review.md` for hash, counts and evidence boundaries. The new distinct
-session starts at 12:49 and is still Lian vTweak 1.4.2, not our 0.18.1 build.
+session starts at 12:49 and is still the foreign fork 1.4.2, not our 0.18.1 build.
 Its initialization is duplicated in the log. Catalog discovery succeeds again
 (6815 named items, 51 groups). Stat-source observations continue through the
 evening and capture changed character/mount objects at 19:31. No warning/error
@@ -1927,7 +1923,7 @@ to the pattern, not just a unique match) and are now wired in as
 `_TU20402_Candidate` fallbacks, both reconfirmed offline after the edit:
 
 - **GameSpeed / MasterFrameUpdate** (`world.cpp`): new candidate at RVA
-  `0xBDC370` - the SAME address the vTweak v1.4.2 fork independently
+  `0xBDC370` - the SAME address the foreign fork independently
   live-logged as its own frame-timer hook earlier this session. Byte-
   identical prologue to our existing TU20100 candidate, body offsets shifted
   +8 throughout. Separately, the trainer's own ini comment names the exact
@@ -2024,16 +2020,16 @@ God Mode/Infinite Stamina/Infinite Spirit itself is **not yet confirmed.**
 Same build also broke `kSig_InvGetHolder` (inventory disabled wholesale -
 this one is `mem::FindPattern`, not `InstallHookAny`, so it had no fallback
 list at all before this fix). A third-party loot mod running on the same
-3460 exe handed us the answer directly: MasterLooter v1.6.53's own log
-(`MasterLooter.log`) prints `[sig] inv_holder +0x22EE540` - its AOB scanner
-found the live address on this exact build/exe. Ghidra at that VA confirms
-the first 11 bytes (`40 53 48 83 EC 20 48 8B 41 ? 48 8B D9` - push rbx; sub
-rsp,20; mov rax,[rcx+NN]; mov rbx,rcx) are byte-identical to the verified
+3460 exe handed us the answer directly: its own log prints
+`[sig] inv_holder +0x22EE540` - its AOB scanner found the live address on
+this exact build/exe. Ghidra at that VA confirms the first 11 bytes
+(`40 53 48 83 EC 20 48 8B 41 ? 48 8B D9` - push rbx; sub rsp,20;
+mov rax,[rcx+NN]; mov rbx,rcx) are byte-identical to the verified
 `kSig_InvGetHolder` pattern, so this is the same function body, not a
-lookalike MasterLooter happened to also need - only what follows changed
+lookalike the other mod happened to also need - only what follows changed
 (a direct `mov rcx,[rax+NN]` became an extra helper-call indirection). The
 decompile also reconfirms the +0xA0/+0xD0 "ownership-borrow link" chain
-noted in [[reference-masterlooter-repo]] is read the same way before the
+noted in [[reference-trainer-autoloot]] is read the same way before the
 final `[[holder+0x68]+0xB8]` container pointer.
 
 Added `kSig_InvGetHolder_TU3460_Candidate` (offsets.h) and switched
@@ -2041,7 +2037,7 @@ Added `kSig_InvGetHolder_TU3460_Candidate` (offsets.h) and switched
 with this as a fallback, logging which pattern matched (same convention as
 every other `InstallHookAny` site). Verified offline: one match, RVA
 `0x22EE540`, against both the Ghidra project and the real live 3460 exe -
-the SAME address MasterLooter logged independently, on the same session,
+the SAME address the other mod logged independently, on the same session,
 making this cross-mod-verified rather than merely internally consistent.
 **Not yet live-tested** through our own resolver.
 

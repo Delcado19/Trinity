@@ -25,6 +25,7 @@
 #include "inventory.h"
 #include "dye.h"
 #include "equipment.h"
+#include "friendly.h"
 #include "../mem/scanner.h"
 #include "../mem/safe_memory.h"
 #include "../mem/hooks.h"
@@ -319,6 +320,7 @@ namespace trinity::game
                       char(__fastcall*)(void*, void*, void*, void*, void*, void*)>);
         PathingHelper_t       oPathingHelper          = nullptr;
         void*                 g_pathingHelperTarget   = nullptr;
+        size_t                g_pathingWhich          = 0; // matched pattern index - see Teleport::PathingStatus()
 
         // sub_3A3E140(rcx=moveController, rdx, r8, r9, stackArg5, stackArg6,
         // stackArg7) - only rcx matters to us; the rest are passed through
@@ -334,6 +336,7 @@ namespace trinity::game
         // takes its other branch instead of failing closed.
         using TravelFn = char(__fastcall*)(void*, int, unsigned int, unsigned int);
         TravelFn   g_travelFn = nullptr;
+        size_t     g_travelWhich = 0; // matched pattern index - see Teleport::FastTravelStatus()
 
         // Data-table resolvers, found by the string-anchored scan in Install()
         // (their bodies are shared template clones - a byte pattern matches ~25
@@ -355,6 +358,7 @@ namespace trinity::game
                                              uint64_t a4, uint64_t a5, uint64_t a6, uint64_t a7);
         LocoStep_t oLocoStep = nullptr;
         void* g_locoStepTarget = nullptr;
+        size_t g_locoStepWhich = 0; // matched pattern index - see Teleport::SuperRunStatus()
 
         // A travel request queued from the menu thread, fired once on the game
         // thread inside hkMoveUpdate (matching how the game itself calls it).
@@ -1182,6 +1186,10 @@ namespace trinity::game
             // engine pass, same game-thread requirement as the dye apply).
             Equipment::Tick();
 
+            // Trust Multiplier's fallback scan (armed only when both setter
+            // signatures are dead); no-op otherwise.
+            Friendly::Tick();
+
             // Fire a queued fast-travel on the game thread (matching the game).
             if (g_pendValid.load(std::memory_order_acquire) && g_travelFn)
             {
@@ -1584,10 +1592,15 @@ namespace trinity::game
         // Resolve the fast-travel trigger + the destination registry global.
         // Non-fatal if missing: position tracking still works, the fast-travel
         // menu just stays empty (logged).
-        const uintptr_t travel = mem::FindPattern(kSig_TravelToNode);
-        if (travel && mem::CountMatches(kSig_TravelToNode, 2) == 1)
+        size_t travelWhich = 0;
+        const uintptr_t travel = mem::FindPatternAny({kSig_TravelToNode, kSig_TravelToNode_TU3460_Candidate}, &travelWhich);
+        const std::string_view travelPattern = travelWhich == 0 ? kSig_TravelToNode : kSig_TravelToNode_TU3460_Candidate;
+        if (travel && mem::CountMatches(travelPattern, 2) == 1)
         {
             g_travelFn = reinterpret_cast<TravelFn>(travel);
+            g_travelWhich = travelWhich;
+            if (travelWhich != 0)
+                LOG_WARN("teleport: fast-travel trigger matched fallback pattern #%zu - this game build moved the current one, so please report it.", travelWhich);
         }
         else if (travel)
         {
@@ -1615,7 +1628,7 @@ namespace trinity::game
         if (mem::InstallHookAny("teleport: locomotion-stepper",
                                 {kSig_LocoStepper, kSig_LocoStepper_TU20100_Candidate},
                                 "Super Run disabled",
-                                &hkLocoStep, &oLocoStep, &g_locoStepTarget))
+                                &hkLocoStep, &oLocoStep, &g_locoStepTarget, &g_locoStepWhich))
         {
             LOG("teleport: locomotion-stepper hook installed @ %p.", g_locoStepTarget);
         }
@@ -1638,7 +1651,7 @@ namespace trinity::game
         if (mem::InstallHookAny("teleport: pathing-helper",
                                 {kSig_PathingHelper, kSig_PathingHelper_TU20100_Candidate},
                                 "destination warp may fight the servo",
-                                &hkPathingHelper, &oPathingHelper, &g_pathingHelperTarget))
+                                &hkPathingHelper, &oPathingHelper, &g_pathingHelperTarget, &g_pathingWhich))
         {
             LOG("teleport: pathing helper hook installed @ %p.", g_pathingHelperTarget);
         }
@@ -2088,6 +2101,37 @@ namespace trinity::game
     bool Teleport::GetFlightEngaged()
     {
         return g_flightEngaged.load(std::memory_order_relaxed);
+    }
+
+    mem::SigStatus Teleport::MoveUpdateStatus()
+    {
+        // Single-pattern hook (InstallHook, not InstallHookAny) - no fallback
+        // concept, so only Dead or Ok ever apply.
+        return oMoveUpdate ? mem::SigStatus::Ok : mem::SigStatus::Dead;
+    }
+
+    mem::SigStatus Teleport::SuperRunStatus()
+    {
+        return mem::StatusOf(oLocoStep != nullptr, g_locoStepWhich);
+    }
+
+    mem::SigStatus Teleport::FreeFlightStatus()
+    {
+        const mem::SigStatus airMover = (g_airMoverLo && g_airMoverHi) ? mem::SigStatus::Ok
+                                                                        : mem::SigStatus::Dead;
+        return mem::Worse(SuperRunStatus(), airMover);
+    }
+
+    mem::SigStatus Teleport::FastTravelStatus()
+    {
+        const mem::SigStatus trigger = mem::StatusOf(g_travelFn != nullptr, g_travelWhich);
+        const mem::SigStatus scene   = g_sceneResolver ? mem::SigStatus::Ok : mem::SigStatus::Dead;
+        return mem::Worse(trigger, scene);
+    }
+
+    mem::SigStatus Teleport::PathingStatus()
+    {
+        return mem::StatusOf(oPathingHelper != nullptr, g_pathingWhich);
     }
 
     bool Teleport::CopyPositionToClipboard()

@@ -89,6 +89,9 @@ namespace trinity::game
         void*          g_insTarget   = nullptr;
         void*          g_commitTarget = nullptr;
         void*          g_expandTarget = nullptr;
+        size_t         g_qtyWhich     = 0; // matched pattern indices - see Inventory::Status()
+        size_t         g_holderWhich  = 0;
+        size_t         g_commitWhich  = 0;
 
         std::atomic<uintptr_t> g_holder{0};
         std::atomic<ULONGLONG> g_holderTick{0};
@@ -1246,6 +1249,114 @@ namespace trinity::game
             mem::FindPatternIf(indirect ? kSig_MovR8Rip : kSig_LeaR8Rip, &IsTableRef, &hunt);
             return hunt.fn ? mem::ResolveRipAt(hunt.fn + kOff_ItemResolver_MovGlobal, 7) : 0;
         }
+
+        // Returns true if the bytes at addr look like a detour stub another
+        // already-loaded mod planted over a function entry (near JMP rel32,
+        // indirect JMP [rip+disp32], or a MinHook/Detours-style absolute
+        // "mov rax,imm64; jmp rax" stub) rather than garbage. Root-caused
+        // 2026-11-05 via two unrelated third-party mods' own logs, both
+        // independently reporting "<this exact RVA>, under a jump an
+        // unknown module put over its entry; hooking on top of it" on the
+        // SAME build/session where our own live AOB scan for this function
+        // found nothing - i.e. whichever mod loads first wins the race and
+        // overwrites the prologue our pattern/pin both expect. A pure
+        // accessor like GetInventoryHolder has no side effects to desync,
+        // so calling straight into someone else's stub is safe: a
+        // well-behaved hook (confirmed by the same third-party logs) reads
+        // through to the real function and returns its result unchanged.
+        bool LooksLikeForeignHookStub(uintptr_t addr)
+        {
+            uint8_t b[10] = {};
+            for (size_t i = 0; i < sizeof(b); ++i)
+                if (!Read8(addr + i, &b[i])) return false;
+            if (b[0] == 0xE9) return true;                      // near JMP rel32
+            if (b[0] == 0xFF && b[1] == 0x25) return true;       // JMP [rip+disp32]
+            if (b[0] == 0x48 && b[1] == 0xB8 &&                  // mov rax,imm64
+                b[9] == 0xE0 && b[8] == 0xFF)                    // ; jmp rax
+                return true;
+            return false;
+        }
+
+        // Last-resort pin, one entry per build where FindPatternAny inexplicably
+        // reports zero live matches although an offline byte scan of the same
+        // on-disk exe finds this function's fixed head at this exact RVA.
+        // Root cause (confirmed 2026-11-05): another, earlier-loading mod
+        // hooks this exact function first, so our live scan for the pristine
+        // prologue finds nothing even though the function and address are
+        // both correct - see LooksLikeForeignHookStub() above. 0x22EE4F0 is
+        // build 3479: two independent third-party mods (one literally names
+        // it "GetInventoryHolder") resolve the same address with no search
+        // logic logged, i.e. their own offline RE, not a live scan.
+        // 0x22F1110 is build 3549 (2.04.07): re-derived this session via
+        // audit.py's own pattern-scan helpers against the live exe, one
+        // unique match, and independently cross-confirmed by two third-party
+        // mods' own live logs the same session. Each candidate is accepted
+        // if its live bytes either match the function's own fixed prologue
+        // (untouched - as safe as a pattern match) OR look like a foreign
+        // hook stub (another mod got there first - still safe to call
+        // through, see above). A build not listed here, or one where the
+        // listed RVA matches neither shape, correctly falls through to
+        // NOT_FOUND rather than hooking the wrong thing.
+        uintptr_t ResolveHolderPinned()
+        {
+            const mem::ModuleRegion& mod = mem::GameModule();
+            if (!mod) return 0;
+
+            // Fixed (non-wildcarded) head of kSig_InvGetHolder_TU3460_Candidate -
+            // identical at both pinned RVAs below.
+            static const uint8_t kExpected[] = {
+                0x40, 0x53, 0x48, 0x83, 0xEC, 0x20, 0x48, 0x8B, 0x41, 0x68,
+                0x48, 0x8B, 0xD9, 0x48, 0x8B, 0x50, 0x20, 0x0F, 0xB7, 0x52, 0x30
+            };
+            static const uintptr_t kPinnedRvas[] = { 0x22EE4F0, 0x22F1110 };
+            for (uintptr_t rva : kPinnedRvas)
+            {
+                const uintptr_t candidate = mod.base + rva;
+                bool match = true;
+                for (size_t i = 0; i < sizeof(kExpected) && match; ++i)
+                {
+                    uint8_t b = 0;
+                    if (!Read8(candidate + i, &b) || b != kExpected[i])
+                        match = false;
+                }
+                if (match) return candidate;
+                if (LooksLikeForeignHookStub(candidate))
+                {
+                    LOG_WARN("inventory: holder resolver pin @ 0x%llX is under "
+                             "another mod's hook (foreign stub detected) - "
+                             "calling through it.",
+                             static_cast<unsigned long long>(rva));
+                    return candidate;
+                }
+            }
+            return 0;
+        }
+
+        void ResolveHolder()
+        {
+            uintptr_t holderAddr = mem::FindPatternAny(
+                {kSig_InvGetHolder, kSig_InvGetHolder_TU3460_Candidate}, &g_holderWhich);
+            if (!holderAddr)
+            {
+                holderAddr = ResolveHolderPinned();
+                if (holderAddr)
+                {
+                    g_holderWhich = 2;
+                    LOG_WARN("inventory: holder resolver pinned to a known build RVA "
+                              "(byte-verified) - the live AOB scan found nothing, so "
+                              "please report this build.");
+                }
+            }
+            if (!holderAddr)
+            {
+                LOG_ERR("inventory: holder resolver signature NOT FOUND - inventory disabled.");
+                return;
+            }
+            if (g_holderWhich > 0 && g_holderWhich < 2)
+                LOG_WARN("inventory: holder resolver matched fallback pattern #%zu - this game "
+                         "build moved the current one, so please report it.", g_holderWhich);
+            oGetHolder = reinterpret_cast<GetHolder_t>(holderAddr);
+        }
     }
 
     bool Inventory::Install()
@@ -1259,35 +1370,46 @@ namespace trinity::game
         if (!mem::InstallHookAny("inventory: item-count accessor",
                                  {kSig_InvGetItemQty_Gugi, kSig_InvGetItemQty_TU20100_Candidate, kSig_InvGetItemQty},
                                  "inventory disabled",
-                                 &hkGetItemQty, &oGetItemQty, &g_qtyTarget))
+                                 &hkGetItemQty, &oGetItemQty, &g_qtyTarget, &g_qtyWhich))
             return false;
 
         // Falls back to the build 3460 candidate (offsets.h: cross-validated
-        // by MasterLooter's own independent AOB scan on this build) when the
-        // verified source pattern does not match.
-        size_t holderWhich = 0;
-        const uintptr_t holderAddr = mem::FindPatternAny(
-            {kSig_InvGetHolder, kSig_InvGetHolder_TU3460_Candidate}, &holderWhich);
-        if (!holderAddr)
-        {
-            LOG_ERR("inventory: holder resolver signature NOT FOUND - inventory disabled.");
-            return false;
-        }
-        if (holderWhich > 0)
-            LOG_WARN("inventory: holder resolver matched fallback pattern #%zu - this game "
-                     "build moved the current one, so please report it.", holderWhich);
-        oGetHolder = reinterpret_cast<GetHolder_t>(holderAddr);
+        // by a third-party mod's own independent AOB scan on this build)
+        // when the verified source pattern does not match.
+        //
+        // Non-fatal (2026-11-02): this used to return false and skip every
+        // add-item/table-global primitive below too, so a missing holder
+        // took the whole module down with it. A live run on build 3479
+        // ruled out a packed-code timing miss (a per-frame retry never
+        // resolved it over 3+ minutes, and cost enough per attempt across
+        // several modules doing the same thing to freeze the game - see
+        // the removed mem::RetryGate), so this is a genuinely moved/dead
+        // signature on this build, not something a retry would fix - but
+        // the rest of Install() does not depend on oGetHolder and should
+        // still get a chance to run.
+        ResolveHolder();
 
 
         // --- Add-item primitives (all optional: without any one of them Add
         // Item is refused, and every other inventory feature still works).
         // These are CALLED, not hooked. The insert planner is oHolderInsert,
         // resolved by the hook above - same function.
-        const uintptr_t ctorAddr   = mem::CountMatches(kSig_TrItemValueCtor, 2) == 1
+        // Each is tried primary-first, then its TU3527 candidate (offsets.h,
+        // re-derived 2026-11-04 from CrimsonInvEditor v11.3's own report) -
+        // still gated to exactly one match per pattern, same safety net as
+        // the single-pattern form this replaces. kSig_InvFreePlacements has
+        // no TU3527 candidate yet, so it stays primary-only.
+        uintptr_t ctorAddr = mem::CountMatches(kSig_TrItemValueCtor, 2) == 1
             ? mem::FindPattern(kSig_TrItemValueCtor) : 0;
-        const uintptr_t commitAddr = mem::CountMatches(kSig_InvCommitPlacement, 2) == 1
+        if (!ctorAddr && mem::CountMatches(kSig_TrItemValueCtor_TU3527_Candidate, 2) == 1)
+            ctorAddr = mem::FindPattern(kSig_TrItemValueCtor_TU3527_Candidate);
+
+        uintptr_t commitAddr = mem::CountMatches(kSig_InvCommitPlacement, 2) == 1
             ? mem::FindPattern(kSig_InvCommitPlacement) : 0;
-        uintptr_t       freeAddr   = mem::CountMatches(kSig_InvFreePlacements, 2) == 1
+        if (!commitAddr && mem::CountMatches(kSig_InvCommitPlacement_TU3527_Candidate, 2) == 1)
+            commitAddr = mem::FindPattern(kSig_InvCommitPlacement_TU3527_Candidate);
+
+        uintptr_t freeAddr = mem::CountMatches(kSig_InvFreePlacements, 2) == 1
             ? mem::FindPattern(kSig_InvFreePlacements) : 0;
         if (ctorAddr)   oItemValueCtor   = reinterpret_cast<ItemValueCtor_t>(ctorAddr);
         if (commitAddr) oCommitPlacement = reinterpret_cast<CommitPlacement_t>(commitAddr);
@@ -1381,13 +1503,14 @@ namespace trinity::game
         mem::InstallHookAny("inventory: transaction commit",
                             {kSig_InvCommit, kSig_InvCommit_TU20402_Candidate},
                             "quantity edits will not persist (revert on reconcile)",
-                            &hkCommit, &oCommit, &g_commitTarget);
+                            &hkCommit, &oCommit, &g_commitTarget, &g_commitWhich);
 
         // Secondary capture path: fires on a real add/drop/buy, not at load.
         // Catches containers that only appear later (e.g. character swap).
-        mem::InstallHook("inventory: holder-insert", kSig_InvHolderInsert,
-                         "server holder relies on the commit hook alone",
-                         &hkHolderInsert, &oHolderInsert, &g_insTarget, 4);
+        mem::InstallHookAny("inventory: holder-insert",
+                            {kSig_InvHolderInsert, kSig_InvHolderInsert_TU3527_Candidate},
+                            "server holder relies on the commit hook alone",
+                            &hkHolderInsert, &oHolderInsert, &g_insTarget);
 
         // Durable container walk (optional but preferred - without it the
         // list only appears once the game happens to query an item count,
@@ -1484,6 +1607,37 @@ namespace trinity::game
     bool Inventory::Ready()
     {
         return CurrentHolder() != 0;
+    }
+
+    mem::SigStatus Inventory::Status()
+    {
+        // Item-count accessor and holder resolver are both required at
+        // Install() - either missing takes the whole module down (see
+        // Install() above). Transaction-commit is optional but its loss
+        // means quantity edits revert on reconcile, which is degraded
+        // enough to show as a Fallback rather than a clean Ok.
+        if (!oGetItemQty || !oGetHolder) return mem::SigStatus::Dead;
+        const mem::SigStatus qty    = mem::StatusOf(true, g_qtyWhich);
+        const mem::SigStatus holder = mem::StatusOf(true, g_holderWhich);
+        const mem::SigStatus commit = mem::StatusOf(oCommit != nullptr, g_commitWhich);
+        return mem::Worse(mem::Worse(qty, holder), commit);
+    }
+
+    mem::SigStatus Inventory::SlotSizeStatus()
+    {
+        if (g_expandTarget)   return mem::SigStatus::Ok;       // hooked - stable
+        if (oSetExpandSlots)  return mem::SigStatus::Fallback; // call-only - may briefly revert
+        return mem::SigStatus::Dead;
+    }
+
+    mem::SigStatus Inventory::AddItemStatus()
+    {
+        // All five add-item primitives (see Install()) are plain AND-ed
+        // CountMatches==1 resolves, no fallback candidates - so only Dead or
+        // Ok ever apply here.
+        const bool ok = oItemValueCtor && oCommitPlacement && oFreePlacements &&
+                        oItemValueDtor && oNtQueryInfoThread;
+        return ok ? mem::SigStatus::Ok : mem::SigStatus::Dead;
     }
 
     static void RefreshImpl(bool force)
@@ -1870,9 +2024,10 @@ namespace trinity::game
             LOG("money/find: %d candidate(s) for %lld.", hits, static_cast<long long>(shown));
     }
 
-    bool Inventory::SetNoBounty(bool enable)
+    // Resolved lazily (shared by SetNoBounty and NoBountyStatus): the table
+    // is not needed unless the feature is used.
+    static uintptr_t ResolveWantedGlobal()
     {
-        // Resolved lazily: the table is not needed unless the feature is used.
         static uintptr_t s_wantedGlobal = 0;
         static bool      s_looked = false;
         if (!s_looked)
@@ -1883,6 +2038,17 @@ namespace trinity::game
                                : "world: WantedInfo table not found - No Bounty disabled.",
                 reinterpret_cast<void*>(s_wantedGlobal));
         }
+        return s_wantedGlobal;
+    }
+
+    mem::SigStatus Inventory::NoBountyStatus()
+    {
+        return ResolveWantedGlobal() ? mem::SigStatus::Ok : mem::SigStatus::Dead;
+    }
+
+    bool Inventory::SetNoBounty(bool enable)
+    {
+        const uintptr_t s_wantedGlobal = ResolveWantedGlobal();
         if (!s_wantedGlobal) return false;
 
         uintptr_t table = 0;

@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "../mem/hooks.h"
+
 namespace trinity::game
 {
     // Abyss-Gear socket editor - the equipment editor, from the menu, for
@@ -39,6 +41,12 @@ namespace trinity::game
         // add/clear edits will persist. Until then they apply visually but a
         // reload will not keep them - the UI can warn with this.
         static bool EditsPersist();
+
+        // Health of the backing signature, for the menu's status dot - see
+        // mem::SigStatus. Never Dead: the core edit path is a plain memory
+        // walk with no hook of its own; missing the optional effect-refresh
+        // only delays a live stat bonus to the next re-equip.
+        static mem::SigStatus HookStatus();
 
         static constexpr int kMaxSockets = 5;
         static constexpr int kRefineMax  = 10; // refinement caps at level 10

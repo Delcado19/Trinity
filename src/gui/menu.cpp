@@ -80,52 +80,63 @@ namespace trinity::gui
         ui::Submenu("Dye Equipment", "dyeslots",
                     game::Dye::Ready()
                         ? "Recolor your equipped gear."
-                        : "Recolor your equipped gear. Load into the world first.");
+                        : "Recolor your equipped gear. Load into the world first.",
+                    game::Dye::HookStatus());
 
         ui::Submenu("Edit Equipment", "equipslots",
                     game::Equipment::Ready()
                         ? "Refine your gear and socket abyss gears into it."
-                        : "Refine and socket your gear. Load into the world first.");
+                        : "Refine and socket your gear. Load into the world first.",
+                    game::Equipment::HookStatus());
 
         bool changed = false;
         changed |= ui::Toggle("God Mode", &st.godMode,
                    game::Player::Ready()
                        ? "Keeps your health full."
-                       : "Keeps your health full. Load into the game world first.");
+                       : "Keeps your health full. Load into the game world first.",
+                   game::Player::StatCommitStatus());
         changed |= ui::Toggle("Infinite Stamina", &st.infStamina,
-                   "Keeps player and mount stamina full.");
+                   "Keeps player and mount stamina full.",
+                   game::Player::StatCommitStatus());
         changed |= ui::Toggle("Infinite Spirit", &st.infSpirit,
-                   "Keeps your spirit full.");
+                   "Keeps your spirit full.",
+                   game::Player::StatCommitStatus());
         changed |= ui::ToggleFloat("Super Run", &st.superRun, &st.superRunMult, 1.0f, 10.0f, 0.25f, 2.0f, "%.2fx",
-                        "Move faster than normal.");
+                        "Move faster than normal.", game::Teleport::SuperRunStatus());
         changed |= ui::ToggleFloat("Super Jump", &st.superJump, &st.superJumpMult, 1.0f, 10.0f, 0.25f, 2.0f, "%.2fx",
-                        "Jump higher than normal.");
+                        "Jump higher than normal.", game::Teleport::MoveUpdateStatus());
         changed |= ui::ToggleFloat("Free Flight", &st.freeFlight, &st.flightSpeed, 1.0f, 40.0f, 1.0f, 8.0f, "%.0f",
                         "While airborne, hold Caps Lock / RB to rise or Ctrl / Right Trigger "
                         "to sink. Let go and normal physics resume - jumps and aerial attacks "
-                        "are untouched.");
+                        "are untouched.", game::Teleport::FreeFlightStatus());
         changed |= ui::ToggleFloat("Trust Multiplier", &st.trustMult, &st.trustMultVal, 1.0f, 25.0f, 0.25f, 3.0f, "%.2fx",
                         game::Friendly::Ready()
                             ? "Gifting NPCs or feeding animals builds trust faster."
-                            : "Gifting NPCs or feeding animals builds trust faster. Unavailable right now.");
+                            : "Gifting NPCs or feeding animals builds trust faster. Unavailable right now.",
+                        game::Friendly::Status());
         if (ui::Toggle("Easy Parry", &st.easyParry,
                        game::Parry::Available()
                            ? "Removes the timing-margin test on a parry. You still have to parry the "
                              "attack - it just no longer has to be frame-perfect."
-                           : "Removes the timing-margin test on a parry. Unavailable right now."))
+                           : "Removes the timing-margin test on a parry. Unavailable right now.",
+                       game::Parry::Status()))
         {
             game::Parry::SetEnabled(st.easyParry);
             changed = true;
         }
         changed |= ui::Toggle("No Fall Damage", &st.noFallDamage,
-                        "Stops damage that arrives with no attacker behind it, which is what a fall is.");
+                        "Stops damage that arrives with no attacker behind it, which is what a fall is.",
+                        game::Player::DamageApplyStatus());
         changed |= ui::Toggle("One-Hit Kill", &st.oneHitKill,
-                        "Anything you hit dies. Overrides the Outgoing Damage slider.");
+                        "Anything you hit dies. Overrides the Outgoing Damage slider.",
+                        game::Player::DamageApplyStatus());
         changed |= ui::FloatOption("Outgoing Damage", &st.dmgOutMult, 0.0f, 20.0f, 0.25f, 1.0f, "%.2fx",
                         st.oneHitKill ? "Adjusts how much damage you deal. One-Hit Kill is on, so this is ignored."
-                                      : "Adjusts how much damage you deal.");
+                                      : "Adjusts how much damage you deal.",
+                        game::Player::DamageApplyStatus());
         changed |= ui::FloatOption("Incoming Damage", &st.dmgInMult, 0.0f, 10.0f, 0.25f, 1.0f, "%.2fx",
-                        "Adjusts how much damage you take.");
+                        "Adjusts how much damage you take.",
+                        game::Player::DamageApplyStatus());
 
         if (changed && st.autoSave)
             Settings::Save();
@@ -687,13 +698,15 @@ namespace trinity::gui
         changed |= ui::ToggleFloat("Game Speed", &st.gameSpeed, &st.gameSpeedMult, 0.1f, 1.0f, 0.05f, 1.0f, "%.2fx",
                    ready
                        ? "Slows the game down. This build of the game ignores values above 1.00x."
-                       : "Slows the game down. Unavailable right now.");
+                       : "Slows the game down. Unavailable right now.",
+                   game::World::Status());
 
         const bool timeReady = game::World::TimeOfDayReady();
         changed |= ui::Toggle("Freeze Time of Day", &st.timeFrozen,
                    timeReady
                        ? "Holds the clock at the current time; the world keeps running normally."
-                       : "Holds the clock in place. Unavailable right now.");
+                       : "Holds the clock in place. Unavailable right now.",
+                   game::World::TimeOfDayStatus());
 
         // Advance the clock by however many hours the user dials in. Left/Right
         // step the amount (held: x10), Enter types an exact one, then the same
@@ -701,7 +714,8 @@ namespace trinity::gui
         static int s_advHours = 1;
         if (ui::Toggle("No Bounty", &st.noBounty,
                        "Crimes and theft stop adding bounty, regional marking, or reducing "
-                       "faction contribution. Session only; changes no save data."))
+                       "faction contribution. Session only; changes no save data.",
+                       game::Inventory::NoBountyStatus()))
         {
             game::Inventory::SetNoBounty(st.noBounty);
             changed = true;
@@ -725,7 +739,8 @@ namespace trinity::gui
         if (ui::IntAction("Shift Time", &s_advHours, -240, 240, 1, 1,
                    timeReady
                        ? "Shifts the clock by signed hours: positive forward, negative backward."
-                       : "Shifts the clock forward or backward. Unavailable right now."))
+                       : "Shifts the clock forward or backward. Unavailable right now.",
+                   game::World::TimeOfDayStatus()))
         {
             if (game::World::AdvanceTimeOfDayHours(s_advHours))
                 ui::Toast("Queued time shift: %+d hour%s", s_advHours, s_advHours == 1 ? "" : "s");
@@ -959,7 +974,8 @@ namespace trinity::gui
             if (saved > 0) snprintf(lbl, sizeof(lbl), "Saved Locations  (%zu)", saved);
             else           snprintf(lbl, sizeof(lbl), "Saved Locations");
             ui::Submenu(lbl, "savedloc",
-                        "Keep any spot in the world and travel back to it later.");
+                        "Keep any spot in the world and travel back to it later.",
+                        game::Teleport::MoveUpdateStatus());
         }
 
         // Teleport to the destination currently set on the world map or by a
@@ -980,7 +996,8 @@ namespace trinity::gui
             if (ui::Option(lbl,
                            haveDest
                                ? "Warp to the destination pin/objective on the map."
-                               : "Set a destination on the map first."))
+                               : "Set a destination on the map first.",
+                           game::Teleport::PathingStatus()))
             {
                 if (!havePos)
                 {
@@ -1003,7 +1020,8 @@ namespace trinity::gui
         // The game's own fast-travel network: every map gimmick (fast-travel
         // points, ores, chests, shops, bells, dungeons...), grouped by category.
         if (ui::Submenu("Fast Travel", "ftcats",
-                        "Warp to any location on the map."))
+                        "Warp to any location on the map.",
+                        game::Teleport::FastTravelStatus()))
         {
             game::Teleport::LoadCatalog();
         }
@@ -1298,12 +1316,16 @@ namespace trinity::gui
         State& st = State::Get();
         ui::Begin();
 
-        ui::Submenu("Add Item", "invadd", "Add any item in the game to your inventory.");
+        ui::Submenu("Add Item", "invadd", "Add any item in the game to your inventory.",
+                    game::Inventory::AddItemStatus());
         ui::Submenu("Currencies", "invcamp",
-                    "Quickly add Gold Bars and Overflowing Silver Pouches.");
+                    "Quickly add Gold Bars and Overflowing Silver Pouches.",
+                    game::Inventory::AddItemStatus());
         ui::Submenu("Quest & Special Items", "invspecial",
-                    "Bounty notices, documents, quest memories, recipes and relics.");
-        ui::Submenu("Item Editor", "invedit", "Browse and edit what you're carrying.");
+                    "Bounty notices, documents, quest memories, recipes and relics.",
+                    game::Inventory::AddItemStatus());
+        ui::Submenu("Item Editor", "invedit", "Browse and edit what you're carrying.",
+                    game::Inventory::Status());
         {
             // The count is the whole reason to look in here, so it goes on the
             // row rather than behind it. Submenu() strips the trailing count
@@ -1343,7 +1365,8 @@ namespace trinity::gui
         bool changed = false;
         if (ui::ToggleInt("Slot Size", &st.invSlotSize, &st.invSlotSizeVal,
                           1, 9999, 10, 2000,
-                          "Sets every storage's slot count to this number."))
+                          "Sets every storage's slot count to this number.",
+                          game::Inventory::SlotSizeStatus()))
             changed = true;
         if (ui::ToggleInt("Max Stack Size", &st.invStackSize, &st.invStackSizeVal,
                           1, 999999999, 1000, 999999,

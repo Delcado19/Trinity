@@ -5,6 +5,8 @@
 
 #include <imgui.h>
 
+#include "../mem/hooks.h"
+
 namespace trinity::ui
 {
     // --- Theme (this fork: azure on blue-slate, distinct from the red vTweak build) ---
@@ -31,6 +33,11 @@ namespace trinity::ui
         inline constexpr ImU32 Shadow     = IM_COL32(  0,   0,   0, 160);
         inline constexpr ImU32 SwitchOff  = IM_COL32( 70,  70,  78, 255);
         inline constexpr ImU32 Knob       = IM_COL32(245, 245, 245, 255);
+
+        // Status dot before the selected row's description (see mem::SigStatus).
+        inline constexpr ImU32 LedOk       = IM_COL32( 60, 200,  90, 255);
+        inline constexpr ImU32 LedFallback = IM_COL32(230, 185,  40, 255);
+        inline constexpr ImU32 LedDead     = IM_COL32(220,  70,  70, 255);
     }
 
 
@@ -109,6 +116,12 @@ namespace trinity::ui
     // reused stack buffer.
     extern char    g_selectedDesc[256];
     extern RowKind g_hintKind;
+
+    // Health of the selected row's backing signature - drives the red/yellow/
+    // green dot drawn before its description in End(). Rows with no signature
+    // to track (pure UI controls: search, swatches, keybinds...) default to Ok,
+    // same as a confirmed-working feature - "nothing known to be broken here".
+    extern mem::SigStatus g_selectedStatus;
 
     // True when the last nav input came from a controller - the footer shows
     // pad glyphs instead of keyboard keys.

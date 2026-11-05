@@ -561,51 +561,62 @@ namespace trinity::game
         }
     }
 
+    namespace
+    {
+        void ResolveDyeHooks()
+        {
+            if (!g_dyeApply)
+            {
+                const uintptr_t apply = mem::FindPattern(kSig_DyeApplyBatch);
+                const size_t applyMatches = mem::CountMatches(kSig_DyeApplyBatch, 2);
+                if (!apply || applyMatches != 1)
+                    LOG_ERR("dye: apply-batch signature %s - armor dyeing disabled.",
+                            apply ? "ambiguous" : "NOT FOUND");
+                else
+                    g_dyeApply = reinterpret_cast<DyeApplyBatch_t>(apply);
+            }
+
+            // Current build's encoding first, older ones as fallbacks - each is the
+            // same function compiled differently, so one pattern can never cover
+            // all of them. TU 2.01.00 candidate (COMPATIBILITY.md: "BREAKTHROUGH
+            // 2026-09-08") added last - that build needs a full register-save
+            // prologue the older ones apparently didn't, so it anchors at the
+            // true function entry instead of mid-function like the others.
+            if (!g_dyeUpsert)
+            {
+                size_t which = 0;
+                const std::string_view upsertSigs[] =
+                    { kSig_DyeUpsert_1180, kSig_DyeUpsert, kSig_DyeUpsert_TU20100_Candidate };
+                const uintptr_t upsert = mem::FindPatternAny(upsertSigs, 3, mem::GameModule(), &which);
+                if (!upsert)
+                    LOG_WARN("dye: upsert signature NOT FOUND - falling back to a direct RGB write, so "
+                             "channels without an existing record will not survive a reload.");
+                else if (mem::CountMatches(upsertSigs[which], 2) != 1)
+                    LOG_WARN("dye: upsert signature ambiguous - falling back to a direct RGB write.");
+                else
+                {
+                    LOG("dye: durable upsert @ %p (pattern #%zu).",
+                        reinterpret_cast<void*>(upsert), which);
+                    g_dyeUpsert = reinterpret_cast<DyeUpsert_t>(upsert);
+                }
+            }
+
+            if (!oEquipBatch)
+                mem::InstallHook("dye: equip-batch", kSig_EquipBatch,
+                                 "armor dyeing disabled (no component capture)",
+                                 &hkEquipBatch, &oEquipBatch, &g_equipTarget);
+        }
+
+        // shortcut: no Tick()-driven retry here (removed 2026-11-02) - a
+        // live run proved apply-batch/equip-batch never resolve on retry on
+        // this build (3+ minutes, zero successes); re-scanning repeatedly
+        // only burned game-thread time and froze the game.
+    }
+
     bool Dye::Install()
     {
-        const uintptr_t apply = mem::FindPattern(kSig_DyeApplyBatch);
-        if (!apply || mem::CountMatches(kSig_DyeApplyBatch, 2) != 1)
-        {
-            LOG_ERR("dye: apply-batch signature %s - armor dyeing disabled.",
-                    apply ? "ambiguous" : "NOT FOUND");
-            return false;
-        }
-        g_dyeApply = reinterpret_cast<DyeApplyBatch_t>(apply);
-
-        // Current build's encoding first, older ones as fallbacks - each is the
-        // same function compiled differently, so one pattern can never cover
-        // all of them. TU 2.01.00 candidate (COMPATIBILITY.md: "BREAKTHROUGH
-        // 2026-09-08") added last - that build needs a full register-save
-        // prologue the older ones apparently didn't, so it anchors at the
-        // true function entry instead of mid-function like the others.
-        size_t which = 0;
-        const std::string_view upsertSigs[] =
-            { kSig_DyeUpsert_1180, kSig_DyeUpsert, kSig_DyeUpsert_TU20100_Candidate };
-        const uintptr_t upsert = mem::FindPatternAny(upsertSigs, 3, mem::GameModule(), &which);
-        if (!upsert)
-            LOG_WARN("dye: upsert signature NOT FOUND - falling back to a direct RGB write, so "
-                     "channels without an existing record will not survive a reload.");
-        else if (mem::CountMatches(upsertSigs[which], 2) != 1)
-        {
-            LOG_WARN("dye: upsert signature ambiguous - falling back to a direct RGB write.");
-            g_dyeUpsert = nullptr;
-        }
-        else
-        {
-            LOG("dye: durable upsert @ %p (pattern #%zu).",
-                reinterpret_cast<void*>(upsert), which);
-            g_dyeUpsert = reinterpret_cast<DyeUpsert_t>(upsert);
-        }
-
-        if (!mem::InstallHook("dye: equip-batch", kSig_EquipBatch,
-                              "armor dyeing disabled (no component capture)",
-                              &hkEquipBatch, &oEquipBatch, &g_equipTarget))
-        {
-            g_dyeApply = nullptr;
-            return false;
-        }
-
-        return true;
+        ResolveDyeHooks();
+        return g_dyeApply != nullptr;
     }
 
     void Dye::Remove()
@@ -620,6 +631,16 @@ namespace trinity::game
     bool Dye::Ready()
     {
         return g_dyeApply != nullptr && ClientComp() != 0;
+    }
+
+    mem::SigStatus Dye::HookStatus()
+    {
+        // apply-batch and the equip-batch hook are both required (see
+        // Install()); the durable upsert is optional and, missing, falls
+        // back to a direct RGB write that does not survive a reload for
+        // channels with no existing record - a real degradation, so Fallback.
+        if (!g_dyeApply || !oEquipBatch) return mem::SigStatus::Dead;
+        return g_dyeUpsert ? mem::SigStatus::Ok : mem::SigStatus::Fallback;
     }
 
     int Dye::SlotCount()

@@ -1,7 +1,7 @@
-# Lian vTweak 1.4.2 evening log review (2026-10-02)
+# Foreign-fork evening log review (2026-10-02)
 
 - Source: `F:\Steam\steamapps\common\Crimson Desert\bin64\Trinity.log`
-- Snapshot: `lian-vtweak-1.4.2-2976-2026-10-02-evening.log.txt`
+- Snapshot: `foreign-fork-2976-2026-10-02-evening.log.txt`
 - Bytes: 28387; lines: 228; distinct lines: 161.
 - SHA256: `264478c3a05d9184628af52ca5d4ca641c5cc0e0212dd553245ded2180d3941c`
 - Last line: `19:43:14.329 [TID 31852] [INFO] player: client stat source char=0 mount=0 owner=000004AEC895A500 root=000004AEC8952F80 array=000004AE8545CC00 count=20`
@@ -11,8 +11,8 @@
 
 There are two distinct initialization sequences, at 06:58:25.919 and
 12:49:05.794, each duplicated verbatim in the file. Four initialization
-messages do not imply four independent launches. Both identify Lian vTweak
-1.4.2, built September 20, and PE 1.0.0.2976. No 0.18.1 run is present.
+messages do not imply four independent launches. Both identify the same
+foreign fork, built September 20, and PE 1.0.0.2976. No 0.18.1 run is present.
 
 The later sequence records character-manager consensus 9/9, installed stat,
 damage and parry/evade hooks, marker teleport initialization (5/5 hooks),

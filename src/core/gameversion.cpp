@@ -18,6 +18,98 @@ namespace trinity
         // say so rather than imply a guarantee that was never made.
         struct KnownBuild { uint16_t revision; const char* tu; bool verified; };
         constexpr KnownBuild kKnown[] = {
+            { 3549, "2.04.07",          true  },  // minor patch (2026-11-05), different exe (SHA256
+                                                  // 25f24e06a1f886e9310fd290f9462f66b480a5e7763d1fe156bfddaa8d1992b9,
+                                                  // audit.py). Full audit.py sweep against the live exe: DamageApply,
+                                                  // MoveUpdate, LocStringGet, TodEngineGlobal and EquipEffectRefresh
+                                                  // all still resolve unique - unchanged from 3527. Of the live-wired
+                                                  // TU-candidate fallbacks, kSig_TravelToNode_TU3460_Candidate,
+                                                  // kSig_InvGetHolder_TU3460_Candidate, kSig_InvCommit_TU20402_
+                                                  // Candidate, kSig_MasterFrameUpdate_TU20402_Candidate,
+                                                  // kSig_FieldTimeRealm_TU3460_Candidate, kSig_FieldTimeTick_
+                                                  // TU3479_Candidate, kSig_StatCommit_TU3527_Candidate,
+                                                  // kSig_TrItemValueCtor_TU3527_Candidate and kSig_InvCommitPlacement_
+                                                  // TU3527_Candidate all still resolve unique - Fast Travel trigger,
+                                                  // Inventory holder/commit/core-global, Game Speed, Advance Time/
+                                                  // Time-of-Day freeze and God Mode/Infinite Stamina/Infinite Spirit
+                                                  // should all keep working. kSig_StatCommit_TU3460_Candidate and
+                                                  // kSig_StatCommit_TU3479_Candidate both stay at 0 matches (same
+                                                  // regression already flagged on 3462, not yet re-derived).
+                                                  // kSig_ParryVerdict stays at 0 (same regression already flagged
+                                                  // on 3527) - Easy Parry stays dead. NEW regression this build:
+                                                  // kSig_InvHolderInsert_TU3527_Candidate went from its documented
+                                                  // unique match on 3527 to 26 matches here (no longer unique) -
+                                                  // the per-feature "unique" safety gate correctly refuses it, so
+                                                  // this changes nothing observable (Add Item was already blocked
+                                                  // on missing kSig_InvFreePlacements regardless). Everything else
+                                                  // already dead on 3527 stays dead. Same risk-accepted precedent
+                                                  // as 3527/3479/3462/3460/3446 below - flipping this only lets
+                                                  // Install() attempt each hook instead of blocking all of them
+                                                  // wholesale. Our own live pass is pending.
+            { 3527, "unconfirmed",      true  },  // follow-up patch (2026-11-04), different exe (SHA256
+                                                  // dc4237f21d6ce1e49f8e5d6fa89bf803fbbe6549123078efdc393265c7bf6841,
+                                                  // audit.py). Full audit.py sweep against the live exe: DamageApply,
+                                                  // MoveUpdate, LocStringGet, TodEngineGlobal and EquipEffectRefresh
+                                                  // all still resolve unique - unchanged from 3479. Of the live-wired
+                                                  // TU-candidate fallbacks, kSig_TravelToNode_TU3460_Candidate,
+                                                  // kSig_InvGetHolder_TU3460_Candidate, kSig_InvCommit_TU20402_
+                                                  // Candidate, kSig_MasterFrameUpdate_TU20402_Candidate,
+                                                  // kSig_FieldTimeRealm_TU3460_Candidate and kSig_FieldTimeTick_
+                                                  // TU3479_Candidate all still resolve unique - Fast Travel trigger,
+                                                  // Inventory holder/commit, Game Speed and Advance Time/Time-of-Day
+                                                  // freeze should all keep working. kSig_StatCommit_TU3460_Candidate
+                                                  // and kSig_StatCommit_TU3479_Candidate both stay at 0 matches (same
+                                                  // regression already flagged on 3462, not yet re-derived) - God
+                                                  // Mode/Infinite Stamina/Infinite Spirit stay dead. NEW regression
+                                                  // this build: kSig_ParryEvaluator dropped to 0 matches (was unique
+                                                  // through 3479) - Easy Parry is dead until re-derived, not yet
+                                                  // done. Everything else already dead on 3479 stays dead. Same
+                                                  // risk-accepted precedent as 3479/3462/3460/3446 below - flipping
+                                                  // this only lets Install() attempt each hook instead of blocking
+                                                  // all of them wholesale. Our own live pass is pending.
+            { 3479, "unconfirmed",      true  },  // follow-up patch (2026-11-01, game 2.04.05), different exe
+                                                  // (SHA256 changed, audit.py). Full audit.py sweep against the
+                                                  // live exe: DamageApply, MoveUpdate, LocStringGet,
+                                                  // TodEngineGlobal and EquipEffectRefresh all still resolve
+                                                  // unique at drifted RVAs - same function, address moved, no
+                                                  // new signature needed (audit.py's primary-only sweep flags a
+                                                  // long list of MISSING entries, but every one of those was
+                                                  // already dead since 3460/3446 via per-feature gating; not a
+                                                  // new regression). Directly verified against the live exe, one
+                                                  // of our own TU3460/TU20100/TU20402 fallback candidates each:
+                                                  // kSig_InvGetHolder_TU3460_Candidate, kSig_FieldTimeRealm_
+                                                  // TU3460_Candidate, kSig_TravelToNode_TU3460_Candidate,
+                                                  // kSig_LocoStepper_TU20100_Candidate, kSig_PathingHelper_
+                                                  // TU20100_Candidate, kSig_InvGetItemQty_TU20100_Candidate,
+                                                  // kSig_InvCommit_TU20402_Candidate, kSig_InvCoreGlobal_
+                                                  // TU20100_Candidate and kSig_MasterFrameUpdate_TU20402_
+                                                  // Candidate all still resolve unique - Inventory holder/
+                                                  // commit/core-global, Advance Time, Fast Travel trigger,
+                                                  // locomotion/pathing hooks and Game Speed's frame-update hook
+                                                  // should all keep working. kSig_StatCommit_TU3460_Candidate
+                                                  // and kSig_StatCommit_TU20100_Candidate both stay at 0 matches
+                                                  // (same regression already flagged on 3462) - but a new
+                                                  // kSig_StatCommit_TU3479_Candidate, re-derived this session via
+                                                  // helper-callee relocation diffing (see offsets.h), resolves
+                                                  // unique at RVA 0xB6C4340 - God Mode/Infinite Stamina/Infinite
+                                                  // Spirit should work again on this build specifically. Everything
+                                                  // else already dead on 3460/3462 stays dead. Same risk-accepted
+                                                  // precedent as 3462/3460/3446 below. Our own live pass is pending.
+            { 3462, "unconfirmed",      true  },  // follow-up patch (2026-11-01), different exe (SHA256 changed,
+                                                  // audit.py), not just a relabel. Full audit.py sweep against the
+                                                  // live exe: DamageApply, MoveUpdate, LocStringGet, TodEngineGlobal,
+                                                  // EquipEffectRefresh and the crime sigs all still resolve unique -
+                                                  // unchanged from 3460/3446. Of the three TU3460 candidates added
+                                                  // this session, kSig_InvGetHolder_TU3460_Candidate,
+                                                  // kSig_FieldTimeRealm_TU3460_Candidate and the new
+                                                  // kSig_TravelToNode_TU3460_Candidate still resolve unique
+                                                  // (byte-identical RVAs to 3460) - Inventory/Advance Time/Fast
+                                                  // Travel trigger should keep working. kSig_StatCommit_TU3460_
+                                                  // Candidate regressed to 0 matches on THIS build specifically -
+                                                  // God Mode/Infinite Stamina/Infinite Spirit are dead again until
+                                                  // re-derived; not yet done. Everything else already dead on 3460
+                                                  // stays dead. Same risk-accepted precedent as 3460/3446/2976
+                                                  // below. Our own live pass is pending.
             { 3460, "unconfirmed",      true  },  // follow-up patch (2026-10-31), file version only one bump past
                                                   // 3446; TU label not yet confirmed by any third-party source. Full
                                                   // audit.py sweep against the live exe: DamageApply, MoveUpdate,

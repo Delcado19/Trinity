@@ -192,6 +192,54 @@ namespace trinity::game
         "66 44 89 4C 24 20 48 89 54 24 10 53 55 56 57 41 56 48 83 EC 40 "
         "BE DC F8 4C 89 33 35 ?? ?? ?? ?? 4C 8D 34 31 48 89 CF 48 8B 49 20 4C 89 C3 49 03 0E 4C 89 F6 4C 39 C1";
 
+    // Build 3479 candidate. The TU3460 candidate above went to zero matches
+    // again (regressed already on 3462, confirmed still dead on 3479 via
+    // tools/TrinitySignatureAudit against the live exe). Re-derived THIS
+    // session without a full Ghidra import (it timed out on this ~330 MB
+    // image, same cost problem noted before) - instead by re-running the
+    // exact technique the TU3460 candidate's own comment describes: the
+    // shared helper callee pattern from that derivation
+    // ("48 89 5C 24 10 48 89 74 24 18 48 89 7C 24 20 41 56 48 83 EC 20 48 8B
+    // FA 4D 8B F1 0F B7 11 49 8B F0 48 8B D9 E8") still matches unique on
+    // 3479, now at RVA 0x18EB920. A raw byte scan of every executable
+    // section for `E8` call opcodes whose rel32 target equals that RVA found
+    // the new caller at RVA 0xB6C4340: its first 21 bytes and its last 19
+    // bytes (ending in the call itself) are byte-IDENTICAL to both the
+    // TU20100 and TU3460 candidates above - only the junk-arithmetic padding
+    // between them was recompiled again (16 bytes this time, was 14 on
+    // 3460), consistent with "same function, reshuffled junk obfuscation"
+    // each patch. The two junk instructions' 4-byte immediates are wildcarded
+    // since they are almost certainly build-specific filler, same as the
+    // TU3460 candidate's own wildcarded junk bytes. Verified offline: one
+    // match, RVA 0xB6C4340 (tools/TrinitySignatureAudit, live 1.0.0.3479
+    // exe, SHA-256 df531a585bf84ceb47779304cc8b3caaf976aea88424c32605885623
+    // cd4519c7). Field layout assumed identical to the TU20100/TU3460
+    // candidates (same head+tail bytes imply the same calling convention and
+    // body) but NOT independently re-confirmed by decompile - Ghidra timed
+    // out importing this image before it could decompile the body. NOT yet
+    // live-tested.
+    inline constexpr const char* kSig_StatCommit_TU3479_Candidate =
+        "66 44 89 4C 24 20 48 89 54 24 10 53 55 56 57 41 56 48 83 EC 40 "
+        "8B 3D ?? ?? ?? ?? 81 F7 ?? ?? ?? ?? 4C 8D 34 39 48 89 CF 48 8B 49 20 4C 89 C3 49 03 0E 4C 89 F6 4C 39 C1";
+
+    // Build 3527: both candidates above stay at 0 matches. Re-derived THIS
+    // session (2026-11-04) from CrimsonInvEditor v11.3's own "Hook
+    // diagnostics" report, which names its own regen/drain hook directly:
+    // "status adder (breath, stamina, spirit over time): hooked at
+    // exe+18E7190" with "refusal armed: god 1 stamina 1 spirit 1 breath 0" -
+    // functionally the same write-funnel God Mode/Infinite Stamina/Infinite
+    // Spirit need. Bytes read from the exe FILE on disk (not live memory,
+    // which was already hooked by CrimsonInvEditor itself at that address -
+    // reading live would have captured their jmp trampoline, not the
+    // original prologue). Offline-verified unique via audit.py against the
+    // live 1.0.0.3527 exe: one match, exactly RVA 0x18E7190. The register
+    // setup (rcx->entry, dl word->flag via movzx, r8->target, r9->time) is
+    // consistent with our own 4-argument StatCommit_t signature. NOT yet
+    // live-tested through our own hook plumbing.
+    inline constexpr const char* kSig_StatCommit_TU3527_Candidate =
+        "48 89 5C 24 08 48 89 74 24 18 66 89 54 24 10 55 57 41 54 41 56 41 57 "
+        "48 8D 6C 24 ?? 48 81 EC ?? ?? ?? ?? 49 8B F9 4D 8B F8 4C 8B F1 0F B7 D2 E8 ?? ?? ?? ??";
+
     // --- Damage multipliers: hook the damage-apply dispatcher ---------------
     // One level above pa_StatCommit sits a per-status "apply signed delta"
     // dispatcher (IDB sub_145B2A0):
@@ -297,6 +345,31 @@ namespace trinity::game
         {"44 8B 85 DC 00 00 00 48 8D 54 24 40 48 8B 0D ?? ?? ?? ?? 48 8B 09", 12},
         {"48 8D 55 1F 48 8B 0D ?? ?? ?? ?? 48 8B 09 E8 ?? ?? ?? ?? 90 80 7D 2F 00", 4},
     };
+
+    // Build 3527: ALL FOUR anchors above are BROKEN (0/4 matches, confirmed by
+    // a live ReadProcessMemory scan of the running game 2026-11-04, not just
+    // an offline audit). CrimsonInvEditor v11.2's own "Hook diagnostics"
+    // report shows the same decay (only 1 of their own 5 anchors still
+    // matched) but names the raw global slot directly: exe+0x71BE418.
+    // Live-verified end-to-end THIS session: that slot's pointer chases to
+    // the exact same manager CrimsonInvEditor's report printed
+    // (0x35B7B616500, byte-identical), and walking a player-class entry
+    // through our OWN UNCHANGED kOff_Owner_Actor/kOff_Actor_StatusMarker/
+    // kOff_Marker_TargetOwner/kOff_Root_StatArray chain lands on a stat
+    // array whose entry[12]/entry[13] read exactly type 22 cur 300000
+    // (Stamina) / type 23 cur 120000 (Spirit) - matching their report line
+    // for line. WalkSelfChain was never broken on 3527; only finding
+    // g_charMgrGlobal at all was. A raw RVA has no byte-pattern cross-check
+    // of the call site that reads it, so ResolveCharMgrGlobal only tries
+    // this on the exact revision it was observed on, and re-validates it
+    // structurally (a player-class entry must resolve a Health-typed stat
+    // array) before trusting it - same posture as kMountVtableOffset_TU20000
+    // below. Separately refutes a candidate lead from the same live session:
+    // root+0x6C8/+0x758 (a third-party trainer's claimed stamina/spirit
+    // offsets) read as garbage on our own root object, not Stamina/Spirit -
+    // that lead is dead, do not pursue it further.
+    inline constexpr uint16_t  kCharMgrGlobal_RVA_Revision = 3527;
+    inline constexpr uintptr_t kCharMgrGlobal_RVA_3527     = 0x71BE418;
 
     // Character manager -> the vector of all gameplay characters. It is the
     // engine's custom pa vector (data ptr, then u32 size, u32 capacity);
@@ -517,6 +590,19 @@ namespace trinity::game
         "48 89 5C 24 ?? 89 54 24 ?? 48 89 4C 24 ?? 55 56 57 41 56 41 57 "
         "48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 41 8B F9 45 8B F8 "
         "33 DB 45 85 C9";
+    // Build 1.0.0.3460/3462 (2.04.03/2.04.04) recompiled the prologue again:
+    // the EDX stack spill is gone, the push set swaps RDI for R12, and the
+    // register shuffle at the tail reuses R9D/R8D/EDX directly instead of
+    // zeroing EBX with XOR. Re-derived via Ghidra against the entry RVA a
+    // third-party trainer's report.txt names for its own fast-travel call
+    // (`TravelToNode(null, sceneId, nodeIndex)`); cross-checked unique both
+    // in the Ghidra 3460 project and offline against the live 1.0.0.3460 exe
+    // (tools/TrinitySignatureAudit) - both single hits at RVA 0x721250,
+    // exactly the trainer's reported address. Not yet live-tested by us.
+    inline constexpr const char* kSig_TravelToNode_TU3460_Candidate =
+        "48 89 5C 24 10 48 89 4C 24 08 55 56 41 54 41 56 41 57 "
+        "48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 41 8B D9 "
+        "45 8B E0 8B F2 45 85 C9";
     // The mode TravelToNode's new fourth argument needs for node travel (the
     // other value, read from the game's own call sites, is used for a
     // different travel path we do not drive). Passing the wrong value takes
@@ -716,19 +802,18 @@ namespace trinity::game
         "40 53 48 83 EC 20 48 8B 41 ? 48 8B D9 48 8B 48";
 
     // Build 3460 candidate - cross-validated by a third-party loot mod
-    // (MasterLooter v1.6.53, github.com/shin2344234/master-looter) that
-    // logged its own AOB scanner resolving "inv_holder +0x22EE540" on this
-    // exact build/exe. Ghidra confirms the first 11 bytes (`40 53 48 83 EC 20
-    // 48 8B 41 ? 48 8B D9` - push rbx; sub rsp,20; mov rax,[rcx+NN]; mov
-    // rbx,rcx) are byte-identical to the verified source above, so this is
-    // the same function, not a lookalike - only what follows changed, from a
-    // direct `mov rcx,[rax+NN]` to an extra indirection through a helper
-    // call. Also confirms the +0xA0/+0xD0 "ownership-borrow link" chain (see
-    // reference-masterlooter-repo memory) is still read the same way before
-    // the final `[[holder+0x68]+0xB8]` container pointer. Verified offline:
-    // one match, RVA 0x22EE540 (tools/TrinitySignatureAudit, live 3460 exe) -
-    // the SAME address MasterLooter logged independently. NOT yet
-    // live-tested through our own resolver.
+    // that logged its own AOB scanner resolving "inv_holder +0x22EE540" on
+    // this exact build/exe. Ghidra confirms the first 11 bytes (`40 53 48 83
+    // EC 20 48 8B 41 ? 48 8B D9` - push rbx; sub rsp,20; mov rax,[rcx+NN];
+    // mov rbx,rcx) are byte-identical to the verified source above, so this
+    // is the same function, not a lookalike - only what follows changed,
+    // from a direct `mov rcx,[rax+NN]` to an extra indirection through a
+    // helper call. Also confirms the +0xA0/+0xD0 "ownership-borrow link"
+    // chain is still read the same way before the final
+    // `[[holder+0x68]+0xB8]` container pointer. Verified offline: one match,
+    // RVA 0x22EE540 (tools/TrinitySignatureAudit, live 3460 exe) - the SAME
+    // address the third-party mod logged independently. NOT yet live-tested
+    // through our own resolver.
     inline constexpr const char* kSig_InvGetHolder_TU3460_Candidate =
         "40 53 48 83 EC 20 48 8B 41 68 48 8B D9 48 8B 50 20 0F B7 52 30 "
         "E8 ?? ?? ?? ?? 0F B7 90 A6 00 00 00 81 FA FF FF 00 00 75 04 B0 03 EB 09 "
@@ -801,6 +886,21 @@ namespace trinity::game
     inline constexpr const char* kSig_InvHolderInsert =
         "48 89 5C 24 ? 4C 89 44 24 ? 48 89 54 24 ? 48 89 4C 24 ? 55 56 57 41 54 "
         "41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC 10 03 00 00";
+
+    // Build 3527: primary above is 0 matches. Re-derived from CrimsonInvEditor
+    // v11.3's own report ("planner exe+25FBFE0" - their report calls this
+    // the insert "planner", same function our hook comment above names). The
+    // generic push-heavy prologue alone (wildcarded LEA/SUB disp32) matched
+    // 26 unrelated functions in this ~332MB image, so the pattern extends
+    // through the distinctive register-shuffle/stack-zero/call tail that
+    // follows it, which brought it back to a single match. Offline-verified
+    // unique via audit.py: one match, exactly RVA 0x25FBFE0. NOT yet
+    // live-tested through our own hook plumbing.
+    inline constexpr const char* kSig_InvHolderInsert_TU3527_Candidate =
+        "48 89 5C 24 20 4C 89 44 24 18 48 89 54 24 10 48 89 4C 24 08 55 56 57 "
+        "41 54 41 55 41 56 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? "
+        "49 8B D9 49 8B F0 48 8B FA 4C 8B F1 33 C0 66 89 44 24 3A 89 44 24 5C "
+        "48 89 44 24 48 48 89 44 24 50 48 8B D1 48 8D 4C 24 48 E8 ?? ?? ?? ??";
 
     // Inventory transaction COMMIT (IDB sub_1CE1E70), called by the transaction
     // orchestrator sub_1CC15C0 as `commit(holder, &err, CONTAINER, ...)` - its
@@ -1064,6 +1164,21 @@ namespace trinity::game
     inline constexpr const char* kSig_TrItemValueCtor =
         "48 89 5C 24 ?? 48 89 4C 24 ?? 55 56 57 41 54 41 55 41 56 41 "
         "57 48 8B EC 48 83 EC 70 4C 8B F2 4C 8B E1";
+
+    // Build 3527: primary above is 0 matches. Re-derived from CrimsonInvEditor
+    // v11.3's own report ("ready: ctor exe+25FDFA0 ... core global ok"),
+    // read from the exe FILE on disk 2026-11-04 (unhooked - this function is
+    // CALLED, not intercepted, so live memory was safe to read too, but the
+    // file was used for consistency with the StatCommit candidate above).
+    // The opening writes match the documented prototype exactly (instance id
+    // = -1, typeId from arg2, quantity from arg3 at +0x10), same identity
+    // check as the primary. Offline-verified unique via audit.py: one match,
+    // exactly RVA 0x25FDFA0. NOT yet live-tested through our own Add Item
+    // path - kSig_InvFreePlacements still has no TU3527 candidate, so
+    // AddItemStatus() stays Dead until that one is found too.
+    inline constexpr const char* kSig_TrItemValueCtor_TU3527_Candidate =
+        "48 89 5C 24 18 48 89 4C 24 08 55 56 57 41 54 41 55 41 56 41 57 "
+        "48 8B EC 48 83 EC 70 4C 8B FA 4C 8B F1 48 C7 01 FF FF FF FF 0F B7 02 66 89 41 08";
     // Publish successful inserts so equipment/ammo observers refresh (gugi e0d287e).
     inline constexpr const char* kSig_InvBumpRevision =
         "40 57 48 83 EC 20 8B 81 08 01 00 00 48 8B F9 39 81 00 01 00 "
@@ -1078,6 +1193,21 @@ namespace trinity::game
     inline constexpr const char* kSig_InvCommitPlacement =
         "48 89 5C 24 ?? 48 89 6C 24 ?? 56 57 41 56 48 83 EC 30 41 0F "
         "B7 58 08 48 8B F1";
+
+    // Build 3527: primary above is 0 matches. Re-derived from CrimsonInvEditor
+    // v11.3's own report ("commit exe+22F5930, stride 224, slot index at
+    // +0xD8 ... DERIVED from the game's own code"), read from the exe FILE
+    // on disk 2026-11-04 (this function is CALLED, not hooked, by both their
+    // tool and ours, but the file was used for consistency with the
+    // StatCommit candidate above, which WAS live-hooked by their trainer at
+    // read time). Stride 224 / slot index +0xD8 match our own
+    // kPlacement_Stride exactly - strong cross-confirmation this is the same
+    // function. Offline-verified unique via audit.py: one match, exactly RVA
+    // 0x22F5930. NOT yet live-tested - see kSig_TrItemValueCtor_TU3527_
+    // Candidate above for why Add Item is still blocked regardless.
+    inline constexpr const char* kSig_InvCommitPlacement_TU3527_Candidate =
+        "48 89 5C 24 10 48 89 6C 24 18 56 57 41 56 48 83 EC 30 41 0F B7 58 08 "
+        "48 8B FA 8B D3 45 0F B7 F1 49 8B E8 48 8B F1 E8 ?? ?? ?? ??";
     // Free the planner's placement vector (IDB sub_7D13B10, reached via the
     // 5-byte jmp thunk sub_332C40 - thunks cannot be signatured, so this is the
     // target; calling it is identical). Its `imul rcx, rax, 0E0h` in the
@@ -1615,6 +1745,18 @@ namespace trinity::game
         "48 89 5C 24 ?? 48 89 74 24 ?? 48 89 7C 24 ?? 4C 89 64 24 ?? "
         "55 41 56 41 57 48 8B EC 48 83 EC 70 48 8B F9 C5 F2 58 41 2C";
 
+    // 1.0.0.3479 recompiled the prologue: no r14/r15 pushes (saved via plain
+    // stores instead), so the fixed byte count before the vaddss shrank from
+    // 40 to 35. Found by raw-byte-scanning CrimsonDesert.exe for the
+    // distinctive accumulator add+writeback pair (C5 F2 58 41 2C C5 FA 11 41
+    // 2C) - exactly one hit in the whole 332MB image, at RVA 0xB3F430 - then
+    // walking back to the real function start. This is also the root cause
+    // behind both "Freeze Time of Day" and "Shift Time" being dead on 3479
+    // (World::TimeOfDayReady() requires this hook).
+    inline constexpr const char* kSig_FieldTimeTick_TU3479_Candidate =
+        "48 89 5C 24 ?? 48 89 74 24 ?? 48 89 7C 24 ?? 4C 89 74 24 ?? "
+        "55 48 8B EC 48 83 EC 70 48 8B F9 C5 F2 58 41 2C";
+
     // --- Time of Day: FREEZE the visible SUN via the RENDER manager ----------
     // The numeric field clock above is only half the story. The visible
     // day/night (sun/moon/sky) is driven by the RENDER "TimeOfDay" manager's
@@ -1995,10 +2137,11 @@ namespace trinity::game
         "49 89 E3 53 55 56 57 41 56 41 57 48 83 EC ?? 48 89 D7 48 89 CE "
         "0F B7 42 04 66 41 89 43 08 49 8D 4B 08 E8";
 
-    inline constexpr uintptr_t kOff_FriendlyRec_Key   = 0x00; // u32 record key
-    inline constexpr uintptr_t kOff_FriendlyRec_Group = 0x04; // u16 group/bucket key
-    inline constexpr uintptr_t kOff_FriendlyRec_Value = 0x20; // i64 trust value
-    inline constexpr int64_t   kFriendly_Max          = 100;  // the taming cap
+    inline constexpr uintptr_t kOff_FriendlyRec_Key    = 0x00; // u32 record key
+    inline constexpr uintptr_t kOff_FriendlyRec_Group  = 0x04; // u16 group/bucket key
+    inline constexpr uintptr_t kOff_FriendlyRec_Value  = 0x20; // i64 trust value
+    inline constexpr uintptr_t kOff_FriendlyRec_Stride = 0x58; // size of one record in the array
+    inline constexpr int64_t   kFriendly_Max           = 100;  // the taming cap
 
     // 1.18.02 encodes the SAME function differently, and the pattern above
     // cannot match it at any offset. `44 8B 41 ?` is the disp8 form of

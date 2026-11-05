@@ -3,6 +3,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "../mem/hooks.h"
+
 namespace trinity::ui
 {
     // Reusable menu rows. Every widget draws one 36px row between Begin() and
@@ -11,7 +13,8 @@ namespace trinity::ui
     // each reports its control scheme to the footer hint bar automatically.
 
     // A plain action row (Enter / A / click fires it).
-    bool Option(const char* label, const char* desc = nullptr);
+    bool Option(const char* label, const char* desc = nullptr,
+               mem::SigStatus status = mem::SigStatus::Ok);
 
     // Option that also reports Del / X pressed on it, so a list can offer
     // both an action and a removal without a second row per entry. The
@@ -28,8 +31,14 @@ namespace trinity::ui
     // Local scalar and shared std::atomic settings are explicitly instantiated
     // in widgets.cpp. The field address stays stable for animation/edit state.
     // On/off switch. Enter/A/click or Left/Right flips it; the knob animates.
+    //
+    // `status` feeds the red/yellow/green dot drawn before this row's
+    // description once it is selected (see mem::SigStatus) - pass it for any
+    // feature whose backing signature can be dead or running on a fallback
+    // pattern; the default Ok suits a row with nothing to track.
     template <typename T>
-    bool Toggle(const char* label, T* value, const char* desc = nullptr);
+    bool Toggle(const char* label, T* value, const char* desc = nullptr,
+               mem::SigStatus status = mem::SigStatus::Ok);
 
     // Numeric rows. Left/Right steps (held: x10). Enter starts inline typing
     // of an exact value (keyboard; Enter commits, moving away cancels).
@@ -37,7 +46,7 @@ namespace trinity::ui
     template <typename T>
     bool FloatOption(const char* label, T* value, float minV, float maxV,
                      float step, float defV, const char* fmt = "%.2f",
-                     const char* desc = nullptr);
+                     const char* desc = nullptr, mem::SigStatus status = mem::SigStatus::Ok);
 
     // A single row that fuses a Toggle and a numeric slider - the on/off
     // switch and its multiplier share one line (e.g. "Super Run" + run speed).
@@ -46,9 +55,11 @@ namespace trinity::ui
     template <typename B, typename T>
     bool ToggleFloat(const char* label, B* enabled, T* value,
                      float minV, float maxV, float step, float defV,
-                     const char* fmt = "%.2f", const char* desc = nullptr);
+                     const char* fmt = "%.2f", const char* desc = nullptr,
+                     mem::SigStatus status = mem::SigStatus::Ok);
     bool IntOption(const char* label, int* value, int minV, int maxV,
-                   int step, int defV, const char* desc = nullptr);
+                   int step, int defV, const char* desc = nullptr,
+                   mem::SigStatus status = mem::SigStatus::Ok);
 
     // A number and the action that applies it, on ONE row (e.g. "Set All").
     // Left/Right step the amount (held: x10) and Del / X resets it to `defV`,
@@ -71,14 +82,15 @@ namespace trinity::ui
     // apply. It does NOT return true when the amount merely changed - stepping
     // an amount is not asking for it to be applied.
     bool IntAction(const char* label, int* value, int minV, int maxV,
-                   int step, int defV, const char* desc = nullptr);
+                   int step, int defV, const char* desc = nullptr,
+                   mem::SigStatus status = mem::SigStatus::Ok);
 
     // Same as ToggleFloat, but for a whole-number value ("Max Stack Size"
     // 999999, "Slot Size" 999) - no decimal formatting.
     template <typename B, typename T>
     bool ToggleInt(const char* label, B* enabled, T* value,
                    int minV, int maxV, int step, int defV,
-                   const char* desc = nullptr);
+                   const char* desc = nullptr, mem::SigStatus status = mem::SigStatus::Ok);
 
     // Cycles through `items`; Left/Right picks, Enter/A advances.
     bool Combo(const char* label, int* index, const char* const* items,
@@ -86,11 +98,12 @@ namespace trinity::ui
 
     // Pushes submenu `id` when activated; `label` (minus any trailing
     // "  (count)") becomes its breadcrumb title.
-    bool Submenu(const char* label, const char* id, const char* desc = nullptr);
+    bool Submenu(const char* label, const char* id, const char* desc = nullptr,
+                mem::SigStatus status = mem::SigStatus::Ok);
 
     // Submenu with the game's own icon at the left (see OptionItem / icons.h).
     bool SubmenuItem(const char* label, const char* icon, const char* id,
-                     const char* desc = nullptr);
+                     const char* desc = nullptr, mem::SigStatus status = mem::SigStatus::Ok);
 
     // Type-to-filter row for long lists. Activating it starts text capture
     // (all keyboard input is swallowed from the game while typing - see

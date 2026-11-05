@@ -2,6 +2,8 @@
 
 #include <cstddef>
 
+#include "../mem/hooks.h"
+
 namespace trinity::game
 {
     // Everything related to teleporting: live position tracking, jumping to
@@ -73,6 +75,14 @@ namespace trinity::game
         // vertical velocity (a direction is held while airborne). Exposed so the
         // HUD can light "FLY".
         static bool GetFlightEngaged();
+
+        // Health of the backing signatures, for the menu's status dot - see
+        // mem::SigStatus.
+        static mem::SigStatus MoveUpdateStatus();  // position tracking / Super Jump
+        static mem::SigStatus SuperRunStatus();    // locomotion-stepper
+        static mem::SigStatus FreeFlightStatus();  // locomotion-stepper + airborne-mover anchor
+        static mem::SigStatus FastTravelStatus();  // fast-travel trigger + scene registry
+        static mem::SigStatus PathingStatus();     // pathing-helper (destination warp)
 
         // Copies the last-seen position to the system clipboard as plain
         // text ("X Y Z"), ready to paste somewhere as a future preset.

@@ -260,6 +260,13 @@ namespace trinity::game
     bool Parry::Available() { return g_target != nullptr || g_site != 0; }
     bool Parry::Enabled()   { return g_on; }
 
+    mem::SigStatus Parry::Status()
+    {
+        if (g_target) return mem::SigStatus::Ok;       // preferred evaluator hook
+        if (g_site)   return mem::SigStatus::Fallback; // degraded verdict-patch mode
+        return mem::SigStatus::Dead;
+    }
+
     void Parry::SetEnabled(bool on)
     {
         if (on == g_on) return;

@@ -11,6 +11,25 @@
 
 namespace trinity::mem
 {
+    // Health of a feature's backing signature: NOT FOUND (Dead), found but only
+    // via an older-build fallback pattern (Fallback), or the current build's own
+    // pattern matched outright (Ok). Independent of whether a game world is
+    // currently loaded - that is Ready()/Available(), a separate concept - so the
+    // menu's status dot (gui/widgets.h) can tell "this build's signature drifted"
+    // apart from "no player object right now".
+    enum class SigStatus { Dead, Fallback, Ok };
+    inline SigStatus StatusOf(bool installed, size_t which)
+    {
+        return !installed ? SigStatus::Dead : which > 0 ? SigStatus::Fallback : SigStatus::Ok;
+    }
+
+    // Combines two statuses for a feature that needs both signatures healthy -
+    // the worse of the two wins (Dead < Fallback < Ok by declaration order).
+    inline SigStatus Worse(SigStatus a, SigStatus b)
+    {
+        return static_cast<int>(a) < static_cast<int>(b) ? a : b;
+    }
+
     // Finds `sig` (refusing an ambiguous match, up to `maxMatches` probes) and
     // installs a MinHook detour at the resolved address - the
     // find/warn/hook/log sequence every game/*.cpp Install() otherwise
@@ -66,9 +85,14 @@ namespace trinity::mem
     // one drifted signature degrades to "matched the older shape" instead of a
     // dead feature. Logs which variant matched, because that is exactly the
     // detail a post-patch bug report needs.
+    // `outWhich`, when given, receives the matched pattern's index on success
+    // (0 = current build's own pattern, >0 = an older build's fallback) - feeds
+    // StatusOf() for the menu's status dot. Left untouched on failure; callers
+    // that only care about the hook being installed just omit it.
     template <typename Fn>
     bool InstallHookAny(const char* context, std::initializer_list<std::string_view> sigs,
-                        const char* consequence, Fn detour, Fn* original, void** target)
+                        const char* consequence, Fn detour, Fn* original, void** target,
+                        size_t* outWhich = nullptr)
     {
         *target = nullptr;
         *original = nullptr;
@@ -103,6 +127,7 @@ namespace trinity::mem
             return false;
         }
         *target = t;
+        if (outWhich) *outWhich = which;
         return true;
     }
 

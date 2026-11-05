@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <limits>
 
+#include "../mem/hooks.h"
+
 namespace trinity::game
 {
     namespace detail
@@ -79,6 +81,11 @@ namespace trinity::game
 
         // True once the field-clock globals resolved (the feature is available).
         static bool TimeOfDayReady();
+
+        // Health of the backing signatures, for the menu's status dot - see
+        // mem::SigStatus.
+        static mem::SigStatus Status();          // Game Speed
+        static mem::SigStatus TimeOfDayStatus();  // Freeze / Advance Time of Day
 
         // Queues one signed step (-240..240 hours). False if unavailable, zero,
         // out of range, or another step is pending. True means accepted, not applied;

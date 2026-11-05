@@ -317,6 +317,11 @@ namespace trinity::game
     }
 
     bool Equipment::Ready()        { return ClientComp() != 0; }
+
+    mem::SigStatus Equipment::HookStatus()
+    {
+        return g_refresh ? mem::SigStatus::Ok : mem::SigStatus::Fallback;
+    }
     bool Equipment::EditsPersist() { return ServerComp() != 0; }
 
     int Equipment::SlotCount()

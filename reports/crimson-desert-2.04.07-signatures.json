@@ -1,0 +1,1389 @@
+{
+  "schemaVersion": 1,
+  "game": "Crimson Desert",
+  "gameVersion": "2.04.07",
+  "baseline": {
+    "label": "gugi97 Trinity TU 2.00.00",
+    "repository": "https://github.com/gugi97/Trinity",
+    "branch": "fork/tu2.00.00",
+    "commit": "7ad5fb1895021d7132083b4194ca1b1ab208610b",
+    "gameVersion": "2.00.00",
+    "peRevision": 2625
+  },
+  "executable": {
+    "name": "CrimsonDesert.exe",
+    "size": 327116696,
+    "sha256": "25f24e06a1f886e9310fd290f9462f66b480a5e7763d1fe156bfddaa8d1992b9",
+    "fileVersion": "1.0.0.3549",
+    "peTimestamp": "0x6AEB7D59",
+    "peTimestampUtc": "2026-11-04T18:45:45Z",
+    "sizeOfImage": "0x13CFF000"
+  },
+  "scan": {
+    "primarySections": [
+      ".xtext",
+      ".xpdata",
+      ".link"
+    ],
+    "fallbackSections": [
+      ".data",
+      ".text",
+      ".arch",
+      ".sbss",
+      ".tls$",
+      ".tls",
+      ".didata"
+    ],
+    "excludedNonExecutableSectionPrefix": ".debug",
+    "maxRecordedLocationsPerSignature": 64,
+    "note": "Count results are mechanical only; semantic status remains UNKNOWN."
+  },
+  "signatures": {
+    "kSig_StatCommit": {
+      "feature": "Health, stamina, and spirit stat commit",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_DamageApply": {
+      "feature": "Damage application and multipliers",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "EXPECTED_COUNT",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x18E6D80",
+          "section": ".xtext"
+        }
+      ]
+    },
+    "kSig_MountStaminaTick": {
+      "feature": "Historical mount stamina tick",
+      "source": "src/game/offsets.h",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "NOT_FOUND",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kCharMgrAnchor_1": {
+      "feature": "Character manager consensus anchor",
+      "source": "src/game/offsets.h",
+      "policy": "exact",
+      "expectedMatches": 1,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kCharMgrAnchor_2": {
+      "feature": "Character manager consensus anchor",
+      "source": "src/game/offsets.h",
+      "policy": "exact",
+      "expectedMatches": 1,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kCharMgrAnchor_3": {
+      "feature": "Character manager consensus anchor",
+      "source": "src/game/offsets.h",
+      "policy": "exact",
+      "expectedMatches": 1,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kCharMgrAnchor_4": {
+      "feature": "Character manager consensus fallback anchor",
+      "source": "src/game/offsets.h",
+      "policy": "exact",
+      "expectedMatches": 2,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_MoveUpdate": {
+      "feature": "Player position tracking",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "EXPECTED_COUNT",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x4585370",
+          "section": ".xtext"
+        }
+      ]
+    },
+    "kSig_LocoStepper": {
+      "feature": "Locomotion and super run",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_TravelToNode": {
+      "feature": "Fast travel",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_DestinationUpdate": {
+      "feature": "Current destination tracking",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_PathingHelper": {
+      "feature": "Teleport pathing helper",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_MarkerOriginPrefix": {
+      "feature": "Marker origin candidate prefix",
+      "source": "src/game/offsets.h",
+      "policy": "contextual",
+      "expectedMatches": null,
+      "matches": 26,
+      "locationsRecorded": 26,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "CONTEXT_REQUIRED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x7695E4",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x769955",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3975937",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x397CF16",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x39E1815",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3A02449",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3A08B53",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3A08FE7",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3A152AD",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3A1BADE",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3A2DFBC",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3A306E9",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3CC373C",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3CE0427",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3CE0A29",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3CE2A88",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3CE52A7",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3CE5A7F",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3CEE39D",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3CF867F",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3CFAB3C",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3CFC280",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3D07D62",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3D081A4",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x3D176BF",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x114F3773",
+          "section": ".xpdata"
+        }
+      ]
+    },
+    "kSig_LeaR8Rip": {
+      "feature": "RIP-relative table/string candidate",
+      "source": "src/game/offsets.h",
+      "policy": "contextual",
+      "expectedMatches": null,
+      "matches": 123105,
+      "locationsRecorded": 64,
+      "locationsTruncated": true,
+      "scanScope": "executable-or-link",
+      "countStatus": "CONTEXT_REQUIRED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x93BE",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x9C01",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x75E3B",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x767D5",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x77229",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x779E6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x77A4D",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E3EC",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E3FD",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E411",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E425",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E439",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E44D",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E4CC",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E4DD",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E4F1",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E56C",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E57D",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E591",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E60C",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E61D",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E631",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E645",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E659",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E66D",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E681",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E695",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E70C",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E71D",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E731",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E7AC",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E7BD",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E7D1",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E84C",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E85D",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E871",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E8EC",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E8FD",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E911",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E98C",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E99D",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E9B1",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E9C5",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E9D9",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7E9ED",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7EA01",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7EA7C",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7EA8D",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7EAA1",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7EAB5",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7EAC9",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7EB3C",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7EB4D",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7EB61",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7EBDC",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7EBED",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7EC01",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7EC15",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7EC29",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7EC3D",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7EC51",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7EC65",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7EC79",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x7EC8D",
+          "section": ".xtext"
+        }
+      ]
+    },
+    "kSig_TableResolverPrologue": {
+      "feature": "32-bit-key table resolver prologue",
+      "source": "src/game/offsets.h and src/game/teleport.cpp",
+      "policy": "contextual",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": [],
+      "aliases": [
+        "teleport.cpp:kPrologue32"
+      ]
+    },
+    "kResolverPrologue16": {
+      "feature": "16-bit-key table resolver prologue",
+      "source": "src/game/teleport.cpp and src/game/inventory.cpp",
+      "policy": "contextual",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": [],
+      "aliases": [
+        "teleport.cpp:kPrologue16",
+        "inventory.cpp:kItemPrologue"
+      ]
+    },
+    "kSig_InvGetItemQty": {
+      "feature": "Inventory item quantity accessor",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_InvGetHolder": {
+      "feature": "Inventory holder resolution",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_InvSetExpandSlots": {
+      "feature": "Inventory slot expansion",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_InvHolderInsert": {
+      "feature": "Inventory insertion planner",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_InvCommit": {
+      "feature": "Inventory transaction commit",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_InvCoreGlobal": {
+      "feature": "Inventory core global",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_TrItemValueCtor": {
+      "feature": "Item-value constructor",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_InvCommitPlacement": {
+      "feature": "Inventory placement commit",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_InvFreePlacements": {
+      "feature": "Inventory placement cleanup",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_MovR8Rip": {
+      "feature": "Indirect RIP-relative table/string candidate",
+      "source": "src/game/offsets.h",
+      "policy": "contextual",
+      "expectedMatches": null,
+      "matches": 18493,
+      "locationsRecorded": 64,
+      "locationsTruncated": true,
+      "scanScope": "executable-or-link",
+      "countStatus": "CONTEXT_REQUIRED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x160786",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x1FE151",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x1FEA01",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x2489F6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x248A96",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x248B36",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x248BD6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x248C76",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x248D16",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x248DB6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x248E56",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x248EF6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x248F96",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249036",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x2490D6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249176",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249216",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x2492B6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249356",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x2493F6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249496",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249536",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x2495D6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249676",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249716",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x2497B6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249856",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x2498F6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249996",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249A36",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249AD6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249B76",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249C16",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249CB6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249D56",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249DF6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249E96",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249F36",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x249FD6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24A076",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24A116",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24A1B6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24A256",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24A2F6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24A396",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24A436",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24A4D6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24A576",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24A616",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24A6B6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24A756",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24A7F6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24A896",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24A936",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24A9D6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24AA76",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24AB16",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24ABB6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x28CC76",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x28D106",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x28D356",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x2DE8D6",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x36AF46",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x37A216",
+          "section": ".xtext"
+        }
+      ]
+    },
+    "kSig_LocStringGet": {
+      "feature": "Localized string lookup",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "EXPECTED_COUNT",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x14A0570",
+          "section": ".xtext"
+        }
+      ]
+    },
+    "kSig_ReportStealthExecute": {
+      "feature": "Historical stealth crime path",
+      "source": "src/game/offsets.h",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "NOT_FOUND",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_TheftCrimeReport": {
+      "feature": "Historical theft crime path",
+      "source": "src/game/offsets.h",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "NOT_FOUND",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_ClientStealItemExecute": {
+      "feature": "Historical client steal execution",
+      "source": "src/game/offsets.h",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x2D369B0",
+          "section": ".xtext"
+        }
+      ]
+    },
+    "kSig_ClientStealItemProcess": {
+      "feature": "Historical client steal processing",
+      "source": "src/game/offsets.h",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 2,
+      "locationsRecorded": 2,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x22EDCC0",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0xD2AD5C0",
+          "section": ".xpdata"
+        }
+      ]
+    },
+    "kSig_AIFuncRegistCrime": {
+      "feature": "Historical AI crime registration",
+      "source": "src/game/offsets.h",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 2,
+      "locationsRecorded": 2,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x24D5640",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x24D64C0",
+          "section": ".xtext"
+        }
+      ]
+    },
+    "kSig_AIFuncWitnessCriminal": {
+      "feature": "Historical AI crime witness",
+      "source": "src/game/offsets.h",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x24D12A0",
+          "section": ".xtext"
+        }
+      ]
+    },
+    "kSig_WantedAddCrimeRecord": {
+      "feature": "Historical wanted-state crime record",
+      "source": "src/game/offsets.h",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "NOT_FOUND",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_SetCrimeTarget": {
+      "feature": "Historical crime target setter",
+      "source": "src/game/offsets.h",
+      "policy": "observe",
+      "expectedMatches": null,
+      "matches": 3,
+      "locationsRecorded": 3,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "OBSERVED",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x2ED4850",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x2EE79F0",
+          "section": ".xtext"
+        },
+        {
+          "rva": "0x42339C0",
+          "section": ".xtext"
+        }
+      ]
+    },
+    "kSig_MasterFrameUpdate": {
+      "feature": "Master frame update",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_GameSpeed": {
+      "feature": "Game speed state",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_FieldTimeRealm": {
+      "feature": "Client/server field-time realm",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_FieldTimeTick": {
+      "feature": "Field-time tick",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_TodEngineGlobal": {
+      "feature": "Time-of-day engine global",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "EXPECTED_COUNT",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0x2F9137A",
+          "section": ".xtext"
+        }
+      ]
+    },
+    "kSig_EquipBatch": {
+      "feature": "Equipment batch update",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_DyeApplyBatch": {
+      "feature": "Dye batch application",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_DyeUpsert": {
+      "feature": "Current dye-record upsert alternative",
+      "source": "src/game/offsets.h",
+      "policy": "alternative",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "NOT_FOUND",
+      "semanticStatus": "UNKNOWN",
+      "locations": [],
+      "alternativeGroup": "dye-upsert"
+    },
+    "kSig_DyeUpsert_1180": {
+      "feature": "Legacy dye-record upsert alternative",
+      "source": "src/game/offsets.h",
+      "policy": "alternative",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "NOT_FOUND",
+      "semanticStatus": "UNKNOWN",
+      "locations": [],
+      "alternativeGroup": "dye-upsert"
+    },
+    "kSig_EquipEffectRefresh": {
+      "feature": "Equipment-effect refresh",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 1,
+      "locationsRecorded": 1,
+      "locationsTruncated": false,
+      "scanScope": "executable-or-link",
+      "countStatus": "EXPECTED_COUNT",
+      "semanticStatus": "UNKNOWN",
+      "locations": [
+        {
+          "rva": "0xA80880",
+          "section": ".xtext"
+        }
+      ]
+    },
+    "kSig_FriendlySetNpc": {
+      "feature": "Current NPC trust setter alternative",
+      "source": "src/game/offsets.h",
+      "policy": "alternative",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "NOT_FOUND",
+      "semanticStatus": "UNKNOWN",
+      "locations": [],
+      "alternativeGroup": "friendly-npc"
+    },
+    "kSig_FriendlySetNpc_1180": {
+      "feature": "Legacy NPC trust setter alternative",
+      "source": "src/game/offsets.h",
+      "policy": "alternative",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "NOT_FOUND",
+      "semanticStatus": "UNKNOWN",
+      "locations": [],
+      "alternativeGroup": "friendly-npc"
+    },
+    "kSig_FriendlySetPet": {
+      "feature": "Pet trust setter",
+      "source": "src/game/offsets.h",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_ParryVerdict": {
+      "feature": "Easy Parry executable patch site",
+      "source": "src/game/parry.cpp",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    },
+    "kSig_WeatherDeserialize": {
+      "feature": "Weather preset deserializer",
+      "source": "src/game/weather.cpp",
+      "policy": "unique",
+      "expectedMatches": null,
+      "matches": 0,
+      "locationsRecorded": 0,
+      "locationsTruncated": false,
+      "scanScope": "none",
+      "countStatus": "MISSING",
+      "semanticStatus": "UNKNOWN",
+      "locations": []
+    }
+  }
+}

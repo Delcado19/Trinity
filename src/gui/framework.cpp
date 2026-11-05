@@ -33,6 +33,7 @@ namespace trinity::ui
     int      g_rowIndex  = 0;
     char     g_selectedDesc[256] = {};
     RowKind  g_hintKind  = RowKind::None;
+    mem::SigStatus g_selectedStatus = mem::SigStatus::Ok;
     bool     g_padActive = false;
     bool     g_captureSeen = false;
 
@@ -723,6 +724,7 @@ namespace trinity::ui
         g_y               = 64.0f * s;
         g_rowIndex        = 0;
         g_selectedDesc[0] = 0;
+        g_selectedStatus  = mem::SigStatus::Ok;
         g_previewSprite[0] = 0;   // re-captured by RowBase if a row has art
         g_previewLabel[0]  = 0;
 
@@ -1036,8 +1038,21 @@ namespace trinity::ui
             const ImVec2 mx(g_x + g_width, g_y + dsz.y + pad * 2.0f);
             dl->AddRectFilled(mn, mx, theme::RowBg);
             dl->AddRectFilled(mn, ImVec2(mn.x + 3.0f * s, mx.y), theme::Accent);
-            dl->AddText(g_fontBody, dh, ImVec2(mn.x + pad + 4.0f * s, mn.y + pad),
-                        theme::Text, g_selectedDesc, nullptr, wrapW);
+
+            // Status dot: red/yellow/green for whether this row's backing
+            // signature is dead, running on a fallback pattern, or confirmed
+            // for this build - see mem::SigStatus. Rows with nothing to track
+            // (pure UI controls) default to Ok, same green as a confirmed one.
+            const ImU32 ledCol = g_selectedStatus == mem::SigStatus::Dead     ? theme::LedDead
+                               : g_selectedStatus == mem::SigStatus::Fallback ? theme::LedFallback
+                                                                               : theme::LedOk;
+            const float  ledR    = 4.0f * s;
+            const float  textX0  = mn.x + pad + 4.0f * s;
+            const ImVec2 ledCtr(textX0 + ledR, mn.y + pad + dh * 0.5f);
+            dl->AddCircleFilled(ledCtr, ledR, ledCol);
+
+            dl->AddText(g_fontBody, dh, ImVec2(textX0 + ledR * 2.0f + 6.0f * s, mn.y + pad),
+                        theme::Text, g_selectedDesc, nullptr, wrapW - ledR * 2.0f - 6.0f * s);
         }
 
         // Item preview: a 24 px row icon is enough to recognise a potion and

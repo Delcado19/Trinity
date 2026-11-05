@@ -138,6 +138,52 @@ namespace trinity::game::pak
             return std::string(reinterpret_cast<const char*>(&blob[p + 1]), len);
         }
 
+        // DLC build 3446+ file names (fileBlob): a third, distinct scheme from
+        // both name decoders above. Each record is [parent:varint][len:1]
+        // [data:len], where parent is a byte distance to step BACKWARD from
+        // this record's own start (0 = root, no shared prefix) - not an
+        // absolute offset like NameFromBlob's dir chain. Verified by hand
+        // against chunk 12 of the live 1.0.0.3479 exe: offset 8789 decodes to
+        // "cd_icon_keyguide_0", and a sibling record 13 bytes further
+        // (parent=13) decodes to "cd_icon_keyguide_00" - confirms backward-
+        // distance chaining. Names never include the file extension; callers
+        // must strip it before matching (see ReadFile()'s fallback retry).
+        // This is the actual root cause of the long-standing "pak: file ...
+        // not found" icon errors - the old NameFromBlob() 4-byte-parent
+        // decoder silently produced garbage keys for every file past 3446,
+        // which the dir-merge fix alone could not have caught.
+        std::string FileNameFromBlob(const std::vector<uint8_t>& blob, uint32_t off)
+        {
+            std::string parts[64];
+            int n = 0;
+            uint32_t cur = off;
+            while (n < 64)
+            {
+                if (cur >= blob.size()) break;
+                uint32_t parent = 0;
+                int shift = 0;
+                size_t p = cur;
+                for (;;)
+                {
+                    if (p >= blob.size()) return {};
+                    const uint8_t b = blob[p++];
+                    parent |= static_cast<uint32_t>(b & 0x7F) << shift;
+                    shift += 7;
+                    if (!(b & 0x80)) break;
+                }
+                if (p >= blob.size()) break;
+                const uint8_t len = blob[p];
+                if (p + 1 + len > blob.size()) break;
+                parts[n++].assign(reinterpret_cast<const char*>(&blob[p + 1]), len);
+                if (parent == 0 || parent > cur) break; // root, or malformed backref
+                cur -= parent;
+            }
+            std::string out;
+            for (int i = n - 1; i >= 0; --i)
+                out += parts[i];
+            return out;
+        }
+
         // --- Game-root resolution + manifest cache --------------------------
         std::wstring g_root;   // "<root>\" (contains the NNNN chunk folders)
         bool         g_rootResolved = false;
@@ -281,37 +327,68 @@ namespace trinity::game::pak
         auto dirIt = m->dirIndex.find(dirPath);
         if (dirIt == m->dirIndex.end())
         {
-            const DirEntry* dir = nullptr;
+            const DirEntry* exact = nullptr;
             for (const auto& e : m->dirs)
             {
-                if (NameFromBlob(m->dirBlob, e.nameOff) == dirPath) { dir = &e; break; }
+                if (NameFromBlob(m->dirBlob, e.nameOff) == dirPath) { exact = &e; break; }
             }
-            if (!dir)
+
+            // Collect every dir to index for this lookup. Normally one
+            // (the exact parent-chain match on <=2976), but the DLC 3446+
+            // flat naming scheme only gives us a bare leaf fragment
+            // ("ui/texture" -> "texture"), and more than one dir can share
+            // that leaf (chunk 12 has "texture" twice: the UI-icon one and
+            // a debug-widget one). Picking "first match wins" broke again
+            // the moment a later build reordered the manifest, so index
+            // every leaf match instead of betting on manifest order - the
+            // two domains' filenames do not collide.
+            std::vector<const DirEntry*> dirs;
+            if (exact)
             {
-                // Fallback for the DLC 3446+ flat naming scheme: match the
-                // final path segment against the bare per-dir fragment
-                // (e.g. "ui/texture" -> "texture"). Multiple dirs can share
-                // a leaf name on the flat scheme (seen on 3446: "texture"
-                // appears twice in chunk 12) - first match wins, same as
-                // the parent-chain loop above.
+                dirs.push_back(exact);
+            }
+            else
+            {
                 const char* slash = strrchr(dirPath, '/');
                 const char* leaf = slash ? slash + 1 : dirPath;
                 for (const auto& e : m->dirs)
                 {
-                    if (FlatNameFromBlob(m->dirBlob, e.nameOff) == leaf) { dir = &e; break; }
+                    if (FlatNameFromBlob(m->dirBlob, e.nameOff) == leaf) dirs.push_back(&e);
                 }
             }
-            if (!dir) { LOG_ERR("pak: dir '%s' not found in chunk %d.", dirPath, chunk); return false; }
+            if (dirs.empty()) { LOG_ERR("pak: dir '%s' not found in chunk %d.", dirPath, chunk); return false; }
 
+            // File names use a third encoding on the 3446+ era (FileNameFromBlob,
+            // see there) that the "exact" dir match never applies to - exact
+            // only matches on <=2976, where files still use the plain
+            // NameFromBlob chain. Key off the same branch that already tells
+            // the two build eras apart.
+            const bool newScheme = (exact == nullptr);
             auto& index = m->dirIndex[dirPath];
-            const uint32_t end = dir->firstFile + dir->fileCount;
-            index.reserve(dir->fileCount);
-            for (uint32_t i = dir->firstFile; i < end && i < m->files.size(); ++i)
-                index.emplace(NameFromBlob(m->fileBlob, m->files[i].nameOff), i);
+            for (const DirEntry* dir : dirs)
+            {
+                const uint32_t end = dir->firstFile + dir->fileCount;
+                index.reserve(index.size() + dir->fileCount);
+                for (uint32_t i = dir->firstFile; i < end && i < m->files.size(); ++i)
+                {
+                    std::string name = newScheme
+                        ? FileNameFromBlob(m->fileBlob, m->files[i].nameOff)
+                        : NameFromBlob(m->fileBlob, m->files[i].nameOff);
+                    index.emplace(std::move(name), i);
+                }
+            }
             dirIt = m->dirIndex.find(dirPath);
         }
 
-        const auto fileIt = dirIt->second.find(fileName);
+        auto fileIt = dirIt->second.find(fileName);
+        if (fileIt == dirIt->second.end())
+        {
+            // 3446+ file names never carry an extension (FileNameFromBlob) -
+            // retry on the bare stem before giving up, so callers can keep
+            // passing the extension they actually want to load.
+            if (const char* dot = strrchr(fileName, '.'))
+                fileIt = dirIt->second.find(std::string(fileName, dot - fileName));
+        }
         if (fileIt == dirIt->second.end())
         {
             // Not an error when the caller expects misses (see pak.h).
