@@ -133,6 +133,293 @@ Free Flight, open the Fast Travel menu (scene registry - may ALSO be fixed by
 the item-table-resolver fix, since it's the same string-anchored-clone-family
 symptom), then read `Trinity.log` for any remaining `[ERR]` lines.
 
+## Update, even later the same session (2026-11-05, post-live-test)
+
+Live test on the previous update's build surfaced two more problems, both
+now addressed:
+
+- **`BuildCatalog()` latch-before-ready bug - FOUND AND FIXED.** This is
+  why "Catalog unavailable" persisted even though the item-table-resolver
+  fix above was genuinely working (confirmed via the user's own fresh
+  `Trinity.log`: all four tables - `iteminfo`/`ItemGroupInfo`/`stringinfo`/
+  `InventoryInfo` - resolved at the predicted RVAs). `BuildCatalog()` set a
+  one-shot "already built" latch (`g_catalogBuilt = true`) unconditionally
+  near the top, before checking whether `g_itemTableGlobal` was even
+  non-zero yet. The DX12 Present hook/overlay starts rendering frames
+  (and can reach `BuildCatalog()` if the Inventory window is open) several
+  seconds before `Install()`'s sequential hook-resolution finishes
+  resolving the item table. If that happened even once, the catalog
+  latched permanently empty for the rest of the session - a genuine,
+  independent bug, not a failure of the table-resolver fix. Fixed in
+  `src/game/inventory.cpp`'s `BuildCatalog()`: the latch now only fires on
+  a genuine dead-end (`g_itemTableGlobal` still 0, or the table pointer/row
+  count reads come back implausible), not on "not ready yet" - a call that
+  arrives too early now just returns and retries on the next call instead
+  of poisoning the result forever.
+- **Max Stack Size - added a read-only plausibility safety gate before any
+  write, NOT a full fix.** `kOff_ItemDef_MaxStackCount` (0x18, i64) /
+  `kOff_ItemDef_ApplyMaxStackCap` (0x111, u8 bool) in `offsets.h` have zero
+  per-build verification history, unlike nearly every other offset in that
+  file, and `SetAllMaxStackSizes()` was a complete dead no-op before this
+  session's item-table-resolver fix (since `g_itemTableGlobal` was always
+  0) - meaning the fix above made this the FIRST time this write path could
+  ever execute. The user reported a crash in `CrimsonDesert.exe` (not
+  `Trinity.asi`) immediately after toggling this exact setting, and
+  confirmed on follow-up that the crash happened shortly after, not later/
+  unrelated. Statically decoded the reported crash RVA
+  (`crimsondesert.exe+0x3F2301`): an indexed-array copy loop with a
+  **post-access** bounds check (do-while style - checks AFTER the read, not
+  before), consistent with either a corrupted count/pointer written
+  elsewhere, or an unrelated pre-existing asset bug (a nearby log line
+  about a missing wolf wrinkle-map XML file is a plausible alternative,
+  independent cause). Added to `SetAllMaxStackSizes()`: before writing
+  anything, read every row's CURRENT (unmodified) `MaxStackCount`/
+  `ApplyMaxStackCap` values and check they look plausible (`0 <= value <=
+  999999999`, cap is 0 or 1); if more than 5% of sampled rows look wrong,
+  refuse the entire write and log an error instead of writing on top of
+  fields that might not be what the offsets claim. **This is a heuristic
+  safety net, not proof the offsets are correct** - genuine resolution
+  needs independent re-derivation of both offsets for build 3549, which
+  has NOT been done. Tell the user not to re-enable Max Stack Size with
+  confidence until that happens.
+- Built clean via the PowerShell+MSBuild command below, committed as
+  `fix: BuildCatalog latch-before-ready bug; safety pre-check for Max Stack
+  Size`, pushed to `origin/port/tu-2.03.00` (commit `582707f`).
+
+### In-progress investigation: a real "native storage screen is open" guard
+
+User asked for an *additional* safety guard on `SetAllMaxStackSizes()`:
+don't write while the player has the game's own Storage/Warehouse UI open
+(not Trinity's own overlay - the two are independent). This was explicitly
+scoped to **real RE, not a fake/theatrical guard** - a first attempt at
+gating on Trinity's own `State::menuOpen` or GUI tab state was rejected
+on inspection: Trinity's own Inventory tab doesn't even read
+`kOff_ItemDef_MaxStackCount`/`ApplyMaxStackCap` when rendering (it reads a
+separately-cached `Item` struct built by `RefreshImpl()`, not the raw
+`ItemDef`), so gating on "is our own tab open" would protect against
+nothing real. Also confirmed `Inventory::Tick()` (which calls
+`SetAllMaxStackSizes()`) already runs on the game thread per
+`teleport.cpp:1177`'s comment, not a separate render thread - so there is
+no thread-safety signal available from how *we* currently call it either.
+
+Did real RE instead: cross-referenced `MasterLooter.asi` and
+`PrivateStorageMaster.asi` (third-party trainers already present for other
+reasons this session - see the no-trainer-names policy above, names are
+withheld here too) in Ghidra via the `rea` MCP tools, since both ship a
+working, real "no storage screen open" guard on their own stack-size
+features.
+
+**Findings, high confidence, reusable for Trinity:**
+
+- Both trainers patch the same field family as Trinity's own
+  `kOff_ItemDef_MaxStackCount`: an **8-byte (i64)** `ItemInfo._maxStackCount`
+  read/write, confirmed by an explicit runtime check in
+  `PrivateStorageMaster.asi`'s own error string
+  (`"[addr] the eight-byte read at +%llX does not name ItemInfo's
+  _maxStackCount"`). This is independent structural corroboration that an
+  8-byte stack-count field at this kind of struct position is the right
+  *shape*, though NOT proof our specific `0x18` offset is correct for
+  build 3549 - they don't expose their own offset value as a static
+  constant (see below).
+- Their mechanism for "Multiplier" is based on the GAME'S default stack
+  size (usually 100, times a multiplier up to a hard safety cap of
+  999999), not a single fixed target value like Trinity's design - a
+  structural difference worth knowing but not necessarily worth copying.
+- Their "no storage screen open" gate (`PrivateStorageMaster.asi`, string
+  `"raising a stack size needs free play with no storage screen open"` at
+  file offset `0x18003b4a0`, containing function at `0x18000f360`) resolves
+  to two bytes read off a **`pa::ClientSequencerStageManager`** instance
+  (engine RTTI class, confirmed via `.?AVClientSequencerStageManager@pa@@`)
+  passed to them as `this` via their own hand-rolled inline hook (NOT a
+  vtable-slot swap, NOT a named engine-event subscription despite
+  misleadingly-named internal log labels like `"ModeSwitch"`/
+  `"StageClose"` - those are just human-readable labels for raw function
+  addresses they found via their own byte-pattern scan, same technique
+  family as Trinity's own `InstallHookAny`). The two bytes:
+  - **Byte A ("stage category") == 4** means the active engine "stage" is
+    the Warehouse/Storage category.
+  - **Byte B ("stage sub-id") == 0x11** means that stage is fully open
+    (transitional values seen: `0xe`, `0xd`).
+  - The RTTI class for the actual storage UI root is
+    **`pa::uiCommonScript::UIGamePlayControlRootWarehouse2`** (confirmed via
+    `.?AVUIGamePlayControlRootWarehouse2@uiCommonScript@pa@@`).
+- **Both RTTI class names were verified present, byte-for-byte identical,
+  in our current `CrimsonDesert.exe` (TU 2.04.07 / 3549)** via a
+  standalone Python script (`strdump.py` in the session scratchpad,
+  simple printable-string scan, not checked into the repo - recreate it if
+  needed, it's ~15 lines).
+- **Vtable addresses for both classes were computed statically** (no
+  Ghidra needed on the big exe for this part - pure PE/RTTI structure
+  walk, same technique family as `audit.py`): locate the TypeDescriptor
+  16 bytes before the decorated name string, find the one
+  `RTTICompleteObjectLocator` (x64, `signature==1`) in `.rdata` whose
+  `pTypeDescriptor` RVA matches, then find the QWORD elsewhere in the file
+  equal to that COL's VA - the vtable starts 8 bytes after that match.
+  Both resolved to exactly one clean hit (script: `find_vtable.py` in the
+  scratchpad, also not checked in):
+  - `pa::ClientSequencerStageManager` vtable: RVA `0x59572E0`, VA
+    `0x1459572E0` (ImageBase `0x140000000`).
+  - `pa::uiCommonScript::UIGamePlayControlRootWarehouse2` vtable: RVA
+    `0x59F24C0`, VA `0x1459F24C0`.
+
+**What's still missing to actually implement this guard** (not done,
+real RE work remaining, explicitly NOT a quick follow-up):
+
+1. The two per-build byte offsets (category/sub-id position within
+   `ClientSequencerStageManager`) are NOT static constants in either
+   trainer's binary - they're runtime globals (`DAT_180054228`/
+   `DAT_18005422c` in `PrivateStorageMaster.asi`) that read as all-zero
+   in the file image, meaning they're populated by that mod's own
+   build-detection code at startup, not recoverable by just reading the
+   file. Need to re-derive independently for our build.
+2. To get a **live instance pointer** of `ClientSequencerStageManager`
+   (needed before any byte-offset diffing is possible), the practical
+   path is: walk the vtable at VA `0x1459572E0` in `CrimsonDesert.exe`,
+   identify which slot is the "mode switch"/stage-transition callback
+   (the one the trainers hook - their own hook-install code resolves this
+   address via their own byte-pattern scan too, so there's no shortcut
+   address to copy), and either hook that slot temporarily ourselves or
+   use it to identify the instance another way. This needs Ghidra/`rea`
+   work on the **big** `CrimsonDesert.exe` (slow - `.pdata`/exception-
+   directory parsing already failed for this specific exe earlier this
+   session, raw byte dumps + manual x64 decode had to be used instead),
+   not the small trainer ASIs this investigation used so far.
+3. Once a live instance pointer exists, finding the two byte offsets
+   becomes trivial: dump the struct bytes once with the Storage/Warehouse
+   screen closed, once with it open, diff, find the byte(s) that flip
+   `!=4 -> 4` and `-> 0x11`.
+4. This was deliberately paused here (checkpoint, not abandoned) because
+   step 2 is open-ended Ghidra time on a large, previously-uncooperative
+   binary - continue it as its own scoped task, not bundled into another
+   fix.
+
+## Update, 2026-11-05, after a 3-way cross-model review (Claude Opus max reasoning + Codex, both independently then cross-checking each other)
+
+The user asked why every patch breaks so much trainer functionality and
+whether Trinity could become "heuristic" - self-checking on unknown future
+builds instead of needing hand-derived signatures after every patch. Two
+agents analyzed this independently against `COMPATIBILITY.md` and the
+installed 3549 exe, then cross-reviewed each other's findings and merged
+into one ranked plan. Full back-and-forth is in this session's transcript,
+not reproduced here - this section only covers what got IMPLEMENTED from
+item 1 of that plan (the small, high-confidence fixes); items 2-6 (central
+target registry, generalized verify-before-trust, unwind-table-based
+function-start recovery, targeted gap patterns, RTTI instance search) are
+still just a plan, not started.
+
+**Verdict on the user's question** (both models agree): the user is
+substantially right. There's no evidence of deliberate, trainer-targeted
+rewrites - `DamageApply`/`MoveUpdate` (the most cheat-relevant code) has
+matched its original signature unchanged since TU 2.00.00, through every
+build up to 3549. What actually causes breakage is three things: ordinary
+compiler drift (an edit anywhere in a translation unit reshuffles register
+allocation/inlining in unrelated functions), a blanket, per-build
+automated obfuscation pass around a few hot functions like `StatCommit`
+(same junk-xor idiom found in ~21,600 places across one huge PE section,
+almost none in actual code - comes and goes per build, consistent with a
+tool, not a human decision), and genuine feature/layout/ABI changes
+(`TravelToNode` gaining a real 4th argument, `TimeManager` fields moving).
+**Trinity's own bugs made it look worse than it is**: a fan-out effect
+(one dead char-manager global on 3527 took out seven features at once),
+a global per-build whitelist gate that disabled features whose signatures
+still matched fine, and - likely - the long-standing "does the game plant
+a JMP at DamageApply's RVA" mystery, which both models now read as
+probably `DamageProbe::Install()` racing `Player::Install()` for the same
+signature in an old build and misreading its own probe as a foreign hook.
+
+**Implemented this pass** (built clean, NOT live-tested):
+
+1. **Scanner masking bug fixed** (`src/mem/scanner.cpp`, `FindPatternAny`).
+   Before: the first pattern in a fallback list with ANY hit won
+   immediately; uniqueness was only checked afterward by the caller
+   (`InstallHook`/`InstallHookAny`), so an ambiguous EARLY pattern could
+   mask an unambiguous LATER one in the same list, refusing the whole hook
+   even though the later pattern would have resolved cleanly. Now checks
+   uniqueness per candidate internally and keeps falling through until one
+   resolves uniquely; if none do, still returns the first ambiguous hit (so
+   callers that re-check uniqueness themselves still get an "ambiguous (N)"
+   message instead of a bare "not found"). Confirmed real by both models,
+   but latent - not currently firing on any of the 13-ish pattern lists in
+   this codebase as of 3549.
+2. **`ResolveHolder()` given the same uniqueness check every other resolver
+   already has** (`src/game/inventory.cpp`). It called `FindPatternAny`
+   directly and trusted ANY non-null result, with no `CountMatches`
+   re-check at all - the one place in the file that skipped this. Since
+   fix 1 above means `FindPatternAny` can now return a non-null but
+   AMBIGUOUS address (deliberately, for diagnostics), this call site needed
+   its own explicit check or it would have started trusting exactly the
+   kind of match fix 1 was designed to make callers distrust.
+3. **A confirmed, build-3549-specific signature collision fixed**: the
+   transaction-commit fallback `kSig_InvCommit_TU20402_Candidate` (a
+   build-3446 byte pattern) now resolves to the SAME address as the
+   item-value constructor on this exact build - verified by disassembly
+   (the body opens with the documented constructor's exact writes: instance
+   id = -1, typeId from arg2, quantity from arg3; not the commit's
+   container-handling body). This is a generic wildcard pattern colliding
+   with an unrelated, recompiled function, not a real commit site moving
+   there. Installing the commit hook on it would have run
+   `NoteContainer()`/the real trampoline on every item the game constructs
+   (a hot, frequent path) instead of on every transaction commit. Fixed
+   with a targeted cross-check in `Inventory::Install()`: if the resolved
+   commit-hook address equals the independently-resolved item-constructor
+   address, uninstall the hook and fall back to the same "not found" state
+   (quantity edits revert on reconcile - already a handled, safe case).
+   **This was the single most important finding of the whole review** -
+   before this fix, build 3549 would have installed a hook on the wrong
+   function the moment `Inventory::Install()` ran, independent of whether
+   the player ever touched Add Item.
+4. **`AddItemStatus()` fixed to match `CommitAdd()`'s actual precondition
+   list.** It was missing `oHolderInsert` (the insert planner `CommitAdd()`
+   calls via `AddIntoHolder`), so the status LED could show Ok while
+   `CommitAdd()` would still refuse with "Not ready yet" - a LED-accuracy
+   bug (not a safety bug: `CommitAdd()` already independently re-validates
+   everything at the moment of the actual write, so this never risked a
+   bad write, only a misleading green dot).
+5. **Two stale/misleading comments corrected**, not functional changes:
+   `inventory.cpp`'s `ResolveHolderPinned()` comment used to say "the game's
+   own code plants [a JMP] at kSig_DamageApply's RVA even with every
+   third-party mod disabled" - what the cited `COMPATIBILITY.md` entry
+   actually found was a JMP whose trampoline pointed INSIDE TRINITY'S OWN
+   MODULE, which the cross-model review now attributes to the DamageProbe
+   self-collision above. Also added a caution comment next to
+   `kSig_StatCommit_TU3527_Candidate` in `offsets.h`: its own documented
+   register mapping (flag at arg2/dl, time at arg4/r9) does not actually
+   match `kSig_StatCommit`'s/the TU20100 candidate's convention (flag at
+   arg4/r9w) despite an earlier comment calling it "consistent" - not proven
+   as an active bug (the TU20100 candidate currently wins first whenever it
+   matches), but do not assume these two candidates are freely
+   interchangeable before this is independently re-checked.
+
+**Explicitly NOT done this pass** (plan items 2-6, each separately scoped,
+sizeable new work - see the full agent transcript for the ranked list and
+the two flagged open disagreements between the two models: whether
+`SigStatus::Ok` should be redefined to mean "validated live" with
+non-primary matches barred from green, versus keeping resolution-origin and
+feature-health as separate displayed concepts; and whether any bounded
+disassembly-based structural matching belongs at runtime inside the ASI at
+all, versus staying offline-only in `audit.py`):
+- A central per-target health registry (locator + RVA + match count +
+  validation result + reason, one log line per target including successes,
+  near-miss dumps for dead ones).
+- Generalizing the Max-Stack-Size-style plausibility pre-pass to every risky
+  write path project-wide, with a stricter contract (count unreadable rows
+  as failures, never write a row flagged implausible, re-derive offsets
+  from the game's own instruction operands rather than guessing a range).
+- Function-start recovery from the exe's unwind table (`.pdata`) to retire
+  the whole "prologue reshaped by an unrelated recompile" class of
+  breakage - both models independently confirmed, against the actual
+  installed 3549 file, that the exception-directory parser failure noted
+  earlier in this document was a TOOLING problem, not a property of this
+  exe (248,726 entries parse cleanly, with correct boundaries for every
+  target checked).
+- Narrowly-scoped bounded-gap (YARA-style) patterns for functions whose
+  obfuscation varies but whose contract doesn't (StatCommit is the pilot
+  candidate) - explicitly NOT a blanket "loosen every pattern" move.
+- RTTI-based instance search as a validator-driven oracle (scan `.data` for
+  slots whose pointee's vtable matches a known class) for the cases where
+  all byte-pattern anchors die at once (the 3527 char-manager loss is the
+  motivating example) - bounded, no unguarded heap scan at startup.
+
 ## Branch / build
 
 - Branch: `port/tu-2.03.00`. Remotes: `origin` (this fork), `upstream-gugi`

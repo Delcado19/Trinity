@@ -1364,10 +1364,18 @@ namespace trinity::game
         // logs independently named this exact RVA the same session, describing
         // exactly this collision. The fix is NOT to pattern-match the foreign
         // mod's hook shape (tried and reverted - a bare JMP opcode proves
-        // nothing: the game's own code plants one at kSig_DamageApply's RVA
-        // even with every third-party mod disabled, see COMPATIBILITY.md's
-        // damage-apply investigation). Instead verify identity against the
-        // FILE ON DISK (ReadExeFileBytesAtRva above), which no live hook can
+        // nothing about who put it there). COMPATIBILITY.md's damage-apply
+        // investigation once read this as "the game's own code plants a JMP
+        // at kSig_DamageApply's RVA even with every third-party mod
+        // disabled" - but what it actually found was a JMP whose trampoline
+        // pointed INSIDE TRINITY'S OWN MODULE, with every other ASI
+        // disabled. A later cross-model review (2026-11-05) traced this to
+        // DamageProbe::Install() hooking the same signature before
+        // Player::Install() got to scan for it in that build - Player's own
+        // scan then saw its own probe's JMP and misread it as an external
+        // collision. Likely self-inflicted, not evidence the game defends
+        // this address. The lesson survives either way: verify identity
+        // against the FILE ON DISK (ReadExeFileBytesAtRva above), which no live hook can
         // affect, then trust the pinned address regardless of what currently
         // sits there live - calling through a foreign mod's hook is safe for
         // this pure accessor (no side effects to desync), and calling the
@@ -1415,8 +1423,25 @@ namespace trinity::game
 
         void ResolveHolder()
         {
+            // FindPatternAny (scanner.cpp) now refuses an ambiguous pattern
+            // internally and tries the next one down the list - but if NONE
+            // of them resolve uniquely, it still returns the first
+            // ambiguous hit (for a caller that wants to report "ambiguous
+            // (N)" rather than "not found"). This call site never checked
+            // that at all before this fix, so an ambiguous live match used
+            // to be trusted outright here instead of falling through to the
+            // pinned RVA like every other resolver in this file does.
+            const std::string_view holderSigs[] =
+                { kSig_InvGetHolder, kSig_InvGetHolder_TU3460_Candidate };
             uintptr_t holderAddr = mem::FindPatternAny(
-                {kSig_InvGetHolder, kSig_InvGetHolder_TU3460_Candidate}, &g_holderWhich);
+                holderSigs, 2, mem::GameModule(), &g_holderWhich);
+            if (holderAddr && g_holderWhich < 2 &&
+                mem::CountMatches(holderSigs[g_holderWhich]) != 1)
+            {
+                LOG_ERR("inventory: holder resolver signature ambiguous - refusing the "
+                         "live match, falling back to the pinned RVA if this build has one.");
+                holderAddr = 0;
+            }
             if (!holderAddr)
             {
                 holderAddr = ResolveHolderPinned();
@@ -1586,6 +1611,30 @@ namespace trinity::game
                             "quantity edits will not persist (revert on reconcile)",
                             &hkCommit, &oCommit, &g_commitTarget, &g_commitWhich);
 
+        // Build 3549: kSig_InvCommit_TU20402_Candidate (a build-3446 byte
+        // pattern) now resolves to the SAME address as the item-value
+        // constructor (ctorAddr above) - a generic wildcard pattern colliding
+        // with an unrelated, recompiled function, not an actual commit site
+        // moving there. Confirmed by disassembly: that address opens with the
+        // documented constructor's exact writes (instance id = -1, typeId
+        // from arg2, quantity from arg3), not the commit's container-handling
+        // body. Installing hkCommit there would run NoteContainer()/oCommit()
+        // on every item the game constructs (a hot, frequent path), not on
+        // every transaction commit - a real role conflict, not a benign
+        // alias. Cross-check and refuse rather than trust a pattern match
+        // blindly; same end state as "signature not found" (edits revert on
+        // reconcile), which is safe and already handled everywhere else.
+        if (g_commitTarget && ctorAddr &&
+            reinterpret_cast<uintptr_t>(g_commitTarget) == ctorAddr)
+        {
+            LOG_ERR("inventory: transaction-commit signature resolved to the "
+                    "item constructor (%p) on this build - refusing the hook; "
+                    "quantity edits will not persist (revert on reconcile).",
+                    g_commitTarget);
+            mem::RemoveHook(&g_commitTarget);
+            oCommit = nullptr;
+        }
+
         // Secondary capture path: fires on a real add/drop/buy, not at load.
         // Catches containers that only appear later (e.g. character swap).
         mem::InstallHookAny("inventory: holder-insert",
@@ -1724,11 +1773,15 @@ namespace trinity::game
 
     mem::SigStatus Inventory::AddItemStatus()
     {
-        // All five add-item primitives (see Install()) are plain AND-ed
-        // CountMatches==1 resolves, no fallback candidates - so only Dead or
-        // Ok ever apply here.
-        const bool ok = oItemValueCtor && oCommitPlacement && oFreePlacements &&
-                        oItemValueDtor && oNtQueryInfoThread;
+        // All six add-item primitives are plain AND-ed CountMatches==1
+        // resolves, no fallback candidates - so only Dead or Ok ever apply
+        // here. Must match CommitAdd()'s own `ready` check exactly (this is
+        // a status LED for that same precondition, not an independent
+        // opinion) - oHolderInsert (the insert planner CommitAdd() calls via
+        // AddIntoHolder) was missing here, so the LED could show Ok while
+        // CommitAdd() would still refuse with "Not ready yet".
+        const bool ok = oItemValueCtor && oHolderInsert && oCommitPlacement &&
+                        oFreePlacements && oItemValueDtor && oNtQueryInfoThread;
         return ok ? mem::SigStatus::Ok : mem::SigStatus::Dead;
     }
 

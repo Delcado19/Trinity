@@ -236,6 +236,17 @@ namespace trinity::game
     // setup (rcx->entry, dl word->flag via movzx, r8->target, r9->time) is
     // consistent with our own 4-argument StatCommit_t signature. NOT yet
     // live-tested through our own hook plumbing.
+    //
+    // CAUTION (cross-model review, 2026-11-05): this candidate's own
+    // register mapping above puts the 16-bit flag at arg2 (dl) and time at
+    // arg4 (r9) - but kSig_StatCommit's prologue comment and the TU20100
+    // candidate both read the flag from r9w (arg4). That is NOT the same
+    // calling convention; "consistent with our own signature" two
+    // paragraphs up may be wrong. Not proven as an active bug - on the
+    // builds checked so far, FindPatternAny picks the TU20100 candidate
+    // first whenever it matches, so this one has never actually won a live
+    // selection yet - but do not assume these candidates are freely
+    // interchangeable before this is independently re-checked.
     inline constexpr const char* kSig_StatCommit_TU3527_Candidate =
         "48 89 5C 24 08 48 89 74 24 18 66 89 54 24 10 55 57 41 54 41 56 41 57 "
         "48 8D 6C 24 ?? 48 81 EC ?? ?? ?? ?? 49 8B F9 4D 8B F8 4C 8B F1 0F B7 D2 E8 ?? ?? ?? ??";

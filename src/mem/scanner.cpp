@@ -226,16 +226,39 @@ namespace trinity::mem
     uintptr_t FindPatternAny(const std::string_view* patterns, size_t count,
                              const ModuleRegion& mod, size_t* which)
     {
+        // An ambiguous match (more than one hit) does not win outright: fall
+        // through and keep trying the remaining, older-build patterns first.
+        // Before this fix, the first pattern with ANY hit won immediately
+        // and its uniqueness was only checked afterward by the caller
+        // (InstallHook/InstallHookAny's own CountMatches call) - so an
+        // ambiguous EARLY pattern masked an unambiguous LATER one, refusing
+        // the whole hook even though that later pattern would have resolved
+        // cleanly. Confirmed latent (2026-11-05 cross-model review): real on
+        // any build where an earlier candidate in a fallback list happens to
+        // also match something else, not yet observed to have fired.
+        // If nothing resolves uniquely, still return the first ambiguous hit
+        // found (same address/index the old code would have returned), so
+        // the caller's own CountMatches-based error message still says
+        // "ambiguous (N)" instead of a bare "not found".
+        uintptr_t firstAmbiguousHit = 0;
+        size_t    firstAmbiguousAt  = count;
         for (size_t i = 0; i < count; ++i)
         {
-            if (const uintptr_t hit = FindPattern(patterns[i], mod))
+            const uintptr_t hit = FindPattern(patterns[i], mod);
+            if (!hit) continue;
+            if (CountMatches(patterns[i], mod) == 1)
             {
                 if (which) *which = i;
                 return hit;
             }
+            if (!firstAmbiguousHit)
+            {
+                firstAmbiguousHit = hit;
+                firstAmbiguousAt  = i;
+            }
         }
-        if (which) *which = count;
-        return 0;
+        if (which) *which = firstAmbiguousAt;
+        return firstAmbiguousHit;
     }
 
     uintptr_t FindPatternIf(std::string_view pattern, const ModuleRegion& mod,
